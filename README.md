@@ -2,10 +2,9 @@
 
 TicketUtil is a utility that allows you to easily interact with various 
 ticketing tools using their REST APIs. Currently, the supported tools
-are JIRA and RT, with future plans to possibly support Bugzilla,
-Redmine, and Trac. Kerberos Authentication is currently the only 
-supported authentication protocol, with plans to support more in the 
-future.
+are JIRA, RT, and Redmine, with future plans to support Bugzilla and 
+Trac. Kerberos authentication is supported for JIRA and 
+RT while HTTP Basic authentication is supported for Redmine.
 
 This module allows you to create, update, and resolve tickets in each
 tool. Along with these three core functions, lower-level tool-specific
@@ -18,6 +17,7 @@ comments in JIRA and RT, etc.
 - [Usage](#usage)
 - [JIRA](#jira) 
 - [RT](#rt) 
+- [Redmine](#redmine)
 - [Comments? / Questions? / Coming Soon](#comments)
 
 ### Installation
@@ -69,8 +69,8 @@ See the docstrings in the code for more information and examples.
 
 ### JIRA
 
-The first step to working with tickets is to make sure you are properly
-authenticated. Authenticate through kerberos using `kinit` and then 
+Currently, TicketUtil supports Kerberos authentication for JIRA. 
+Authenticate through kerberos using `kinit` and then 
 execute the following in Python:
 
 ```python
@@ -151,8 +151,8 @@ t.close_requests_session()
 
 ### RT
 
-The first step to working with tickets is to make sure you are properly
-authenticated. Authenticate through kerberos using `kinit` and then 
+Currently, TicketUtil supports Kerberos authentication for JIRA. 
+Authenticate through kerberos using `kinit` and then 
 execute the following in Python:
 
 ```python
@@ -221,6 +221,86 @@ t = TicketUtil.RTTicket(<rt_url>, <project_queue>, <ticket_id>)
 
 # Resolve ticket.
 t.resolve()
+
+# Close Requests session.
+t.close_requests_session()
+```
+
+### Redmine
+
+Currently, TicketUtil supports HTTP Basic authentication for Redmine. 
+When creating a RedmineTicket object, pass in your username
+and password as a tuple into the auth argument. You can also use an API 
+key passed in as a username with a random password for <password>. For 
+more details, see http://www.redmine.org/projects/redmine/wiki/Rest_api#Authentication.
+
+```python
+>>> from TicketUtil import RTTicket
+>>> t = RedmineTicket(<redmine_url>, <project_name>, auth=(<username>, <password>))
+```
+
+You should see the following response:
+
+```
+INFO:requests.packages.urllib3.connectionpool:Starting new HTTP connection (1): <redmine_url>
+INFO:root:Successfully authenticated to Redmine
+```
+
+You now have a `RedmineTicket` object that is associated with the 
+`<project_name>` project.
+
+Some example workflows are found below. Notice that they all start
+with creating a RedmineTicket object associated with a project (and with 
+a ticket id when updating / resolving tickets). The last step is always 
+closing the Requests session with `t.close_requests_session()`.
+
+#### Create Redmine ticket
+```python
+import TicketUtil
+
+# Create a ticket object and pass the url and project name in as strings.
+t = RedmineTicket(<redmine_url>, <project_name>, auth=(<username>, <password>))
+
+# Create our params for ticket creation.
+params = {'subject': 'Ticket Subject',
+          'description': 'Ticket Description'}
+
+# Create our ticket.
+t.create(params)
+
+# After creating the ticket, the ticket_id and ticket_url instance vars have been set, so you can continue working with it.
+t.add_comment("Test Comment")
+
+# Close Requests session.
+t.close_requests_session()
+```
+
+#### Update Redmine ticket
+```python
+import TicketUtil
+
+# Create a ticket object and pass the url, project name, and ticket id in as strings.
+t = RedmineTicket(<redmine_url>, <project_name>, <ticket_id>, auth=(<username>, <password>))
+
+# Update ticket.
+t.update('Update ticket with this comment')
+
+# Because update() simply adds a comment to the ticket, you could also use add_comment():
+t.add_comment('Add a second comment to ticket')
+
+# Close Requests session.
+t.close_requests_session()
+```
+
+#### Resolve Redmine ticket
+```python
+import TicketUtil
+
+# Create a ticket object and pass the url, project name, and ticket id in as strings.
+t = RedmineTicket(<redmine_url>, <project_name>, <ticket_id>, auth=(<username>, <password>))
+
+# Resolve ticket with status id of '3'.
+t.resolve('3')
 
 # Close Requests session.
 t.close_requests_session()

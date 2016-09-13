@@ -32,9 +32,7 @@ class Ticket(object):
         else:
             self.ticket_url = None
 
-        # The first step to working with a ticket is making sure you can authenticate to the API.
-        # Create our requests session below...
-        self.principal = get_kerberos_principal()
+        # Create our requests session below.
         self.s = self.create_requests_session()
 
     def create(self, options_dict):
@@ -93,9 +91,16 @@ class Ticket(object):
         :return s: Requests Session.
         """
         # TODO: Support other authentication methods.
+        # Set up authentication for requests session.
         s = requests.Session()
-        s.auth = HTTPKerberosAuth(mutual_authentication=DISABLED)
-        s.verify = False
+        if self.auth == 'kerberos':
+            self.principal = get_kerberos_principal()
+            s.auth = HTTPKerberosAuth(mutual_authentication=DISABLED)
+            s.verify = False
+        if isinstance(self.auth, tuple):
+            s.auth = self.auth
+
+        # Try to authenticate to auth_url.
         try:
             r = s.get(self.auth_url)
             r.raise_for_status()
@@ -119,8 +124,11 @@ class JiraTicket(Ticket):
     """
     A JIRA Ticket object. Contains JIRA-specific methods for working with tickets.
     """
-    def __init__(self, base_url, project_key, ticket_id=None):
+    def __init__(self, base_url, project_key, ticket_id=None, auth=None):
         self.ticketing_tool = 'JIRA'
+
+        # Right now, hardcode auth as 'kerberos', which is the only supported auth for JIRA.
+        self.auth = 'kerberos'
 
         # JIRA URLs
         self.base_url = base_url
@@ -235,6 +243,7 @@ class JiraTicket(Ticket):
                 r = self.s.post("{0}/{1}/transitions".format(self.rest_url,  self.ticket_id), json=params)
                 r.raise_for_status()
                 logging.debug("Transition ticket: Status Code: {0}".format(r.status_code))
+                logging.info("Transitioned ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
             # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
             except requests.RequestException as e:
                 logging.error("Error transitioning ticket")
@@ -322,8 +331,11 @@ class RTTicket(Ticket):
     """
     A RT Ticket object. Contains RT-specific methods for working with tickets.
     """
-    def __init__(self, base_url, project_key, ticket_id=None):
+    def __init__(self, base_url, project_key, ticket_id=None, auth=None):
         self.ticketing_tool = 'RT'
+
+        # Right now, hardcode auth as 'kerberos', which is the only supported auth for RT.
+        self.auth = 'kerberos'
 
         # RT URLs
         self.base_url = base_url
@@ -447,6 +459,184 @@ class RTTicket(Ticket):
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
 
 
+class RedmineTicket(Ticket):
+    """
+    A Redmine Ticket object. Contains Redmine-specific methods for working with tickets.
+    """
+    def __init__(self, base_url, project_key, ticket_id=None, auth=None):
+        self.ticketing_tool = 'Redmine'
+
+        # The auth param should be of the form (<username>, <password>) for HTTP Basic authentication.
+        self.auth = auth
+
+        # RT URLs
+        self.base_url = base_url
+        self.rest_url = '{0}/issues'.format(self.base_url)
+        self.auth_url = '{0}/projects/{1}.json'.format(self.base_url, project_key)
+
+        # Call our parent class's init method which creates our requests session.
+        super(RedmineTicket, self).__init__(project_key, ticket_id)
+
+        # For Redmine tickets, specify headers.
+        self.s.headers.update({'Content-Type': 'application/json'})
+
+    def craft_ticket_url(self):
+        """
+        Crafts the ticket URL out of the rest_url and ticket_id.
+        :return: ticket_url: The URL of the ticket.
+        """
+        # If we are receiving a ticket_id, it indicates we'll be doing an update or resolve, so set ticket_url.
+        if self.ticket_id:
+            ticket_url = "{0}/{1}".format(self.rest_url, self.ticket_id)
+
+        # If we do not receive a ticket ID in our initialization it indicates we'll be creating a ticket.
+        else:
+            ticket_url = None
+
+        return ticket_url
+
+    def create_ticket_parameters(self, options_dict):
+        """
+        Creates the payload for the POST request when creating a Redmine ticket.
+
+        Example:
+        options_dict = {'subject': 'Ticket Subject',
+                        'description': 'Ticket Description'}
+
+        :param options_dict: Key: Value pairs for updating fields in Redmine.
+        :return: params: A dictionary to pass in to the POST request containing ticket details.
+        """
+        # Create our parameters for creating the ticket.
+        params = {'issue': {}}
+        params['issue']['project_id'] = self.get_project_id()
+
+        # Iterate through our options and add them to the params dict.
+        for key, value in options_dict.items():
+            params['issue'][key] = value
+
+        return params
+
+    def create_ticket(self, params):
+        """
+        Tries to create the ticket through the ticketing tool's API.
+        Retrieves the ticket_id and creates the ticket_url.
+        :param params: The payload to send in the POST request.
+        :return:
+        """
+        # Attempt to create ticket.
+        try:
+            r = self.s.post("{0}.json".format(self.rest_url), json=params)
+            r.raise_for_status()
+            logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
+
+            # Retrieve key from new ticket.
+            ticket_content = r.json()
+            ticket_id = ticket_content['issue']['id']
+            ticket_url = "{0}/{1}".format(self.rest_url, ticket_id)
+            logging.info("Created ticket {0} - {1}".format(ticket_id, ticket_url))
+            self.ticket_id = ticket_id
+            self.ticket_url = ticket_url
+
+        # If ticket creation is not successful, log an error.
+        except requests.RequestException as e:
+            logging.error("Error creating ticket")
+            logging.error(e.args[0])
+
+    def get_project_id(self):
+        """
+        Get project id from project name.
+        Project name is used as the parameter when creating the Ticket object,
+        but the Project ID is needed when creating the ticket.
+        :return:
+        """
+        try:
+            r = self.s.get(self.auth_url)
+            r.raise_for_status()
+            logging.debug("Get Project ID: Status Code: {0}".format(r.status_code))
+
+            # Retrieve project id.
+            project_info = r.json()
+            project_id = project_info['project']['id']
+            logging.debug("Retrieved Project ID: {0}".format(project_id))
+            return project_id
+        except requests.RequestException as e:
+            logging.error("Error retrieving Project ID")
+            logging.error(e.args[0])
+            return None
+
+    def edit_ticket_fields(self, edit_ticket_dict):
+        """
+        Edits fields in a Redmine issue.
+
+        Examples for edit_ticket_dict parameter:
+        {'subject': 'New subject',
+        'notes': 'Comment about the update'}
+
+        :param edit_ticket_dict: Dictionary containing data for editing ticket.
+        :return:
+        """
+        if self.ticket_id:
+            params = {'issue': edit_ticket_dict}
+            try:
+                r = self.s.put("{0}/{1}.json".format(self.rest_url, self.ticket_id), json=params)
+                r.raise_for_status()
+                logging.debug("Edit ticket field: Status Code: {0}".format(r.status_code))
+            # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
+            except requests.RequestException as e:
+                logging.error("Error editing ticket")
+                logging.error(e.args[0])
+        else:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+
+    def add_comment(self, comment):
+        """
+        Adds a comment to a Redmine issue.
+        :param comment: A string representing the comment to be added.
+        :return:
+        """
+        if self.ticket_id:
+            # Create the payload for our update.
+            params = {'issue': {}}
+            params['issue']['notes'] = comment
+
+            # Attempt to add comment to ticket.
+            try:
+                r = self.s.put('{0}/{1}.json'.format(self.rest_url, self.ticket_id), json=params)
+                r.raise_for_status()
+                logging.debug("Add comment: Status Code: {0}".format(r.status_code))
+                logging.info("Updated ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
+            except requests.RequestException as e:
+                logging.error("Error updating ticket")
+                logging.error(e.args[0])
+        else:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+
+    def transition_ticket(self, transition_id):
+        """
+        Transitions a RT ticket to the resolved state.
+        :param transition_id: Used for JIRA tickets, not used for RT.
+        :return:
+        """
+        if self.ticket_id:
+            # Create the payload for resolving the ticket. - Redmine's status_id for the resolved state is '3'.
+            params = {'issue': {}}
+            params['issue']['status_id'] = transition_id
+
+            # Attempt to resolve ticket.
+            try:
+                r = self.s.put('{0}/{1}.json'.format(self.rest_url, self.ticket_id), json=params)
+                r.raise_for_status()
+                logging.debug("Transition ticket: Status Code: {0}".format(r.status_code))
+                logging.info("Transitioned ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
+            except requests.RequestException as e:
+                logging.error("Error transitioning ticket")
+                logging.error(e.args[0])
+        else:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+
+
 def get_kerberos_principal():
     """
     Use gssapi to get the current kerberos principal.
@@ -465,6 +655,7 @@ def main():
     :return:
     """
     print("Not directly executable")
+
 
 if __name__ == "__main__":
     main()
