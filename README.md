@@ -9,8 +9,8 @@ RT while HTTP Basic authentication is supported for Redmine.
 This module allows you to create, update, and resolve tickets in each
 tool. Along with these three core functions, lower-level tool-specific
 functions are supported - adding and removing watchers in JIRA, 
-transitioning tickets through a project's workflow in JIRA, adding 
-comments in JIRA and RT, etc.
+transitioning tickets through a project's workflow in JIRA, editing
+fields in JIRA and Redmine, etc.
 
 ## Table of contents
 - [Installation](#installation)
@@ -28,7 +28,7 @@ requirements.txt file.
 To install the required packages, simply type:
 
 ```
-pip install -r ticket_util_requirements.txt
+pip install -r requirements.txt
 ```
 
 Then, copy TicketUtil.py into your codebase, or add it as a submodule
@@ -231,7 +231,7 @@ t.close_requests_session()
 Currently, TicketUtil supports HTTP Basic authentication for Redmine. 
 When creating a RedmineTicket object, pass in your username
 and password as a tuple into the auth argument. You can also use an API 
-key passed in as a username with a random password for <password>. For 
+key passed in as a username with a random password for `<password>`. For 
 more details, see http://www.redmine.org/projects/redmine/wiki/Rest_api#Authentication.
 
 ```python
@@ -258,7 +258,7 @@ closing the Requests session with `t.close_requests_session()`.
 ```python
 import TicketUtil
 
-# Create a ticket object and pass the url and project name in as strings.
+# Create a ticket object and pass the url and project name in as strings, and the auth in as a tuple.
 t = RedmineTicket(<redmine_url>, <project_name>, auth=(<username>, <password>))
 
 # Create our params for ticket creation.
@@ -270,6 +270,7 @@ t.create(params)
 
 # After creating the ticket, the ticket_id and ticket_url instance vars have been set, so you can continue working with it.
 t.add_comment("Test Comment")
+t.edit_ticket_fields({'subject': 'New subject', 'notes': 'Updated the subject'})
 
 # Close Requests session.
 t.close_requests_session()
@@ -279,7 +280,7 @@ t.close_requests_session()
 ```python
 import TicketUtil
 
-# Create a ticket object and pass the url, project name, and ticket id in as strings.
+# Create a ticket object and pass the url, project name, and ticket id in as strings, and the auth in as a tuple.
 t = RedmineTicket(<redmine_url>, <project_name>, <ticket_id>, auth=(<username>, <password>))
 
 # Update ticket.
@@ -296,7 +297,7 @@ t.close_requests_session()
 ```python
 import TicketUtil
 
-# Create a ticket object and pass the url, project name, and ticket id in as strings.
+# Create a ticket object and pass the url, project name, and ticket id in as strings, and the auth in as a tuple.
 t = RedmineTicket(<redmine_url>, <project_name>, <ticket_id>, auth=(<username>, <password>))
 
 # Resolve ticket with status id of '3'.
