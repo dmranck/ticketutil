@@ -4,7 +4,7 @@ import gssapi
 import requests
 from requests_kerberos import HTTPKerberosAuth, DISABLED
 
-__author__ = 'dranck, rnester, Kumudini'
+__author__ = 'dranck, rnester'
 
 # Disable warnings for requests because we aren't doing certificate verification
 requests.packages.urllib3.disable_warnings()
@@ -186,7 +186,11 @@ class BugzillaTicket(Ticket):
         """
         # Attempt to create ticket.
         try:
-            r = self.s.post(self.rest_url, params={'token': self.token}, json=params)
+
+            if self.token:
+                params.update({'token': self.token})
+
+            r = self.s.post(self.rest_url, params=params)
 
             r.raise_for_status()
             logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
@@ -771,7 +775,6 @@ def main():
     :return:
     """
     print("Not directly executable")
-
 
 if __name__ == "__main__":
     main()

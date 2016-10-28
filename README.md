@@ -307,6 +307,90 @@ t.resolve('3')
 t.close_requests_session()
 ```
 
+### Bugzilla
+
+Currently, Bugzilla supports Kerberos as well as authentication with general login name and password.
+In the code general login will allow you to retrieve a token that can be used as authentication for subsequent API calls. 
+
+Below is the scenario which has been used while passing the general username and passowrd setting the authentication method as 
+auth=rest. For kerberos you have to pass the parameter for auth=kerberos while keeping other values to NONE.
+
+Check the details call below and execute accordingly in python:
+
+
+```python
+import TicketUtil
+
+
+# Create a ticket object and pass the url and product_name in as strings.
+
+t = BugzillaTicket('<bugzilla_url>','<product_name>', 'None', 'rest', '<user>', '<password>')
+
+
+# Create our params for ticket creation.
+
+
+params = { "product" : "TestProduct",
+	  "component" : "TestComponent",
+	  "version" : "unspecified",
+	  "summary" : "'This is a test bug - please disregard",
+	 }
+ 
+
+# Create our ticket.
+t.create(params)
+
+# After creating the ticket, the ticket_id and ticket_url instance vars have been set, so you can continue working with it.
+t.add_comment("Test Comment")
+
+# Close Requests session.
+t.close_requests_session()
+
+```
+
+#### Update Bugzilla ticket with a new comment
+
+```python
+# Create a ticket object and pass the url, product_name, and  the exsisting ticket id in as strings.
+t = BugzillaTicket('<bugzilla_url>','<product_name>', '<exsisting-ticket-id>', 'rest', '<user>', '<password>')
+
+# Add a new comment.
+t.add_comment('Add a second comment to ticket')
+
+
+# Close Requests session.
+t.close_requests_session()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### Comments? / Questions? / Coming Soon <a name="comments"></a>
 
 For questions / comments, email dranck@redhat.com.
