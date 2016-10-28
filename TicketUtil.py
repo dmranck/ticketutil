@@ -153,28 +153,21 @@ class BugzillaTicket(Ticket):
     def create_requests_session(self):
         if self.auth != 'rest':
             return super()
-        else:
-            try:
-                s = requests.Session()
-                r = s.get(self.auth_url, params=self.credentials, verify=False)
-                r.raise_for_status()
-                self.checkForBZError(r)
-                resp = r.json()
-                self.token = resp['token']
-                logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
-                logging.info("Successfully authenticated to {0} with token: {1}".format(self.ticketing_tool, self.token))
+        try:
+            s = requests.Session()
+            r = s.get(self.auth_url, params=self.credentials, verify=False)
+            r.raise_for_status()
+            resp = r.json()
+            self.token = resp['token']
+            logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
+            logging.info("Successfully authenticated to {0} with token: {1}".format(self.ticketing_tool, self.token))
 
-                return s
-            # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
+            return s
 
-            except requests.RequestException as e:
-                logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
-                logging.error(e.args[0])
-
-
-    def checkForBZError(self, bzRessponse):
-        if 'error' in bzRessponse.json() and bzRessponse.json()['error']:
-            raise Exception(bzRessponse.json()['message'] if 'message' in bzRessponse.json() else 'Unknown API error')
+        # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
+        except requests.RequestException as e:
+            logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
+            logging.error(e.args[0])
 
 
     def create_ticket(self, params):
@@ -188,14 +181,13 @@ class BugzillaTicket(Ticket):
         try:
 
             if self.token:
-                params.update({'token': self.token})
+                params['token'] = self.token
 
             r = self.s.post(self.rest_url, params=params)
 
             r.raise_for_status()
             logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
 
-            self.checkForBZError(r)
 
             self.ticket_id = r.json()['id']
             self.ticket_url = self.craft_ticket_url()
@@ -211,11 +203,6 @@ class BugzillaTicket(Ticket):
 
         if self.ticket_id:
             ticket_url = "{0}/show_bug.cgi?id={1}".format(self.base_url, self.ticket_id)
-            print(ticket_url)
-
-        # If we do not receive a ticket ID in our initialization it indicates we'll be creating a ticket.
-        else:
-            ticket_url = None
 
         return ticket_url
 
@@ -228,10 +215,9 @@ class BugzillaTicket(Ticket):
             params = {'comment': comment}
 
             if self.token:
-                params.update({'token': self.token})
+                params['token'] = self.token
             r = self.s.post("{0}/{1}/comment".format(self.rest_url, self.ticket_id), json=params)
             r.raise_for_status()
-            self.checkForBZError(r)
             logging.debug("Add comment: Status Code: {0}".format(r.status_code))
             logging.info("Updated ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
             # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
@@ -775,6 +761,8 @@ def main():
     :return:
     """
     print("Not directly executable")
+
+
 
 if __name__ == "__main__":
     main()
