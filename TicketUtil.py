@@ -84,6 +84,8 @@ class Ticket(object):
         self.ticket_id = ticket_id
         self.ticket_url = self.craft_ticket_url()
 
+        logging.info("Current ticket: {0} - {1}".format(self.ticket_id, self.ticket_url))
+
     def create_requests_session(self):
         """
         Creates a Requests Session and authenticates to base API URL with kerberos-requests.
@@ -231,7 +233,7 @@ class JiraTicket(Ticket):
         To view possible workflow transitions for a particular issue:
         <self.rest_url>/<self.ticket_id>/transitions
 
-        :param transition_id: Used for JIRA tickets - the transition id of the closed state.
+        :param transition_id: The transition id of the desired state.
         :return:
         """
         if self.ticket_id:
@@ -269,6 +271,7 @@ class JiraTicket(Ticket):
                 r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
                 r.raise_for_status()
                 logging.debug("Edit ticket field: Status Code: {0}".format(r.status_code))
+                logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
             # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
             except requests.RequestException as e:
                 logging.error("Error editing ticket")
@@ -408,6 +411,36 @@ class RTTicket(Ticket):
         except requests.RequestException as e:
             logging.error("Error creating ticket")
             logging.error(e.args[0])
+
+    def edit_ticket_fields(self, edit_ticket_dict):
+        """
+        Edits fields in a RT issue.
+
+        Examples for edit_ticket_dict parameter:
+        {'Subject': 'New Ticket Title',
+        'Priority': '5'}
+
+        :param edit_ticket_dict: Dictionary containing data for editing ticket.
+        :return:
+        """
+        if self.ticket_id:
+            params = 'content='
+
+            # Iterate through our options and add them to the params dict.
+            for key, value in edit_ticket_dict.items():
+                params += '{0}: {1}\n'.format(key, value)
+
+            try:
+                r = self.s.post("{0}/ticket/{1}/edit".format(self.rest_url, self.ticket_id), data=params)
+                r.raise_for_status()
+                logging.debug("Edit ticket field: Status Code: {0}".format(r.status_code))
+                logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
+            except requests.RequestException as e:
+                logging.error("Error editing ticket")
+                logging.error(e.args[0])
+        else:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
 
     def add_comment(self, comment):
         """
@@ -581,6 +614,7 @@ class RedmineTicket(Ticket):
                 r = self.s.put("{0}/{1}.json".format(self.rest_url, self.ticket_id), json=params)
                 r.raise_for_status()
                 logging.debug("Edit ticket field: Status Code: {0}".format(r.status_code))
+                logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
             # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
             except requests.RequestException as e:
                 logging.error("Error editing ticket")
@@ -614,8 +648,8 @@ class RedmineTicket(Ticket):
 
     def transition_ticket(self, transition_id):
         """
-        Transitions a RT ticket to the resolved state.
-        :param transition_id: Used for JIRA tickets, not used for RT.
+        Transitions a Redmine ticket to the resolved state.
+        :param transition_id: The transition id of the desired state.
         :return:
         """
         if self.ticket_id:
