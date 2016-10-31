@@ -1,10 +1,11 @@
 import logging
 import re
+
 import gssapi
 import requests
 from requests_kerberos import HTTPKerberosAuth, DISABLED
 
-__author__ = 'dranck, rnester'
+__author__ = 'dranck, rnester, kshirsal'
 
 # Disable warnings for requests because we aren't doing certificate verification
 requests.packages.urllib3.disable_warnings()
@@ -140,19 +141,55 @@ class BugzillaTicket(Ticket):
         # Call our parent class's init method which creates our requests session.
         super(BugzillaTicket, self).__init__(project_key, ticket_id)
 
+    def craft_ticket_url(self):
+        """
+        Crafts the ticket URL out of the base_url, project_key, and ticket_id.
+        :return: ticket_url: The URL of the ticket.
+        """
+        ticket_url = None
+
+        # If we are receiving a ticket_id, it indicates we'll be doing an update or resolve, so set ticket_url.
+        if self.ticket_id:
+            ticket_url = "{0}/show_bug.cgi?id={1}".format(self.base_url, self.ticket_id)
+
+        return ticket_url
+
 
     def create_ticket_parameters(self, options_dict):
+        """
+        Creates the payload for the POST request when creating a Bugzilla ticket.
+
+        Example:
+        options_dict = {"product" : "TestProduct",
+                        "component" : "TestComponent",
+                        "version" : "unspecified",
+                        "summary" : "'This is a test bug - please disregard",
+                        "alias" : "SomeAlias",
+                        "op_sys" : "All",
+                        "priority" : "P1",
+                        "rep_platform" : "All"}
+        :param options_dict: Key: Value pairs for updating fields in Bugzilla.
+        :return: params: A dictionary to pass in to the POST request containing ticket details.
+        """
+        # Create our parameters for creating the ticket.
+        params = {'fields': {}}
+        params['fields']['project'] = {'key': self.project_key}
 
         params = {"product": str(self.project_key)}
 
         # Iterate through our options and add them to the params dict.
-        for key, value in options_dict.items():
-            params.update({str(key): str(value)})
+        params.update(options_dict)
         return params
 
     def create_requests_session(self):
+        # Returns to the super class if the authentication method is kerberos.
         if self.auth != 'rest':
             return super()
+        """
+        Creates a Requests Session and authenticates to base API URL with authentication other then kerberos.
+        We're using a Session to persist cookies across all requests made from the Session instance.
+        :return s: Requests Session.
+        """
         try:
             s = requests.Session()
             r = s.get(self.auth_url, params=self.credentials, verify=False)
@@ -161,7 +198,6 @@ class BugzillaTicket(Ticket):
             self.token = resp['token']
             logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
             logging.info("Successfully authenticated to {0} with token: {1}".format(self.ticketing_tool, self.token))
-
             return s
 
         # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
@@ -198,15 +234,13 @@ class BugzillaTicket(Ticket):
             logging.error("Error creating ticket")
             logging.error(e.args[0])
 
-    def craft_ticket_url(self):
-        ticket_url = None
-
-        if self.ticket_id:
-            ticket_url = "{0}/show_bug.cgi?id={1}".format(self.base_url, self.ticket_id)
-
-        return ticket_url
 
     def add_comment(self, comment):
+        """
+        Adds a comment to a Bugzilla ticket.
+        :param comment: A string representing the comment to be added.
+        :return:
+        """
         if not self.ticket_id: # Create the payload for our update.
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
             return
@@ -754,15 +788,12 @@ def get_kerberos_principal():
     except gssapi.raw.misc.GSSError:
         return None
 
-
 def main():
     """
     main() function, not directly callable.
     :return:
     """
     print("Not directly executable")
-
-
 
 if __name__ == "__main__":
     main()
