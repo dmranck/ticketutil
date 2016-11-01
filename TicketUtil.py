@@ -382,6 +382,9 @@ class RTTicket(Ticket):
 
         # Iterate through our options and add them to the params dict.
         for key, value in options_dict.items():
+            # RT requires a special encoding on the Text parameter.
+            if key == 'Text':
+                value = self.text_encode(value)
             params += '{0}: {1}\n'.format(key, value)
 
         return params
@@ -490,6 +493,17 @@ class RTTicket(Ticket):
                 logging.error(e.args[0])
         else:
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+
+    def text_encode(self, text):
+        """
+        Encodes the text parameter in the form expected by RT's REST API when creating a ticket.
+        Replaces spaces with '+' and new lines with '%0A+'.
+        :param text: The string that will be used in the text field for our ticket.
+        :return: The string containing the replaced characters.
+        """
+        text = text.replace(' ', '+')
+        text = text.replace('\n', '%0A+')
+        return text
 
 
 class RedmineTicket(Ticket):
