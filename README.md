@@ -360,7 +360,6 @@ t.add_comment('Add a second comment to ticket')
 
 # Close Requests session.
 t.close_requests_session()
-
 ```
 
 
