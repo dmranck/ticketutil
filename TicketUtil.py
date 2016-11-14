@@ -174,9 +174,8 @@ class JiraTicket(Ticket):
         params = {'fields': {}}
         params['fields']['project'] = {'key': self.project_key}
 
-        # Iterate through our options and add them to the params dict.
-        for key, value in options_dict.items():
-            params['fields'][key] = value
+        # Update params dict with items from options_dict.
+        params['fields'].update(options_dict)
 
         return params
 
@@ -557,9 +556,8 @@ class RedmineTicket(Ticket):
         params = {'issue': {}}
         params['issue']['project_id'] = self.get_project_id()
 
-        # Iterate through our options and add them to the params dict.
-        for key, value in options_dict.items():
-            params['issue'][key] = value
+        # Update params dict with items from options_dict.
+        params['issue'].update(options_dict)
 
         return params
 
