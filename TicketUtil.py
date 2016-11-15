@@ -182,14 +182,15 @@ class BugzillaTicket(Ticket):
         return params
 
     def create_requests_session(self):
-        # Returns to the super class if the authentication method is kerberos.
-        if self.auth != 'rest':
-            return super()
         """
+        Returns to the super class if the authentication method is kerberos.
         Creates a Requests Session and authenticates to base API URL with authentication other then kerberos.
         We're using a Session to persist cookies across all requests made from the Session instance.
         :return s: Requests Session.
         """
+        if self.auth != 'rest':
+            return super()
+
         try:
             s = requests.Session()
             r = s.get(self.auth_url, params=self.credentials, verify=False)
