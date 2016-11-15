@@ -322,7 +322,7 @@ Check the details call below and execute accordingly in python:
 ```python
 import TicketUtil
 
-# Create a ticket object and pass the url and product_name in as strings as well as set the environment variable for the username and password with which you wish to login.
+# Create a ticket object and pass the url, product_name as strings additionally set the environment variable for the username and password.
 username = os.environ.get("Username", "<email-address>")
 password = os.environ.get("Password", "<password>")
 t = BugzillaTicket('<bugzilla_url>','<product_name>', 'None', 'rest', username, password)
@@ -350,7 +350,7 @@ t.close_requests_session()
 ```python
 import TicketUtil
 
-# Create a ticket object and pass the url and product_name and exsisting ticket-id in as strings.
+# Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
 t = BugzillaTicket('<bugzilla_url>','<product_name>', '<exsisting-ticket-id>', 'rest', username, password)
 
 # Add a new comment.
@@ -365,7 +365,7 @@ t.close_requests_session()
 ```python
 import TicketUtil
 
-# Create a ticket object and pass the url and product_name and exsisting ticket-id in as strings.
+# Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
 t = BugzillaTicket('<bugzilla_url>','<product_name>', '<exsisting-ticket-id>', 'rest', username, password)
 
 # Edit the ticket fields by specifying the edit ticket dictonary with the valid feilds, below are the example fields they may differ as per need.
@@ -385,7 +385,7 @@ t.close_requests_session()
 ```python
 import TicketUtil
 
-# Create a ticket object and pass the url and product_name and exsisting ticket-id in as strings.
+# Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
 t = BugzillaTicket('<bugzilla_url>','<product_name>', '<exsisting-ticket-id>', 'rest', username, password)
 
 # Resolve the ticket with proper status and resolution.
