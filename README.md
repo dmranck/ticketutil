@@ -360,7 +360,7 @@ t.add_comment('Add a second comment to ticket')
 t.close_requests_session()
 ```
 
-### Edit Bugzilla ticket with proper field's
+#### Edit Bugzilla ticket with proper field's
 
 ```python
 import TicketUtil
@@ -381,21 +381,20 @@ t.edit_ticket_fields(edit_ticket_dict)
 t.close_requests_session()
 ```
 
-### Resolve Bugzilla ticket
+#### Resolve Bugzilla ticket
 ```python
 import TicketUtil
 
 # Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
 t = BugzillaTicket('<bugzilla_url>','<product_name>', '<exsisting-ticket-id>', 'rest', username, password)
 
-# Resolve the ticket with proper status and resolution.
-resolve_params = {"status": "<>", "resolution": "NONE"}
+# Resolve the ticket with proper status and resolution aditionally note that if a bug is changing from open to closed, you should also specify a resolution, else it can be specified to "NONE".
+resolve_params = {"status": "<status>", "resolution": "<resolution>"}
 t.transition_ticket(resolve_params)
 
 # Close Requests session.
 t.close_requests_session()
 ```
-
 
 
 ### Comments? / Questions? / Coming Soon <a name="comments"></a>
