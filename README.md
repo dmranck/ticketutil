@@ -18,6 +18,7 @@ fields in JIRA and Redmine, etc.
 - [JIRA](#jira) 
 - [RT](#rt) 
 - [Redmine](#redmine)
+- [Bugzilla](#bugzilla)
 - [Comments? / Questions? / Coming Soon](#comments)
 
 ### Installation
@@ -321,21 +322,17 @@ Check the details call below and execute accordingly in python:
 ```python
 import TicketUtil
 
-
-# Create a ticket object and pass the url and product_name in as strings.
-
-t = BugzillaTicket('<bugzilla_url>','<product_name>', 'None', 'rest', '<user>', '<password>')
-
+# Create a ticket object and pass the url and product_name in as strings as well as set the environment variable for the username and password with which you wish to login.
+username = os.environ.get("Username", "<email-address>")
+password = os.environ.get("Password", "<password>")
+t = BugzillaTicket('<bugzilla_url>','<product_name>', 'None', 'rest', username, password)
 
 # Create our params for ticket creation.
+params = {"product" : "TestProduct",
+          "component" : "TestComponent",
+          "version" : "unspecified",
+          "summary" : "'This is a test bug - please disregard"}
 
-
-params = { "product" : "TestProduct",
-	  "component" : "TestComponent",
-	  "version" : "unspecified",
-	  "summary" : "'This is a test bug - please disregard",
-	 }
- 
 
 # Create our ticket.
 t.create(params)
@@ -351,42 +348,53 @@ t.close_requests_session()
 #### Update Bugzilla ticket with a new comment
 
 ```python
-# Create a ticket object and pass the url, product_name, and  the exsisting ticket id in as strings.
-t = BugzillaTicket('<bugzilla_url>','<product_name>', '<exsisting-ticket-id>', 'rest', '<user>', '<password>')
+import TicketUtil
+
+# Create a ticket object and pass the url and product_name and exsisting ticket-id in as strings.
+t = BugzillaTicket('<bugzilla_url>','<product_name>', '<exsisting-ticket-id>', 'rest', username, password)
 
 # Add a new comment.
 t.add_comment('Add a second comment to ticket')
-
 
 # Close Requests session.
 t.close_requests_session()
 ```
 
+### Edit Bugzilla ticket with proper field's
 
+```python
+import TicketUtil
 
+# Create a ticket object and pass the url and product_name and exsisting ticket-id in as strings.
+t = BugzillaTicket('<bugzilla_url>','<product_name>', '<exsisting-ticket-id>', 'rest', username, password)
 
+# Edit the ticket fields by specifying the edit ticket dictonary with the valid feilds, below are the example fields they may differ as per need.
+edit_ticket_dict = {'summary': '[Update]This is a test bug - please disregard',
+                    'product': '<product-name>',
+                    'component': '<product-component>',
+                    'version': '<version>',
+                    'alias': '<alias-name>'}
 
+t.edit_ticket_fields(edit_ticket_dict)
 
+# Close Requests session.
+t.close_requests_session()
+```
 
+### Resolve Bugzilla ticket
+```python
+import TicketUtil
 
+# Create a ticket object and pass the url and product_name and exsisting ticket-id in as strings.
+t = BugzillaTicket('<bugzilla_url>','<product_name>', '<exsisting-ticket-id>', 'rest', username, password)
 
+# Resolve the ticket with proper status and resolution.
+resolve_params = {"status": "<>", "resolution": "NONE"}
+t.transition_ticket(resolve_params)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Close Requests session.
+t.close_requests_session()
+```
 
 
 

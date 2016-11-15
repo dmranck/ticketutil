@@ -1,5 +1,6 @@
 import logging
 import re
+import os
 
 import gssapi
 import requests
@@ -259,6 +260,66 @@ class BugzillaTicket(Ticket):
 
         except requests.RequestException as e:
             logging.error("Error updating ticket")
+            logging.error(e.args[0])
+
+    def transition_ticket(self, resolve_params):
+        """
+        Resolving  a Bugzilla ticket.
+        :param resolution: A string representing the resolution to be added.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        try:
+            # Create the payload for our update.
+            params = resolve_params
+
+            if self.token:
+                params['token'] = self.token
+
+            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r.raise_for_status()
+            logging.debug("Resolving Ticket: Status Code: {0}".format(r.status_code))
+            logging.info("Updated ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        except requests.RequestException as e:
+            logging.error("Error resolving the ticket")
+            logging.error(e.args[0])
+
+    def edit_ticket_fields(self, edit_ticket_dict):
+        """
+        Edits fields in a Bugzilla issue.
+
+        Examples for edit_ticket_dict parameter:
+        {'summary': 'New subject',
+        'product': 'Valid product label',
+        'component': 'Component related to the product against which the bug is raised',
+        'version': 'Version against which the bug is supposed to be filed',
+        'alias': 'If you wish to set any alias for the bug'}
+
+        :param edit_ticket_dict: Dictionary containing data for editing ticket.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        try:
+            # Create the payload for our update.
+            params = edit_ticket_dict
+
+            if self.token:
+                params['token'] = self.token
+
+            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r.raise_for_status()
+            logging.debug("Resolving Ticket: Status Code: {0}".format(r.status_code))
+            logging.info("Edited ticket with the mentioned fields {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        except requests.RequestException as e:
+            logging.error("Error resolving the ticket")
             logging.error(e.args[0])
 
 class JiraTicket(Ticket):
