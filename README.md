@@ -2,15 +2,15 @@
 
 TicketUtil is a utility that allows you to easily interact with various 
 ticketing tools using their REST APIs. Currently, the supported tools
-are JIRA, RT, and Redmine, with future plans to support Bugzilla and 
-Trac. Kerberos authentication is supported for JIRA and 
-RT while HTTP Basic authentication is supported for Redmine.
+are JIRA, RT, Redmine and Buzilla with future plans to support Trac.
+Kerberos authentication is supported for JIRA and RT and Bugzilla while
+HTTP Basic authentication is supported for Redmine.
 
 This module allows you to create, update, and resolve tickets in each
 tool. Along with these three core functions, lower-level tool-specific
 functions are supported - adding and removing watchers in JIRA, 
 transitioning tickets through a project's workflow in JIRA, editing
-fields in JIRA and Redmine, etc.
+fields in JIRA,Redmine and Bugzilla etc.
 
 ## Table of contents
 - [Installation](#installation)
@@ -395,7 +395,6 @@ t.transition_ticket(resolve_params)
 # Close Requests session.
 t.close_requests_session()
 ```
-
 
 ### Comments? / Questions? / Coming Soon <a name="comments"></a>
 
