@@ -310,15 +310,32 @@ t.close_requests_session()
 
 ### Bugzilla
 
-Currently, Bugzilla supports Kerberos as well as authentication with general login name and password.
-In the code general login will allow you to retrieve a token that can be used as authentication for subsequent API calls. 
+Currently, Bugzilla supports Kerberos as well as authentication with 
+general login name and password. In the code general login will allow 
+you to retrieve a token that can be used as authentication for 
+subsequent API calls. For more details, 
+see : http://bugzilla.readthedocs.io/en/latest/api/index.html
+Below is the scenario which has been used while passing the general
+username and passowrd setting the authentication method as auth=rest.
+For kerberos you have to pass the parameter for auth=kerberos while 
+keeping other values to NONE.
 
-Below is the scenario which has been used while passing the general username and passowrd setting the authentication method as 
-auth=rest. For kerberos you have to pass the parameter for auth=kerberos while keeping other values to NONE.
+```python
+>>> from TicketUtil import RTTicket
+>>> t = BugzillaTicket('<bugzilla_url>','<product_name>', 'None', 'rest', username, password)
+```
 
+You should see the following response:
+```python
+INFO:requests.packages.urllib3.connectionpool:Starting new HTTP connection (1): <bugzilla_url>
+INFO:root:Successfully authenticated to Bugzilla with token: <token-id>
+
+```
+You now have a BugzillaTicket object that is associated with the <product_name>.
+Some example workflows are found below. Notice that they all start with creating a BugzillaTicket object associated with a project (and with a ticket id when updating / resolving tickets). The last step is always closing the Requests session with t.close_requests_session().
 Check the details call below and execute accordingly in python:
 
-
+#### Create Bugzilla ticket
 ```python
 import TicketUtil
 
@@ -345,8 +362,7 @@ t.close_requests_session()
 
 ```
 
-#### Update Bugzilla ticket with a new comment
-
+#### Update Bugzilla ticket
 ```python
 import TicketUtil
 
@@ -360,8 +376,7 @@ t.add_comment('Add a second comment to ticket')
 t.close_requests_session()
 ```
 
-#### Edit Bugzilla ticket with proper field's
-
+#### Edit Bugzilla ticket 
 ```python
 import TicketUtil
 
@@ -398,7 +413,7 @@ t.close_requests_session()
 
 ### Comments? / Questions? / Coming Soon <a name="comments"></a>
 
-For questions / comments, email dranck@redhat.com.
+For questions / comments, email dranck@redhat.com, anything specific to Bugzilla, email kshirsal@redhat.com.
 
 The plan for TicketUtil is to support more ticketing tools in the near 
 future. Please let me know if there are any suggestions / requests.
