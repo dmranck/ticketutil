@@ -120,6 +120,7 @@ class Ticket(object):
         """
         self.s.close()
 
+
 class BugzillaTicket(Ticket):
     """
     A BZ Ticket object. Contains BZ-specific methods for working with tickets.
@@ -155,7 +156,6 @@ class BugzillaTicket(Ticket):
 
         return ticket_url
 
-
     def create_ticket_parameters(self, options_dict):
         """
         Creates the payload for the POST request when creating a Bugzilla ticket.
@@ -173,9 +173,6 @@ class BugzillaTicket(Ticket):
         :return: params: A dictionary to pass in to the POST request containing ticket details.
         """
         # Create our parameters for creating the ticket.
-        params = {'fields': {}}
-        params['fields']['project'] = {'key': self.project_key}
-
         params = {"product": str(self.project_key)}
 
         # Iterate through our options and add them to the params dict.
@@ -207,7 +204,6 @@ class BugzillaTicket(Ticket):
             logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
             logging.error(e.args[0])
 
-
     def create_ticket(self, params):
         """
         Tries to create the ticket through the ticketing tool's API.
@@ -221,7 +217,7 @@ class BugzillaTicket(Ticket):
             if self.token:
                 params['token'] = self.token
 
-            r = self.s.post(self.rest_url, params=params)
+            r = self.s.post(self.rest_url, json=params)
 
             r.raise_for_status()
             logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
@@ -235,7 +231,6 @@ class BugzillaTicket(Ticket):
         except requests.RequestException as e:
             logging.error("Error creating ticket")
             logging.error(e.args[0])
-
 
     def add_comment(self, comment):
         """
@@ -321,6 +316,7 @@ class BugzillaTicket(Ticket):
         except requests.RequestException as e:
             logging.error("Error resolving the ticket")
             logging.error(e.args[0])
+
 
 class JiraTicket(Ticket):
     """
@@ -838,7 +834,6 @@ class RedmineTicket(Ticket):
         else:
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
 
-
 def get_kerberos_principal():
     """
     Use gssapi to get the current kerberos principal.
@@ -856,6 +851,7 @@ def main():
     :return:
     """
     print("Not directly executable")
+
 
 if __name__ == "__main__":
     main()
