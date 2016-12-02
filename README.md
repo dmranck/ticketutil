@@ -365,7 +365,7 @@ t.close_requests_session()
 import TicketUtil
 
 # Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
-t = BugzillaTicket('<bugzilla_url>','<product_name>', 'exsisting-ticket-id', 'rest', username, password)
+t = BugzillaTicket('<bugzilla_url>','<product_name>', '<existing-ticket-id>', 'rest', username, password)
 
 # Add a new comment.
 t.add_comment('Add a second comment to ticket')
@@ -379,7 +379,7 @@ t.close_requests_session()
 import TicketUtil
 
 # Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
-t = BugzillaTicket('<bugzilla_url>','<product_name>', 'exsisting-ticket-id', 'rest', username, password)
+t = BugzillaTicket('<bugzilla_url>','<product_name>', '<existing-ticket-id>', 'rest', username, password)
 
 # Edit the ticket fields by specifying the edit ticket dictonary with the valid feilds, below are the example fields they may differ as per need.
 edit_ticket_dict = {'summary': '[Update]This is a test bug - please disregard',
@@ -399,7 +399,7 @@ t.close_requests_session()
 import TicketUtil
 
 # Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
-t = BugzillaTicket('<bugzilla_url>','<product_name>', 'exsisting-ticket-id', 'rest', username, password)
+t = BugzillaTicket('<bugzilla_url>','<product_name>', '<existing-ticket-id>', 'rest', username, password)
 
 # Resolve the ticket with proper status and resolution aditionally note that if a bug is changing from open to closed, you should also specify a resolution, else it can be specified to "NONE".
 resolve_params = {"status": "<status>", "resolution": "<resolution>"}
