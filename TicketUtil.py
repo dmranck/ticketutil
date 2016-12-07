@@ -157,17 +157,21 @@ class JiraTicket(Ticket):
 
         return ticket_url
 
-    def create_ticket_parameters(self, options_dict):
+    def create_ticket_parameters(self, fields_dict, update_dict=None):
         """
         Creates the payload for the POST request when creating a JIRA ticket.
 
         Example:
-        options_dict = {'summary': 'Ticket Summary',
-                        'description': 'Ticket Description',
-                        'priority': {'name': 'Major'}
-                        'issuetype': {'name': 'Task'}}
+        fields_dict = {'summary': 'Ticket Summary',
+                       'description': 'Ticket Description',
+                       'priority': {'name': 'Major'}
+                       'issuetype': {'name': 'Task'}}
 
-        :param options_dict: Key: Value pairs for updating fields in JIRA.
+        update_dict = {'issuelinks': [{'add': {'type': {'name': 'Relates'},
+                                       'inwardIssue': {'key': 'PROJECT-100'}}}]}
+
+        :param fields_dict: Key: Value pairs for the field dict in JIRA.
+        :param update_dict: Key: Value pairs for the update dict in JIRA.
         :return: params: A dictionary to pass in to the POST request containing ticket details.
         """
         # Create our parameters for creating the ticket.
@@ -175,7 +179,10 @@ class JiraTicket(Ticket):
         params['fields']['project'] = {'key': self.project_key}
 
         # Update params dict with items from options_dict.
-        params['fields'].update(options_dict)
+        params['fields'].update(fields_dict)
+
+        if update_dict:
+            params['update'] = update_dict
 
         return params
 
