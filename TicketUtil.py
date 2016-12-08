@@ -1,16 +1,17 @@
 import logging
 import re
+import os
 
 import gssapi
 import requests
 from requests_kerberos import HTTPKerberosAuth, DISABLED
 
-__author__ = 'dranck, rnester'
+__author__ = 'dranck, rnester, kshirsal'
 
 # Disable warnings for requests because we aren't doing certificate verification
 requests.packages.urllib3.disable_warnings()
 
-DEBUG = False
+DEBUG = True
 
 if DEBUG:
     logging.basicConfig(level=logging.DEBUG)
@@ -120,6 +121,203 @@ class Ticket(object):
         :return:
         """
         self.s.close()
+
+
+class BugzillaTicket(Ticket):
+    """
+    A BZ Ticket object. Contains BZ-specific methods for working with tickets.
+    """
+
+    def __init__(self, base_url, project_key, ticket_id=None, auth=None, user=None, password=None):
+        self.ticketing_tool = 'Bugzilla'
+
+        # Right now, hardcode auth as 'kerberos', which is the only supported auth for BZ.
+        self.auth = auth if auth else 'kerberos'
+
+        self.credentials = {"login": user, "password": password}
+        self.token = None
+
+        # BZ URLs
+        self.base_url = base_url
+        self.rest_url = '{0}/rest/bug'.format(self.base_url)
+        self.auth_url = '{0}/rest/login'.format(self.base_url)
+
+        # Call our parent class's init method which creates our requests session.
+        super(BugzillaTicket, self).__init__(project_key, ticket_id)
+
+    def craft_ticket_url(self):
+        """
+        Crafts the ticket URL out of the base_url, project_key, and ticket_id.
+        :return: ticket_url: The URL of the ticket.
+        """
+        ticket_url = None
+
+        # If we are receiving a ticket_id, it indicates we'll be doing an update or resolve, so set ticket_url.
+        if self.ticket_id:
+            ticket_url = "{0}/show_bug.cgi?id={1}".format(self.base_url, self.ticket_id)
+
+        return ticket_url
+
+    def create_ticket_parameters(self, options_dict):
+        """
+        Creates the payload for the POST request when creating a Bugzilla ticket.
+
+        Example:
+        options_dict = {"product" : "TestProduct",
+                        "component" : "TestComponent",
+                        "version" : "unspecified",
+                        "summary" : "'This is a test bug - please disregard",
+                        "alias" : "SomeAlias",
+                        "op_sys" : "All",
+                        "priority" : "P1",
+                        "rep_platform" : "All"}
+        :param options_dict: Key: Value pairs for updating fields in Bugzilla.
+        :return: params: A dictionary to pass in to the POST request containing ticket details.
+        """
+        # Create our parameters for creating the ticket.
+        params = {"product": str(self.project_key)}
+
+        # Iterate through our options and add them to the params dict.
+        params.update(options_dict)
+        return params
+
+    def create_requests_session(self):
+        """
+        Returns to the super class if the authentication method is kerberos.
+        Creates a Requests Session and authenticates to base API URL with authentication other then kerberos.
+        We're using a Session to persist cookies across all requests made from the Session instance.
+        :return s: Requests Session.
+        """
+        if self.auth != 'rest':
+            return super()
+
+        try:
+            s = requests.Session()
+            r = s.get(self.auth_url, params=self.credentials, verify=False)
+            r.raise_for_status()
+            resp = r.json()
+            self.token = resp['token']
+            logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
+            logging.info("Successfully authenticated to {0} with token: {1}".format(self.ticketing_tool, self.token))
+            return s
+
+        # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
+        except requests.RequestException as e:
+            logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
+            logging.error(e.args[0])
+
+    def create_ticket(self, params):
+        """
+        Tries to create the ticket through the ticketing tool's API.
+        Retrieves the ticket_id and creates the ticket_url.
+        :param params: The payload to send in the POST request.
+        :return:
+        """
+        # Attempt to create ticket.
+        try:
+
+            if self.token:
+                params['token'] = self.token
+
+            r = self.s.post(self.rest_url, json=params)
+
+            r.raise_for_status()
+            logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
+
+
+            self.ticket_id = r.json()['id']
+            self.ticket_url = self.craft_ticket_url()
+            logging.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        # If ticket creation is not successful, log an error.
+        except requests.RequestException as e:
+            logging.error("Error creating ticket")
+            logging.error(e.args[0])
+
+    def add_comment(self, comment):
+        """
+        Adds a comment to a Bugzilla ticket.
+        :param comment: A string representing the comment to be added.
+        :return:
+        """
+        if not self.ticket_id: # Create the payload for our update.
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        try:
+            params = {'comment': comment}
+
+            if self.token:
+                params['token'] = self.token
+            r = self.s.post("{0}/{1}/comment".format(self.rest_url, self.ticket_id), json=params)
+            r.raise_for_status()
+            logging.debug("Add comment: Status Code: {0}".format(r.status_code))
+            logging.info("Updated ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
+
+        except requests.RequestException as e:
+            logging.error("Error updating ticket")
+            logging.error(e.args[0])
+
+    def transition_ticket(self, resolve_params):
+        """
+        Resolving  a Bugzilla ticket.
+        :param resolution: A string representing the resolution to be added.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        try:
+            # Create the payload for our update.
+            params = resolve_params
+
+            if self.token:
+                params['token'] = self.token
+
+            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r.raise_for_status()
+            logging.debug("Resolving Ticket: Status Code: {0}".format(r.status_code))
+            logging.info("Updated ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        except requests.RequestException as e:
+            logging.error("Error resolving the ticket")
+            logging.error(e.args[0])
+
+    def edit_ticket_fields(self, edit_ticket_dict):
+        """
+        Edits fields in a Bugzilla issue.
+
+        Examples for edit_ticket_dict parameter:
+        {'summary': 'New subject',
+        'product': 'Valid product label',
+        'component': 'Component related to the product against which the bug is raised',
+        'version': 'Version against which the bug is supposed to be filed',
+        'alias': 'If you wish to set any alias for the bug'}
+
+        :param edit_ticket_dict: Dictionary containing data for editing ticket.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        try:
+            # Create the payload for our update.
+            params = edit_ticket_dict
+
+            if self.token:
+                params['token'] = self.token
+
+            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r.raise_for_status()
+            logging.debug("Resolving Ticket: Status Code: {0}".format(r.status_code))
+            logging.info("Edited ticket with the mentioned fields {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        except requests.RequestException as e:
+            logging.error("Error resolving the ticket")
+            logging.error(e.args[0])
 
 
 class JiraTicket(Ticket):
@@ -689,7 +887,6 @@ class RedmineTicket(Ticket):
         else:
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
 
-
 def get_kerberos_principal():
     """
     Use gssapi to get the current kerberos principal.
@@ -700,7 +897,6 @@ def get_kerberos_principal():
         return str(gssapi.Credentials(usage='initiate').name).lower()
     except gssapi.raw.misc.GSSError:
         return None
-
 
 def main():
     """

@@ -2,15 +2,15 @@
 
 TicketUtil is a utility that allows you to easily interact with various 
 ticketing tools using their REST APIs. Currently, the supported tools
-are JIRA, RT, and Redmine, with future plans to support Bugzilla and 
-Trac. Kerberos authentication is supported for JIRA and 
-RT while HTTP Basic authentication is supported for Redmine.
+are JIRA, RT, Redmine and Buzilla with future plans to support Trac.
+Kerberos authentication is supported for JIRA and RT and Bugzilla while
+HTTP Basic authentication is supported for Redmine.
 
 This module allows you to create, update, and resolve tickets in each
 tool. Along with these three core functions, lower-level tool-specific
 functions are supported - adding and removing watchers in JIRA, 
 transitioning tickets through a project's workflow in JIRA, editing
-fields in JIRA and Redmine, etc.
+fields in JIRA,Redmine and Bugzilla etc.
 
 ## Table of contents
 - [Installation](#installation)
@@ -18,6 +18,7 @@ fields in JIRA and Redmine, etc.
 - [JIRA](#jira) 
 - [RT](#rt) 
 - [Redmine](#redmine)
+- [Bugzilla](#bugzilla)
 - [Comments? / Questions? / Coming Soon](#comments)
 
 ### Installation
@@ -307,9 +308,110 @@ t.resolve('3')
 t.close_requests_session()
 ```
 
+### Bugzilla
+
+Currently, Bugzilla supports Kerberos as well as authentication with 
+general login name and password. In the code general login will allow 
+you to retrieve a token that can be used as authentication for 
+subsequent API calls. For more details, 
+see : http://bugzilla.readthedocs.io/en/latest/api/index.html
+Below is the scenario which has been used while passing the general
+username and passowrd setting the authentication method as auth=rest.
+For kerberos you have to pass the parameter for auth=kerberos while 
+keeping other values to NONE.
+
+```python
+>>> from TicketUtil import RTTicket
+>>> t = BugzillaTicket('<bugzilla_url>','<product_name>', 'None', 'rest', username, password)
+```
+
+You should see the following response:
+```python
+INFO:requests.packages.urllib3.connectionpool:Starting new HTTP connection (1): <bugzilla_url>
+INFO:root:Successfully authenticated to Bugzilla with token: <token-id>
+
+```
+You now have a BugzillaTicket object that is associated with the <product_name>.
+Some example workflows are found below. Notice that they all start with creating a BugzillaTicket object associated with a project (and with a ticket id when updating / resolving tickets). The last step is always closing the Requests session with t.close_requests_session().
+Check the details call below and execute accordingly in python:
+
+#### Create Bugzilla ticket
+```python
+import TicketUtil
+
+# Create a ticket object and pass the url, product_name as strings additionally set the environment variable for the username and password.
+t = BugzillaTicket('<bugzilla_url>','<product_name>', 'None', 'rest', username, password)
+
+# Create our params for ticket creation.
+params = {"product" : "TestProduct",
+          "component" : "TestComponent",
+          "version" : "unspecified",
+          "summary" : "'This is a test bug - please disregard"}
+
+
+# Create our ticket.
+t.create(params)
+
+# After creating the ticket, the ticket_id and ticket_url instance vars have been set, so you can continue working with it.
+t.add_comment("Test Comment")
+
+# Close Requests session.
+t.close_requests_session()
+
+```
+
+#### Update Bugzilla ticket
+```python
+import TicketUtil
+
+# Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
+t = BugzillaTicket('<bugzilla_url>','<product_name>', '<existing-ticket-id>', 'rest', username, password)
+
+# Add a new comment.
+t.add_comment('Add a second comment to ticket')
+
+# Close Requests session.
+t.close_requests_session()
+```
+
+#### Edit Bugzilla ticket 
+```python
+import TicketUtil
+
+# Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
+t = BugzillaTicket('<bugzilla_url>','<product_name>', '<existing-ticket-id>', 'rest', username, password)
+
+# Edit the ticket fields by specifying the edit ticket dictonary with the valid feilds, below are the example fields they may differ as per need.
+edit_ticket_dict = {'summary': '[Update]This is a test bug - please disregard',
+                    'product': '<product-name>',
+                    'component': '<product-component>',
+                    'version': '<version>',
+                    'alias': '<alias-name>'}
+
+t.edit_ticket_fields(edit_ticket_dict)
+
+# Close Requests session.
+t.close_requests_session()
+```
+
+#### Resolve Bugzilla ticket
+```python
+import TicketUtil
+
+# Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
+t = BugzillaTicket('<bugzilla_url>','<product_name>', '<existing-ticket-id>', 'rest', username, password)
+
+# Resolve the ticket with proper status and resolution aditionally note that if a bug is changing from open to closed, you should also specify a resolution, else it can be specified to "NONE".
+resolve_params = {"status": "<status>", "resolution": "<resolution>"}
+t.transition_ticket(resolve_params)
+
+# Close Requests session.
+t.close_requests_session()
+```
+
 ### Comments? / Questions? / Coming Soon <a name="comments"></a>
 
-For questions / comments, email dranck@redhat.com.
+For questions / comments, email dranck@redhat.com, anything specific to Bugzilla, email kshirsal@redhat.com.
 
 The plan for TicketUtil is to support more ticketing tools in the near 
 future. Please let me know if there are any suggestions / requests.
