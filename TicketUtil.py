@@ -1,6 +1,5 @@
 import logging
 import re
-import os
 
 import gssapi
 import requests
@@ -11,7 +10,7 @@ __author__ = 'dranck, rnester, kshirsal'
 # Disable warnings for requests because we aren't doing certificate verification
 requests.packages.urllib3.disable_warnings()
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     logging.basicConfig(level=logging.DEBUG)
@@ -533,6 +532,33 @@ class JiraTicket(Ticket):
         else:
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
 
+    def add_attachment(self, file):
+        """
+        Attaches a file to a JIRA issue.
+        :param file: A string representing the file to attach.
+        :return:
+        """
+        if self.ticket_id:
+            headers = {"X-Atlassian-Token": "nocheck"}
+
+            # Attempt to attach file.
+            try:
+                params = {'file': open(file, 'r')}
+                r = self.s.post("{0}/{1}/attachments".format(self.rest_url, self.ticket_id),
+                                files=params,
+                                headers=headers)
+                r.raise_for_status()
+                logging.debug("Add attachment: Status Code: {0}".format(r.status_code))
+                logging.info("Attached File {0}: {1} - {2}".format(file, self.ticket_id, self.ticket_url))
+            except FileNotFoundError:
+                logging.error("{0} not found".format(file))
+            # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
+            except requests.RequestException as e:
+                logging.error("Error attaching file {0}".format(file))
+                logging.error(e.args[0])
+        else:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+
 
 class RTTicket(Ticket):
     """
@@ -887,6 +913,7 @@ class RedmineTicket(Ticket):
         else:
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
 
+
 def get_kerberos_principal():
     """
     Use gssapi to get the current kerberos principal.
@@ -897,6 +924,7 @@ def get_kerberos_principal():
         return str(gssapi.Credentials(usage='initiate').name).lower()
     except gssapi.raw.misc.GSSError:
         return None
+
 
 def main():
     """
