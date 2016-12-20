@@ -126,14 +126,18 @@ class BugzillaTicket(Ticket):
     """
     A BZ Ticket object. Contains BZ-specific methods for working with tickets.
     """
-
-    def __init__(self, base_url, project_key, ticket_id=None, auth=None, user=None, password=None):
+    def __init__(self, base_url, project_key, ticket_id=None, auth=None):
         self.ticketing_tool = 'Bugzilla'
 
-        # Right now, hardcode auth as 'kerberos', which is the only supported auth for BZ.
-        self.auth = auth if auth else 'kerberos'
+        # Kerberos is default auth if the auth param is not specified.
+        # A tuple of the form (<username>, <password>) can also be passed in.
+        if isinstance(auth, tuple):
+            self.auth = auth
+            username, password = auth
+            self.credentials = {"login": username, "password": password}
+        else:
+            self.auth = 'kerberos'
 
-        self.credentials = {"login": user, "password": password}
         self.token = None
 
         # BZ URLs
@@ -187,9 +191,10 @@ class BugzillaTicket(Ticket):
         We're using a Session to persist cookies across all requests made from the Session instance.
         :return s: Requests Session.
         """
-        if self.auth != 'rest':
-            return super()
+        if self.auth == 'kerberos':
+            return super(BugzillaTicket, self).create_requests_session()
 
+        # If basic authentication is passed in, generate a token to be used in all requests.
         try:
             s = requests.Session()
             r = s.get(self.auth_url, params=self.credentials, verify=False)
@@ -197,11 +202,12 @@ class BugzillaTicket(Ticket):
             resp = r.json()
             self.token = resp['token']
             logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
-            logging.info("Successfully authenticated to {0} with token: {1}".format(self.ticketing_tool, self.token))
+            logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
             return s
 
         # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
-        except requests.RequestException as e:
+        # If authentication wasn't successful, a token will not be in resp. Add KeyError as exception.
+        except (KeyError, requests.RequestException) as e:
             logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
             logging.error(e.args[0])
 

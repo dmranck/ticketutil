@@ -96,10 +96,10 @@ the Requests session with `t.close_requests_session()`.
 
 #### Create JIRA ticket
 ```python
-import TicketUtil
+from TicketUtil import JiraTicket
 
 # Create a ticket object and pass the url and project key in as strings.
-t = TicketUtil.JiraTicket(<jira_url>, <project_key>)
+t = JiraTicket(<jira_url>, <project_key>)
 
 # Create our params for ticket creation.
 params = {'summary': 'Ticket Title',
@@ -121,10 +121,10 @@ t.close_requests_session()
 
 #### Update JIRA ticket
 ```python
-import TicketUtil
+from TicketUtil import JiraTicket
 
 # Create a ticket object and pass the url, project key, and ticket id in as strings.
-t = TicketUtil.JiraTicket(<jira_url>, <project_key>, <ticket_id>)
+t = JiraTicket(<jira_url>, <project_key>, <ticket_id>)
 
 # Update ticket.
 t.update('Update ticket with this comment')
@@ -138,10 +138,10 @@ t.close_requests_session()
 
 #### Resolve JIRA ticket
 ```python
-import TicketUtil
+from TicketUtil import JiraTicket
 
 # Create a ticket object and pass the url, project key, and ticket id in as strings.
-t = TicketUtil.JiraTicket(<jira_url>, <project_key>, <ticket_id>)
+t = JiraTicket(<jira_url>, <project_key>, <ticket_id>)
 
 # Resolve ticket with transition id of '3'.
 t.resolve('3')
@@ -178,10 +178,10 @@ closing the Requests session with `t.close_requests_session()`.
 
 #### Create RT ticket
 ```python
-import TicketUtil
+from TicketUtil import RTTicket
 
 # Create a ticket object and pass the url and project queue in as strings.
-t = TicketUtil.RTTicket(<rt_url>, <project_queue>)
+t = RTTicket(<rt_url>, <project_queue>)
 
 # Create our params for ticket creation.
 params = {'Subject': 'Ticket Title',
@@ -200,8 +200,10 @@ t.close_requests_session()
 
 #### Update RT ticket
 ```python
+from TicketUtil import RTTicket
+
 # Create a ticket object and pass the url, project queue, and ticket id in as strings.
-t = TicketUtil.RTTicket(<rt_url>, <project_queue>, <ticket_id>)
+t = RTTicket(<rt_url>, <project_queue>, <ticket_id>)
 
 # Update ticket.
 t.update('Update ticket with this comment')
@@ -215,10 +217,10 @@ t.close_requests_session()
 
 #### Resolve RT ticket
 ```python
-import TicketUtil
+from TicketUtil import RTTicket
 
 # Create a ticket object and pass the url, project queue, and ticket id in as strings.
-t = TicketUtil.RTTicket(<rt_url>, <project_queue>, <ticket_id>)
+t = RTTicket(<rt_url>, <project_queue>, <ticket_id>)
 
 # Resolve ticket.
 t.resolve()
@@ -236,7 +238,7 @@ key passed in as a username with a random password for `<password>`. For
 more details, see http://www.redmine.org/projects/redmine/wiki/Rest_api#Authentication.
 
 ```python
->>> from TicketUtil import RTTicket
+>>> from TicketUtil import RedmineTicket
 >>> t = RedmineTicket(<redmine_url>, <project_name>, auth=(<username>, <password>))
 ```
 
@@ -257,7 +259,7 @@ closing the Requests session with `t.close_requests_session()`.
 
 #### Create Redmine ticket
 ```python
-import TicketUtil
+from TicketUtil import RedmineTicket
 
 # Create a ticket object and pass the url and project name in as strings, and the auth in as a tuple.
 t = RedmineTicket(<redmine_url>, <project_name>, auth=(<username>, <password>))
@@ -279,7 +281,7 @@ t.close_requests_session()
 
 #### Update Redmine ticket
 ```python
-import TicketUtil
+from TicketUtil import RedmineTicket
 
 # Create a ticket object and pass the url, project name, and ticket id in as strings, and the auth in as a tuple.
 t = RedmineTicket(<redmine_url>, <project_name>, <ticket_id>, auth=(<username>, <password>))
@@ -296,7 +298,7 @@ t.close_requests_session()
 
 #### Resolve Redmine ticket
 ```python
-import TicketUtil
+from TicketUtil import RedmineTicket
 
 # Create a ticket object and pass the url, project name, and ticket id in as strings, and the auth in as a tuple.
 t = RedmineTicket(<redmine_url>, <project_name>, <ticket_id>, auth=(<username>, <password>))
@@ -310,44 +312,45 @@ t.close_requests_session()
 
 ### Bugzilla
 
-Currently, Bugzilla supports Kerberos as well as authentication with 
-general login name and password. In the code general login will allow 
+Currently, Bugzilla supports Kerberos as well as HTTP Basic 
+authentication. For basic authentication, pass in your username and 
+password as a tuple into the auth argument. This will allow 
 you to retrieve a token that can be used as authentication for 
 subsequent API calls. For more details, 
-see : http://bugzilla.readthedocs.io/en/latest/api/index.html
-Below is the scenario which has been used while passing the general
-username and passowrd setting the authentication method as auth=rest.
-For kerberos you have to pass the parameter for auth=kerberos while 
-keeping other values to NONE.
+see: http://bugzilla.readthedocs.io/en/latest/api/index.html.
+
+The examples below use basic authentication. For kerberos, set 
+`auth="kerberos"` when creating a BugzillaTicket object.
 
 ```python
->>> from TicketUtil import RTTicket
->>> t = BugzillaTicket('<bugzilla_url>','<product_name>', 'None', 'rest', username, password)
+>>> from TicketUtil import BugzillaTicket
+>>> t = BugzillaTicket(<bugzilla_url>, <product_name>, auth=(<username>, <password>))
 ```
 
 You should see the following response:
 ```python
 INFO:requests.packages.urllib3.connectionpool:Starting new HTTP connection (1): <bugzilla_url>
 INFO:root:Successfully authenticated to Bugzilla with token: <token-id>
-
 ```
-You now have a BugzillaTicket object that is associated with the <product_name>.
-Some example workflows are found below. Notice that they all start with creating a BugzillaTicket object associated with a project (and with a ticket id when updating / resolving tickets). The last step is always closing the Requests session with t.close_requests_session().
-Check the details call below and execute accordingly in python:
+You now have a `BugzillaTicket` object that is associated with the 
+`<product_name>` product.
+
+Some example workflows are found below. Notice that they all start with 
+creating a BugzillaTicket object associated with a product (and with a 
+ticket id when updating / resolving tickets). The last step is always 
+closing the Requests session with `t.close_requests_session()`.
 
 #### Create Bugzilla ticket
 ```python
-import TicketUtil
+from TicketUtil import BugzillaTicket
 
-# Create a ticket object and pass the url, product_name as strings additionally set the environment variable for the username and password.
-t = BugzillaTicket('<bugzilla_url>','<product_name>', 'None', 'rest', username, password)
+# Create a ticket object and pass the url and product_name in as strings, and the auth in as a tuple.
+t = BugzillaTicket(<bugzilla_url>, <product_name>, auth=(<username>, <password>))
 
 # Create our params for ticket creation.
-params = {"product" : "TestProduct",
-          "component" : "TestComponent",
+params = {"component" : "TestComponent",
           "version" : "unspecified",
           "summary" : "'This is a test bug - please disregard"}
-
 
 # Create our ticket.
 t.create(params)
@@ -357,15 +360,14 @@ t.add_comment("Test Comment")
 
 # Close Requests session.
 t.close_requests_session()
-
 ```
 
 #### Update Bugzilla ticket
 ```python
-import TicketUtil
+from TicketUtil import BugzillaTicket
 
-# Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
-t = BugzillaTicket('<bugzilla_url>','<product_name>', '<existing-ticket-id>', 'rest', username, password)
+# Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings, and the auth in as a tuple.
+t = BugzillaTicket(<bugzilla_url>, <product_name>, <ticket_id>, auth=(<username>, <password>))
 
 # Add a new comment.
 t.add_comment('Add a second comment to ticket')
@@ -376,12 +378,12 @@ t.close_requests_session()
 
 #### Edit Bugzilla ticket 
 ```python
-import TicketUtil
+from TicketUtil import BugzillaTicket
 
 # Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
-t = BugzillaTicket('<bugzilla_url>','<product_name>', '<existing-ticket-id>', 'rest', username, password)
+t = BugzillaTicket(<bugzilla_url>, <product_name>, <ticket_id>, auth=(<username>, <password>))
 
-# Edit the ticket fields by specifying the edit ticket dictonary with the valid feilds, below are the example fields they may differ as per need.
+# Edit the ticket fields by specifying the edit ticket dictonary with valid fields. 
 edit_ticket_dict = {'summary': '[Update]This is a test bug - please disregard',
                     'product': '<product-name>',
                     'component': '<product-component>',
@@ -396,13 +398,14 @@ t.close_requests_session()
 
 #### Resolve Bugzilla ticket
 ```python
-import TicketUtil
+from TicketUtil import BugzillaTicket
 
 # Create a ticket object and pass the url, product_name and exsisting ticket-id in as strings.
-t = BugzillaTicket('<bugzilla_url>','<product_name>', '<existing-ticket-id>', 'rest', username, password)
+t = BugzillaTicket(<bugzilla_url>, <product_name>, <ticket_id>, auth=(<username>, <password>))
 
-# Resolve the ticket with proper status and resolution aditionally note that if a bug is changing from open to closed, you should also specify a resolution, else it can be specified to "NONE".
-resolve_params = {"status": "<status>", "resolution": "<resolution>"}
+# Resolve the ticket with proper status and resolution.
+# Additionally note that if a bug is changing from open to closed, you should also specify a resolution, else it can be specified to "NONE".
+resolve_params = {"status": <status>, "resolution": <resolution>}
 t.transition_ticket(resolve_params)
 
 # Close Requests session.
