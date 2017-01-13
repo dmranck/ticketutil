@@ -152,7 +152,6 @@ class BugzillaTicket(ticket.Ticket):
                 params['token'] = self.token
 
             r = self.s.post(self.rest_url, json=params)
-
             r.raise_for_status()
             logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
 

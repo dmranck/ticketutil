@@ -237,6 +237,7 @@ class JiraTicket(ticket.Ticket):
         try:
             # Get watchers list and convert to json. Then remove all watchers.
             r = self.s.get("{0}/{1}/watchers".format(self.rest_url, self.ticket_id))
+            r.raise_for_status()
             watchers_json = r.json()
             watchers_list = []
             for watcher in watchers_json['watchers']:

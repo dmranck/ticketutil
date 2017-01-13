@@ -27,7 +27,7 @@ class RedmineTicket(ticket.Ticket):
         # The auth param should be of the form (<username>, <password>) for HTTP Basic authentication.
         self.auth = auth
 
-        # RT URLs
+        # Redmine URLs
         self.url = url
         self.rest_url = '{0}/issues'.format(self.url)
         self.auth_url = '{0}/projects/{1}.json'.format(self.url, project)
