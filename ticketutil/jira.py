@@ -228,7 +228,7 @@ class JiraTicket(ticket.Ticket):
     def remove_all_watchers(self):
         """
         Removes all watchers from a JIRA ticket.
-        :return watchers_list: A comma-delimited string of watchers that were removed from ticket.
+        :return watchers_list: A list of watchers that were removed from ticket.
         """
         if not self.ticket_id:
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
@@ -247,7 +247,7 @@ class JiraTicket(ticket.Ticket):
                                                                          watcher['name']))
                 r.raise_for_status()
                 logging.debug("Remove watcher {0}: Status Code: {0}".format(watcher['name'], r.status_code))
-            return ", ".join(watchers_list)
+            return watchers_list
         except requests.RequestException as e:
             logging.error("Error removing watchers from ticket")
             logging.error(e.args[0])
