@@ -25,7 +25,7 @@ https://docs.atlassian.com/jira/REST/cloud/
 ### create(self, summary, description, \*\*kwargs) <a name="create"></a>
 
 Creates a ticket. The required parameters for ticket creation are
-subject and text. Keyword arguments are used for other ticket
+summary and description. Keyword arguments are used for other ticket
 fields.
 
 ```python
