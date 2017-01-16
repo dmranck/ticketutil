@@ -357,8 +357,11 @@ def _prepare_ticket_fields(fields):
         :return: fields: Ticket fields in the correct form for the ticketing tool.
         """
         for key, value in fields.items():
-            if key in ['issuetype', 'priority', 'assignee', 'reporter', 'parent']:
+            if key in ['priority', 'assignee', 'reporter', 'parent']:
                 fields[key] = {'name': value}
+            if key == 'type':
+                fields['issuetype'] = {'name': value}
+                fields.pop('type')
         return fields
 
 
