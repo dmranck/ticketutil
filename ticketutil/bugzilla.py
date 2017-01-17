@@ -207,13 +207,9 @@ class BugzillaTicket(ticket.Ticket):
                 if r.json()['bugs'][0]['changes'] == {}:
                     logging.error("No changes made to ticket. Possible invalid field or lack of change in field.")
                     return
-            if r.json()['error'] is True:
-                try:
-                    logging.error(r.json()['message'])
-                    return
-                except KeyError:
-                    logging.error("Unknown error occurred.")
-                    return
+            if 'message' in r.json():
+                logging.error(r.json()['message'])
+                return
             logging.debug("Editing Ticket: Status Code: {0}".format(r.status_code))
             logging.info("Edited ticket with the mentioned fields {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
@@ -273,6 +269,76 @@ class BugzillaTicket(ticket.Ticket):
             logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error changing status of ticket")
+            logging.error(e.args[0])
+
+    def add_cc(self, user):
+        """
+        Adds user(s) to cc list.
+        :param user: A string representing one user's email address, or a list of strings for multiple users.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        if isinstance(user, list):
+            params = {'cc': {'add': user}}
+        else:
+            params = {'cc': {'add': [user]}}
+
+        if self.token:
+            params['token'] = self.token
+
+        # Attempt to edit ticket.
+        try:
+            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r.raise_for_status()
+            if 'bugs' in r.json():
+                if r.json()['bugs'][0]['changes'] == {}:
+                    logging.error("No changes made to ticket. Possible invalid field or lack of change in field.")
+                    return
+            if 'message' in r.json():
+                logging.error(r.json()['message'])
+                return
+            logging.debug("Adding user(s) to cc list: Status Code: {0}".format(r.status_code))
+            logging.info("Adding user(s) to cc list {0} - {1}".format(self.ticket_id, self.ticket_url))
+        except requests.RequestException as e:
+            logging.error("Error adding user(s) to cc list")
+            logging.error(e.args[0])
+
+    def remove_cc(self, user):
+        """
+        Removes user(s) from cc list.
+        :param user: A string representing one user's email address, or a list of strings for multiple users.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        if isinstance(user, list):
+            params = {'cc': {'remove': user}}
+        else:
+            params = {'cc': {'remove': [user]}}
+
+        if self.token:
+            params['token'] = self.token
+
+        # Attempt to edit ticket.
+        try:
+            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r.raise_for_status()
+            if 'bugs' in r.json():
+                if r.json()['bugs'][0]['changes'] == {}:
+                    logging.error("No changes made to ticket. Possible invalid field or lack of change in field.")
+                    return
+            if 'message' in r.json():
+                logging.error(r.json()['message'])
+                return
+            logging.debug("Removing user(s) from cc list: Status Code: {0}".format(r.status_code))
+            logging.info("Removing user(s) from cc list {0} - {1}".format(self.ticket_id, self.ticket_url))
+        except requests.RequestException as e:
+            logging.error("Error removing user(s) from cc list")
             logging.error(e.args[0])
 
 

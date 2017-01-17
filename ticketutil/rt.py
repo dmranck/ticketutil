@@ -84,7 +84,7 @@ class RTTicket(ticket.Ticket):
         priority='5'
         owner='username@mail.com'
         cc='username@mail.com'
-        admincc='username@mail.com, username2@mail.com'
+        admincc=['username@mail.com', 'username2@mail.com']
 
         :param subject: The ticket subject.
         :param text: The ticket text.
@@ -98,6 +98,9 @@ class RTTicket(ticket.Ticket):
         params += 'Requestor: {0}\n'.format(self.principal)
         params += 'Subject: {0}\n'.format(subject)
         params += 'Text: {0}\n'.format(_text_encode(text))
+
+        # Some of the ticket fields need to be in a specific form for the tool.
+        fields = _prepare_ticket_fields(fields)
 
         # Iterate through our options and add them to the params dict.
         for key, value in fields.items():
@@ -136,7 +139,7 @@ class RTTicket(ticket.Ticket):
         priority='5'
         owner='username@mail.com'
         cc='username@mail.com'
-        admincc='username@mail.com, username2@mail.com'
+        admincc=['username@mail.com', 'username2@mail.com']
 
         :return:
         """
@@ -144,10 +147,13 @@ class RTTicket(ticket.Ticket):
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
             return
 
+        # Some of the ticket fields need to be in a specific form for the tool.
+        fields = _prepare_ticket_fields(kwargs)
+
         params = 'content='
 
         # Iterate through our kwargs and add them to the params dict.
-        for key, value in kwargs.items():
+        for key, value in fields.items():
             params += '{0}: {1}\n'.format(key.title(), value)
 
         # Attempt to edit ticket.
@@ -218,6 +224,19 @@ def _text_encode(text):
     text = text.replace(' ', '+')
     text = text.replace('\n', '%0A+')
     return text
+
+
+def _prepare_ticket_fields(fields):
+        """
+        Makes sure each key value pair in the fields dictionary is in the correct form.
+        :param fields: Ticket fields.
+        :return: fields: Ticket fields in the correct form for the ticketing tool.
+        """
+        for key, value in fields.items():
+            if key in ['cc', 'admincc']:
+                if isinstance(value, list):
+                    fields[key] = ', '.join(value)
+        return fields
 
 
 def main():

@@ -247,6 +247,7 @@ class JiraTicket(ticket.Ticket):
                                                                          watcher['name']))
                 r.raise_for_status()
                 logging.debug("Remove watcher {0}: Status Code: {0}".format(watcher['name'], r.status_code))
+            logging.info("Removed all watchers from ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
             return watchers_list
         except requests.RequestException as e:
             logging.error("Error removing watchers from ticket")
@@ -270,6 +271,7 @@ class JiraTicket(ticket.Ticket):
             r = self.s.delete("{0}/{1}/watchers?username={2}".format(self.rest_url, self.ticket_id, watcher))
             r.raise_for_status()
             logging.debug("Remove watcher {0}: Status Code: {0}".format(watcher, r.status_code))
+            logging.info("Removed watcher {0} from ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error removing watcher {0} from ticket".format(watcher))
             logging.error(e.args[0])
@@ -298,6 +300,7 @@ class JiraTicket(ticket.Ticket):
                 r = self.s.post("{0}/{1}/watchers".format(self.rest_url, self.ticket_id), data=watcher)
                 r.raise_for_status()
                 logging.debug("Add watcher {0}: Status Code: {0}".format(r.status_code))
+                logging.info("Added watcher {0} to ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
             except requests.RequestException as e:
                 logging.error("Error adding {0} as a watcher to ticket".format(watcher))
                 logging.error(e.args[0])

@@ -1,5 +1,7 @@
 # ticketutil
 
+![Python Version](https://img.shields.io/badge/python-2.7%2C%203.3%2C%203.4%2C%203.5%2C%203.6-blue.svg)
+
 ticketutil is a Python module that allows you to easily interact with 
 various ticketing tools using their REST APIs. Currently, the supported 
 tools are JIRA, RT, Redmine and Bugzilla.
@@ -22,7 +24,9 @@ watchers in JIRA, adding attachments in JIRA, etc.
 
 ### Installation
 
-ticketutil is compatible with both Python 2 and Python 3. 
+ticketutil is compatible with Python 2.7, 3.3, 3.4, 3.5, and 3.6.
+Note: For Python 2.6 and lower, an additional package, importlib, may 
+need to be installed.
 
 A short list of packages defined in the requirements.txt file need to be 
 installed. To install the required packages, simply type:

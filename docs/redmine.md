@@ -22,6 +22,8 @@ methods, so you can use the name instead of having to look up the id.
 - [edit()](#edit)
 - [add_comment()](#comment)
 - [change_status()](#status)
+- [remove_watcher()](#remove_watcher)
+- [add_watcher()](#add_watcher)
 
 ### create(self, subject, description, \*\*kwargs) <a name="create"></a>
 
@@ -81,4 +83,20 @@ Changes status of a Redmine ticket.
 
 ```python
 t.change_status('Resolved')
+```
+
+### remove_watcher(self, watcher) <a name="remove_watcher"></a>
+
+Removes watcher from a Redmine ticket. Accepts an email or username.
+
+```python
+t.remove_watcher('username')
+```
+
+### add_watcher(self, watcher) <a name="add_watcher"></a>
+
+Adds watcher to a Redmine ticket. Accepts an email or username.
+
+```python
+t.add_watcher('username')
 ```

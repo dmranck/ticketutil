@@ -30,6 +30,8 @@ t.create(subject='Ticket subject',
 ```
 
 Tested create() ticket fields:
+NOTE: cc and admincc accept a string representing one user's email 
+address, or a list of strings for multiple users.
 
 ```python
 subject='Ticket subject'
@@ -37,7 +39,7 @@ text='Ticket text'
 priority='5'
 owner='username@mail.com'
 cc='username@mail.com'
-admincc='username@mail.com, username2@mail.com'
+admincc=['username@mail.com', 'username2@mail.com']
 ```
 
 ### edit(self, \*\*kwargs) <a name="edit"></a>
@@ -50,12 +52,14 @@ t.edit(owner='username@mail.com')
 ```
 
 Tested edit() ticket fields:
+NOTE: cc and admincc accept a string representing one user's email 
+address, or a list of strings for multiple users.
 
 ```python
 priority='5'
 owner='username@mail.com'
 cc='username@mail.com'
-admincc='username@mail.com, username2@mail.com'
+admincc=['username@mail.com', 'username2@mail.com']
 ```
 
 ### add_comment(self, comment) <a name="comment"></a>

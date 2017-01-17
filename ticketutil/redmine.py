@@ -214,6 +214,58 @@ class RedmineTicket(ticket.Ticket):
             logging.error("Error changing status of ticket")
             logging.error(e.args[0])
 
+    def remove_watcher(self, watcher):
+        """
+        Removes watcher from a Redmine ticket.
+        Accepts an email or username.
+        :param watcher: Username or email of watcher to remove.
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        # If an email address was passed in for watcher param, extract the 'name' piece.
+        if '@' in watcher:
+            watcher = "{0}".format(watcher.split('@')[0].strip())
+
+        watcher_id = self._get_user_id(watcher)
+
+        try:
+            r = self.s.delete("{0}/{1}/watchers/{2}.json".format(self.rest_url, self.ticket_id, watcher_id))
+            r.raise_for_status()
+            logging.debug("Remove watcher {0}: Status Code: {0}".format(watcher, r.status_code))
+            logging.info("Removed watcher {0} from ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
+        except requests.RequestException as e:
+            logging.error("Error removing watcher {0} from ticket".format(watcher))
+            logging.error(e.args[0])
+
+    def add_watcher(self, watcher):
+        """
+        Adds watcher to a Redmine ticket.
+        Accepts an email or username.
+        :param watcher: Username or email of watcher to remove.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        # If an email address was passed in for watcher param, extract the 'name' piece.
+        if '@' in watcher:
+            watcher = "{0}".format(watcher.split('@')[0].strip())
+
+        if watcher:
+            watcher_id = self._get_user_id(watcher)
+            params = {'user_id': watcher_id}
+            try:
+                r = self.s.post("{0}/{1}/watchers.json".format(self.rest_url, self.ticket_id), json=params)
+                r.raise_for_status()
+                logging.debug("Add watcher {0}: Status Code: {0}".format(r.status_code))
+                logging.info("Added watcher {0} to ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
+            except requests.RequestException as e:
+                logging.error("Error adding {0} as a watcher to ticket".format(watcher))
+                logging.error(e.args[0])
+
     def _get_project_id(self):
         """
         Get project id from project name.

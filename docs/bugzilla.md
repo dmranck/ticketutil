@@ -17,6 +17,8 @@ http://bugzilla.readthedocs.io/en/latest/api/index.html
 - [edit()](#edit)
 - [add_comment()](#comment)
 - [change_status()](#status)
+- [remove_cc()](#remove_cc)
+- [add_cc()](#add_cc)
 
 ### create(self, summary, description, \*\*kwargs) <a name="create"></a>
 
@@ -83,4 +85,24 @@ bug ID.
 ```python
 t.change_status('NEW')
 t.change_status('CLOSED', resolution='DUPLICATE', dupe_of='<bug_id>')
+```
+
+### remove_cc(self, user) <a name="remove_cc"></a>
+
+Removes user(s) from CC List of a Bugzilla ticket. Accepts a string 
+representing one user's email address, or a list of strings for multiple 
+users.
+
+```python
+t.remove_cc('username@mail.com')
+```
+
+### add_cc(self, user) <a name="add_cc"></a>
+
+Adds user(s) to CC List of a Bugzilla ticket. Accepts a string 
+representing one user's email address, or a list of strings for multiple 
+users.
+
+```python
+t.add_cc(['username1@mail.com', 'username2@mail.com'])
 ```
