@@ -1,6 +1,6 @@
 # ticketutil
 
-![Python Version](https://img.shields.io/badge/python-2.7%2C%203.3%2C%203.4%2C%203.5%2C%203.6-blue.svg)
+![Python Version](https://img.shields.io/badge/python-2.7%2C%203.3%2C%203.4%2C%203.5%2C%203.6-blue.svg?raw=true)
 
 ticketutil is a Python module that allows you to easily interact with 
 various ticketing tools using their REST APIs. Currently, the supported 
