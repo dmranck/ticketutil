@@ -1,4 +1,5 @@
 import logging
+import os
 
 import requests
 
@@ -9,9 +10,9 @@ __author__ = 'dranck, rnester, kshirsal'
 # Disable warnings for requests because we aren't doing certificate verification
 requests.packages.urllib3.disable_warnings()
 
-DEBUG = False
+DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
 
-if DEBUG:
+if DEBUG == 'True':
     logging.basicConfig(level=logging.DEBUG)
 else:
     logging.basicConfig(level=logging.INFO)
