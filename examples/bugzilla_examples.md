@@ -59,6 +59,8 @@ t.create(summary='Ticket summary',
 t.add_comment('Test Comment')
 t.edit(priority='medium',
        qa_contact='username@mail.com')
+t.add_cc(['username1@mail.com', 'username2@mail.com'])
+t.remove_cc('username1@mail.com')
 t.change_status('Modified')
 
 # Close Requests session.

@@ -53,10 +53,10 @@ t.create(subject='Ticket subject',
          priority='5',
          owner='username@mail.com',
          cc='username@mail.com,
-         admincc='username@mail.com, username2@mail.com')
+         admincc=['username@mail.com', 'username2@mail.com'])
 t.add_comment('Test Comment')
 t.edit(priority='4',
-       cc='username@mail.com')
+       cc='username1@mail.com')
 t.change_status('Resolved')
 
 # Close Requests session.
