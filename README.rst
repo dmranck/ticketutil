@@ -21,6 +21,7 @@ watchers in JIRA, adding attachments in JIRA, etc.
 Simplify all of your ticketing operations with ticketutil:
 
 .. code-block:: python
+
     from ticketutil.jira import JiraTicket
     t = JiraTicket(<jira_url>, <project_key>, auth='kerberos')
 
@@ -32,7 +33,6 @@ Simplify all of your ticketing operations with ticketutil:
 
     # Close Requests session.
     t.close_requests_session()
-
 
 Installation
 ------------
