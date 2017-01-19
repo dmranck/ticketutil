@@ -18,7 +18,7 @@ setup(
     author='Danny Ranck',
     author_email='dmranck@gmail.com',
     url='https://github.com/dmranck/ticketutil',
-    download_url='https://github.com/dmranck/ticketutil/tarball/0.1',
+    download_url='https://github.com/dmranck/ticketutil/tarball/1.0.0',
     keywords=['jira', 'bugzilla', 'rt', 'redmine', 'ticket', 'rest'],
     install_requires=_get_requirements('requirements.txt')
 )
