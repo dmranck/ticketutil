@@ -1,6 +1,7 @@
 # ticketutil
 
-![Python Version](https://img.shields.io/badge/python-2.7%2C%203.3%2C%203.4%2C%203.5%2C%203.6-blue.svg?raw=true)
+[![Python Version](https://img.shields.io/badge/python-2.7%2C%203.3%2C%203.4%2C%203.5%2C%203.6-blue.svg?raw=true)](https://pypi.python.org/pypi/ticketutil/1.0.0)
+[![PyPI](https://img.shields.io/badge/pypi-v1.0.0-blue.svg?raw=true)](https://pypi.python.org/pypi/ticketutil/1.0.0)
 
 ticketutil is a Python module that allows you to easily interact with 
 various ticketing tools using their REST APIs. Currently, the supported 
@@ -31,19 +32,15 @@ t.close_requests_session()
 
 ## Installation
 
+Install ticketutil with `pip install ticketutil`.
+
 ticketutil is compatible with Python 2.7, 3.3, 3.4, 3.5, and 3.6.
 Note: For Python 2.6 and lower, an additional package, importlib, may 
 need to be installed.
 
-A short list of packages defined in the requirements.txt file need to be 
-installed. To install the required packages, simply type:
-
-```
-pip install -r requirements.txt
-```
-
-Then, copy the ticketutil folder into your codebase, or add it as a 
-submodule and you're all set!
+If not installing with pip, a short list of packages defined in the 
+requirements.txt file need to be installed. To install the required 
+packages, type `pip install -r requirements.txt`.
 
 ## Usage
 
