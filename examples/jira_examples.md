@@ -50,12 +50,12 @@ t = JiraTicket(<jira_url>,
 # Create a ticket and perform some common ticketing operations.
 t.create(summary='Ticket summary',
          description='Ticket description',
-         issuetype='Task',
+         type='Task',
          priority='Major',
          assignee='username')
 t.add_comment('Test Comment')
 t.edit(priority='Critical',
-       issuetype='Bug')
+       type='Bug')
 t.remove_all_watchers()
 t.add_watcher('username')
 t.add_attachment('file_to_attach.txt')
@@ -78,7 +78,7 @@ t = JiraTicket(<jira_url>,
 # Perform some common ticketing operations.
 t.add_comment('Test Comment')
 t.edit(priority='Critical',
-       issuetype='Bug')
+       type='Bug')
        
 # Work with a different ticket.
 t.set_ticket_id(<new_ticket_id>)
