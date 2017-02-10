@@ -1,3 +1,21 @@
+"""
+ServiceNow ticket
+module created by pzubaty
+
+Provided, you have user and pwd, you can create new ticket like this (below),
+but you should need other attributes like Category, Item and other non-optional
+attributes from the ServiceNow web GUI.
+
+from ticketutil.servicenow import ServiceNowTicket
+
+table = "/x_redha_pnt_devops_table"
+server = "https://redhatqa.service-now.com"
+auth = (user,pwd)
+ticket = ServiceNowTicket(server, table, auth)
+ticket.create("TEST adding SNow API into ticketutil")
+"""
+
+
 import logging
 import os
 
@@ -62,7 +80,7 @@ class ServiceNowTicket(ticket.Ticket):
         response = self.s.get(url)
         logging.debug("GET request Status Code: {0}"
                       .format(response.status_code))
-        return process_response(response)
+        return self.process_response(response)
 
 
     def api_post(self, url, data):
@@ -75,7 +93,7 @@ class ServiceNowTicket(ticket.Ticket):
         response = self.s.post(url, data=data)
         logging.debug("POST request Status Code: {0}"
                       .format(response.status_code))
-        return process_response(response)
+        return self.process_response(response)
 
 
     def api_put(self, url, data):
@@ -89,7 +107,7 @@ class ServiceNowTicket(ticket.Ticket):
         response = self.s.put(url, data=data)
         logging.debug("PUT request Status Code: {0}"
                       .format(response.status_code))
-        return process_response(response)
+        return self.process_response(response)
 
 
     def get_sys_id(self):
@@ -110,7 +128,7 @@ class ServiceNowTicket(ticket.Ticket):
 
         # If we are receiving a ticket_id, set ticket_url.
         if self.ticket_id:
-            self.sys_id = get_sys_id() if not self.sys_id
+            self.sys_id = get_sys_id() if not self.sys_id else self.sys_id
             ticket_url = "{0}/{1}.do?sys_id={2}".format(self.url, self.table,
                                                         self.sys_id)
         return ticket_url
@@ -125,7 +143,7 @@ class ServiceNowTicket(ticket.Ticket):
 
         :param short_description: short description of the issue
         """
-        if short_description None:
+        if short_description is None:
             logging.error("short_description "
                           "is a necessary parameter for ticket creation.")
             return
@@ -137,10 +155,11 @@ class ServiceNowTicket(ticket.Ticket):
     def _create_ticket_parameters(self, short_description, fields):
         """
         """
-        params = '{"short_description" : "{}"'.format(short_description)
+        params = '"short_description" : "{}"'.format(short_description)
         for key, value in fields.items():
             params += ', "{}" : "{}"'.format(key.title(), value)
-        params += '}'
+        params = '{' + params + '}'
+        return params
 
 
     def _create_ticket_request(self, params):
@@ -151,7 +170,7 @@ class ServiceNowTicket(ticket.Ticket):
         self.sys_id = result['sys_id']
         self.ticket_url = self._generate_ticket_url()
         logging.info("Created issue {0} - {1}".format(self.ticket_id,
-                                                      self.ticket_url)
+                                                      self.ticket_url))
 
 
     def add_comment(self, comment):
