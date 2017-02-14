@@ -11,7 +11,7 @@ added later.
 ```python
 from ticketutil.servicenow import ServiceNowTicket
 
-table = '/x_redha_pnt_devops_table'
+table = 'x_redha_pnt_devops_table'
 server = 'https://envqa.service-now.com'
 user = 'test_servicenow'
 pwd = 'passwordString'
@@ -44,7 +44,7 @@ INFO:root:Created issue <number> - <service_now_url>
 ```python
 from ticketutil.servicenow import ServiceNowTicket
 
-table = '/x_redha_pnt_devops_table'
+table = 'x_redha_pnt_devops_table'
 server = 'https://envqa.service-now.com'
 user = 'test_servicenow'
 pwd = 'passwordString'
