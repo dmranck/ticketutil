@@ -1,8 +1,7 @@
 """
 ServiceNow ticket
-module created by pzubaty
 
-Provided, you have user and pwd, you can create new ticket like this (below),
+Provided, you have user and pwd, you can create new ticket like this,
 but you should need other attributes like Category, Item and other non-optional
 attributes from the ServiceNow web GUI.
 
@@ -22,7 +21,8 @@ from . import ticket
 #TODO ask dranck about credits
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
 
-# Disable warnings for requests because we aren't doing certificate verification
+# Disable warnings for requests because we aren't doing certificate
+# verification
 requests.packages.urllib3.disable_warnings()
 
 DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
@@ -35,13 +35,21 @@ else:
 
 class ServiceNowTicket(ticket.Ticket):
     """
-    ServiceNow Ticket object. Contains ServiceNow specific methods for working with tickets.
+    ServiceNow Ticket object. Contains ServiceNow specific methods for working
+    with tickets.
     """
     def __init__(self, url, project, auth=None, ticket_id=None):
+        """
+        :param url: ServiceNow service url
+        :param project: ServiceNow table or project
+        :param auth: (<username>, <password>) for HTTP Basic Authentication
+        :param ticked_id: ticked number, eg. PNT1234567
+        """
         self.ticketing_tool = 'ServiceNow'
         self.sys_id = None
 
-        # The auth param should be of the form (<username>, <password>) for HTTP Basic authentication.
+        # The auth param should be of the form (<username>, <password>) for
+        # HTTP Basic authentication.
         self.url = url
         self.auth = auth
         self.table = project
@@ -60,6 +68,8 @@ class ServiceNowTicket(ticket.Ticket):
     def process_response(self, response):
         """
         Helper function to process Requests response or raise exception
+
+        :param response: response of the Requests query
         """
         try:
             if (response.status_code != 201 and
@@ -75,10 +85,12 @@ class ServiceNowTicket(ticket.Ticket):
     def api_get(self, url):
         """
         API GET wrapper
+
+        :param url: url containing REST API query
         """
         self.s.headers.update({'Content-Type': 'application/json'})
         response = self.s.get(url)
-        logging.debug("GET request Status Code: {0}"
+        logging.debug('GET request Status Code: {0}'
                       .format(response.status_code))
         return self.process_response(response)
 
@@ -86,12 +98,14 @@ class ServiceNowTicket(ticket.Ticket):
     def api_post(self, url, data):
         """
         API POST wrapper
+
+        :param url: url containing REST API query
         :param text: text to be inserted into table record
         """
-        self.s.headers.update({"Content-Type":"application/json",
-                               "Accept":"application/json"})
+        self.s.headers.update({'Content-Type':'application/json',
+                               'Accept':'application/json'})
         response = self.s.post(url, data=data)
-        logging.debug("POST request Status Code: {0}"
+        logging.debug('POST request Status Code: {0}'
                       .format(response.status_code))
         return self.process_response(response)
 
@@ -100,28 +114,41 @@ class ServiceNowTicket(ticket.Ticket):
         """
         API PUT wrapper
         Updates table content.
+
+        :param url: url containing REST API query
         :param text: text to be inserted into table record
         """
-        self.s.headers.update({"Content-Type":"application/json",
-                               "Accept":"application/json"})
+        self.s.headers.update({'Content-Type':'application/json',
+                               'Accept':'application/json'})
         response = self.s.put(url, data=data)
-        logging.debug("PUT request Status Code: {0}"
+        logging.debug('PUT request Status Code: {0}'
                       .format(response.status_code))
         return self.process_response(response)
 
 
     def get_sys_id(self):
         """
+        Get sys_id query wrapper
+        TODO: what about security, encodeURIComponent in python?
+
+        :return: sys_id
         """
         url = self.rest_url + '?sysparm_query=GOTOnumber%3D'
         url += self.ticket_id
         result = self.api_get(url)
-        return result[0]['sys_id']
+        try:
+            return result[0]['sys_id']
+        except:
+            self.ticket_id = None
+            self.sys_id = None
+            logging.error("Failed to get sys_id")
+
 
 
     def _generate_ticket_url(self):
         """
         Generates the ticket URL out of the url, project, and ticket_id.
+
         :return: ticket_url: The URL of the ticket.
         """
         ticket_url = None
@@ -129,7 +156,7 @@ class ServiceNowTicket(ticket.Ticket):
         # If we are receiving a ticket_id, set ticket_url.
         if self.ticket_id:
             self.sys_id = self.get_sys_id() if not self.sys_id else self.sys_id
-            ticket_url = "{0}/{1}.do?sys_id={2}".format(self.url, self.table,
+            ticket_url = '{0}/{1}.do?sys_id={2}'.format(self.url, self.table,
                                                         self.sys_id)
         return ticket_url
 
@@ -141,7 +168,22 @@ class ServiceNowTicket(ticket.Ticket):
                u_item,
                **kwargs):
         """
-        Create method wrapper for PNT DevOps One
+        Creates new issue, new record in the ServiceNow table
+
+        :param short_description: short description of the issue
+        :param description: full description of the issue
+        :param u_category: ticket category (Category in WebUI)
+        :param u_item: ticket category item (Item in WebUI)
+
+        :param kwargs: optional fields
+
+        Fields example:
+        'contact_type' : 'Email',
+        'u_opened_for' : 'PNT',
+        'assigned_to' : 'pzubaty',
+        'impact' : '2',
+        'urgency' : '2',
+        'priority' : '2'
         """
         fields = {'description' : description,
                   'u_category' : u_category,
@@ -158,10 +200,20 @@ class ServiceNowTicket(ticket.Ticket):
         Keyword arguments are used for other issue fields.
 
         :param short_description: short description of the issue
+
+        :param kwargs: optional fields
+
+        Fields example:
+        'contact_type' : 'Email',
+        'u_opened_for' : 'PNT',
+        'assigned_to' : 'pzubaty',
+        'impact' : '2',
+        'urgency' : '2',
+        'priority' : '2'
         """
         if short_description is None:
-            logging.error("short_description "
-                          "is a necessary parameter for ticket creation.")
+            logging.error('short_description '
+                          'is a necessary parameter for ticket creation.')
             return
 
         params = self._create_ticket_parameters(short_description, kwargs)
@@ -172,6 +224,11 @@ class ServiceNowTicket(ticket.Ticket):
                                   short_description,
                                   fields):
         """
+        Creates the payload for the POST request when creating new ticket.
+
+        :param short_description: short description of the issue
+
+        :param fields: optional fields
         """
         params = '"short_description" : "{}"'.format(short_description)
         for key, value in fields.items():
@@ -182,19 +239,28 @@ class ServiceNowTicket(ticket.Ticket):
 
     def _create_ticket_request(self, params):
         """
+        Tries to create the ticket through the ticketing tool's API.
+        Retrieves the ticket_id and creates the ticket_url.
+
+        :param params: The payload to send in the POST request.
         """
         result = self.api_post(self.rest_url, params)
         self.ticket_id = result['number']
         self.sys_id = result['sys_id']
         self.ticket_url = self._generate_ticket_url()
-        logging.info("Created issue {0} - {1}".format(self.ticket_id,
+        logging.info('Created issue {0} - {1}'.format(self.ticket_id,
                                                       self.ticket_url))
 
 
     def change_status(self, status):
+        """
+        Change ServiceNow ticket status
+
+        :param status: State to change to
+        """
         if not self.sys_id:
-            logging.error("No ticket ID associated with ticket object. Set "
-                          "ticket ID with set_ticket_id(ticket_id)")
+            logging.error('No ticket ID associated with ticket object. Set '
+                          'ticket ID with set_ticket_id(ticket_id)')
             return
 
         try:
@@ -207,28 +273,45 @@ class ServiceNowTicket(ticket.Ticket):
 
 
     def edit(self, **kwargs):
+        """
+        Edit ticket
+
+        Edits a ServiceNow ticket, ticked_id (sys_id) must be set beforehand.
+        You can set ticket_id by calling set_ticket_id(ticket_id) method.
+
+        :param kwargs: optional fields
+
+        Fields example:
+        'contact_type' : 'Email',
+        'u_opened_for' : 'PNT',
+        'assigned_to' : 'pzubaty',
+        'impact' : '2',
+        'urgency' : '2',
+        'priority' : '2'
+        """
         if not self.sys_id:
-            logging.error("No ticket ID associated with ticket object. Set "
-                          "ticket ID with set_ticket_id(ticket_id)")
+            logging.error('No ticket ID associated with ticket object. Set '
+                          'ticket ID with set_ticket_id(ticket_id)')
             return
         params = ''
         for key, value in kwargs.items():
             params += ', "{}" : "{}"'.format(key, value)
         params = '{' + params[1:] + '}'
 
-        url = self.rest_url + "/" + self.sys_id
+        url = self.rest_url + '/' + self.sys_id
         result = self.api_put(url, params)
         if result['number']:
-            logging.info("Issue edited {0} - {1}"
+            logging.info('Issue edited {0} - {1}'
                          .format(self.ticket_id, self.ticket_url))
         else:
-            logging.error("Error while editing issue")
+            logging.error('Error while editing issue')
 
 
     def add_comment(self, comment):
         """
         Adds comment
-        :param comment: new comment
+
+        :param comment: new ticket comment
         """
         try:
             logging.info('Adding comment')
@@ -238,51 +321,13 @@ class ServiceNowTicket(ticket.Ticket):
             logging.error('Failed to add the comment')
 
 
-def test():
-    table = "/x_redha_pnt_devops_table"
-    server = "https://redhatqa.service-now.com"
-    user = "pnt_test_api"
-    f = open('/home/pzubaty/Documents/Snow_api.txt')
-    pwd = f.readline()[:-1]
-    auth = (user,pwd)
-
-    ticket = ServiceNowTicket(server, table, auth)
-    description = ("This is just a simple test for ticketutil library. Calling "
-                   "ServiceNowTicket class you are able to create tickets in "
-                   "the ServiceNow automatically. You need however to provide "
-                   "username and password (at the moment only basic auth is "
-                   "supported. Module created by pzubaty@redhat.com")
-
-    ticket.create(short_description="TEST adding SNow API into ticketutil",
-                  description=description,
-                  u_category="Communication",
-                  u_item="ServiceNow")
-    ticket.close_requests_session()
-
-
-def test_comment(ticket_id):
-    table = "/x_redha_pnt_devops_table"
-    server = "https://redhatqa.service-now.com"
-    user = "pnt_test_api"
-    f = open('/home/pzubaty/Documents/Snow_api.txt')
-    pwd = f.readline()[:-1]
-    auth = (user,pwd)
-
-    ticket = ServiceNowTicket(server, table, auth, ticket_id)
-    ticket.add_comment("Lorem ipsum dolor TEST")
-    fields = {'assigned_to':'pzubaty', 'priority':'3'}
-    ticket.edit(**fields)
-    ticket.change_status('Pending')
-    ticket.close_requests_session()
-
-
 def main():
     """
     main() function, not directly callable.
     :return:
     """
-    print("Not directly executable")
+    print('Not directly executable')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
