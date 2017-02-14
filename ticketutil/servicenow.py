@@ -18,7 +18,7 @@ import requests
 
 from . import ticket
 
-#TODO ask dranck about credits
+# TODO ask dranck about credits
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
 
 # Disable warnings for requests because we aren't doing certificate
@@ -38,6 +38,7 @@ class ServiceNowTicket(ticket.Ticket):
     ServiceNow Ticket object. Contains ServiceNow specific methods for working
     with tickets.
     """
+
     def __init__(self, url, project, auth=None, ticket_id=None):
         """
         :param url: ServiceNow service url
@@ -64,7 +65,6 @@ class ServiceNowTicket(ticket.Ticket):
         # OK for GET, but will it blend? Accept part might be needed later
         self.s.headers.update({'Content-Type': 'application/json'})
 
-
     def process_response(self, response):
         """
         Helper function to process Requests response or raise exception
@@ -72,15 +72,15 @@ class ServiceNowTicket(ticket.Ticket):
         :param response: response of the Requests query
         """
         try:
-            if (response.status_code != 201 and
-                response.status_code != 200):
+            if (response.status_code != 201
+                and response.status_code != 200
+                ):
                 raise
             result = response.json()['result']
             return result
         except:
             logging.error('Headers: {0}'.format(response.headers))
             logging.error('Error Response: {0}'.format(response.json()))
-
 
     def api_get(self, url):
         """
@@ -94,7 +94,6 @@ class ServiceNowTicket(ticket.Ticket):
                       .format(response.status_code))
         return self.process_response(response)
 
-
     def api_post(self, url, data):
         """
         API POST wrapper
@@ -102,13 +101,12 @@ class ServiceNowTicket(ticket.Ticket):
         :param url: url containing REST API query
         :param text: text to be inserted into table record
         """
-        self.s.headers.update({'Content-Type':'application/json',
-                               'Accept':'application/json'})
+        self.s.headers.update({'Content-Type': 'application/json',
+                               'Accept': 'application/json'})
         response = self.s.post(url, data=data)
         logging.debug('POST request Status Code: {0}'
                       .format(response.status_code))
         return self.process_response(response)
-
 
     def api_put(self, url, data):
         """
@@ -118,13 +116,12 @@ class ServiceNowTicket(ticket.Ticket):
         :param url: url containing REST API query
         :param text: text to be inserted into table record
         """
-        self.s.headers.update({'Content-Type':'application/json',
-                               'Accept':'application/json'})
+        self.s.headers.update({'Content-Type': 'application/json',
+                               'Accept': 'application/json'})
         response = self.s.put(url, data=data)
         logging.debug('PUT request Status Code: {0}'
                       .format(response.status_code))
         return self.process_response(response)
-
 
     def get_sys_id(self):
         """
@@ -143,8 +140,6 @@ class ServiceNowTicket(ticket.Ticket):
             self.sys_id = None
             logging.error("Failed to get sys_id")
 
-
-
     def _generate_ticket_url(self):
         """
         Generates the ticket URL out of the url, project, and ticket_id.
@@ -159,7 +154,6 @@ class ServiceNowTicket(ticket.Ticket):
             ticket_url = '{0}/{1}.do?sys_id={2}'.format(self.url, self.table,
                                                         self.sys_id)
         return ticket_url
-
 
     def create(self,
                short_description,
@@ -178,26 +172,26 @@ class ServiceNowTicket(ticket.Ticket):
         :param kwargs: optional fields
 
         Fields example:
-        'contact_type' : 'Email',
-        'u_opened_for' : 'PNT',
-        'assigned_to' : 'pzubaty',
-        'impact' : '2',
-        'urgency' : '2',
-        'priority' : '2'
+        'contact_type': 'Email',
+        'u_opened_for': 'PNT',
+        'assigned_to': 'pzubaty',
+        'impact': '2',
+        'urgency': '2',
+        'priority': '2'
         """
-        fields = {'description' : description,
-                  'u_category' : u_category,
-                  'u_item' : u_item}
+        fields = {'description': description,
+                  'u_category': u_category,
+                  'u_item': u_item}
         kwargs.update(fields)
-        self.create(short_description, **kwargs)
+        self.create_simple(short_description, **kwargs)
 
-
-    def create(self, short_description, **kwargs):
+    def create_simple(self, short_description, **kwargs):
         """
         Creates new issue, new record in the ServiceNow table
 
         The required parameter is short description of the issue.
         Keyword arguments are used for other issue fields.
+        note: pyflakes hate polymorphism
 
         :param short_description: short description of the issue
 
@@ -219,7 +213,6 @@ class ServiceNowTicket(ticket.Ticket):
         params = self._create_ticket_parameters(short_description, kwargs)
         self._create_ticket_request(params)
 
-
     def _create_ticket_parameters(self,
                                   short_description,
                                   fields):
@@ -236,7 +229,6 @@ class ServiceNowTicket(ticket.Ticket):
         params = '{' + params + '}'
         return params
 
-
     def _create_ticket_request(self, params):
         """
         Tries to create the ticket through the ticketing tool's API.
@@ -251,7 +243,6 @@ class ServiceNowTicket(ticket.Ticket):
         logging.info('Created issue {0} - {1}'.format(self.ticket_id,
                                                       self.ticket_url))
 
-
     def change_status(self, status):
         """
         Change ServiceNow ticket status
@@ -265,12 +256,10 @@ class ServiceNowTicket(ticket.Ticket):
 
         try:
             logging.info('Changing ticket status')
-            fields = {'state' : status}
+            fields = {'state': status}
             self.edit(**fields)
         except:
             logging.error('Failed to change ticket status')
-
-
 
     def edit(self, **kwargs):
         """
@@ -305,7 +294,6 @@ class ServiceNowTicket(ticket.Ticket):
                          .format(self.ticket_id, self.ticket_url))
         else:
             logging.error('Error while editing issue')
-
 
     def add_comment(self, comment):
         """
