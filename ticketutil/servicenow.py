@@ -6,13 +6,9 @@ Provided, you have user and pwd, you can create new ticket like this (below),
 but you should need other attributes like Category, Item and other non-optional
 attributes from the ServiceNow web GUI.
 
-from ticketutil.servicenow import ServiceNowTicket
-
-table = "/x_redha_pnt_devops_table"
-server = "https://redhatqa.service-now.com"
-auth = (user,pwd)
-ticket = ServiceNowTicket(server, table, auth)
-ticket.create("TEST adding SNow API into ticketutil")
+TODO:
+api PATCH method would enable editing comment
+api DELETE method - maybe, not that necessary
 """
 
 
@@ -43,6 +39,7 @@ class ServiceNowTicket(ticket.Ticket):
     """
     def __init__(self, url, project, auth=None, ticket_id=None):
         self.ticketing_tool = 'ServiceNow'
+        self.sys_id = None
 
         # The auth param should be of the form (<username>, <password>) for HTTP Basic authentication.
         self.url = url
@@ -51,7 +48,10 @@ class ServiceNowTicket(ticket.Ticket):
         self.rest_url = '{0}/api/now/v1/table/{1}'.format(self.url, self.table)
         self.auth_url = self.rest_url
 
-        super(ServiceNowTicket, self).__init__(project, ticket_id)
+        # parent creates request session, ticket_id beforehand causes failure
+        super(ServiceNowTicket, self).__init__(project, ticket_id=None)
+        if ticket_id:
+            super(ServiceNowTicket, self).set_ticket_id(ticket_id)
 
         # OK for GET, but will it blend? Accept part might be needed later
         self.s.headers.update({'Content-Type': 'application/json'})
@@ -115,7 +115,7 @@ class ServiceNowTicket(ticket.Ticket):
         """
         url = self.rest_url + '?sysparm_query=GOTOnumber%3D'
         url += self.ticket_id
-        result = api_get(url)
+        result = self.api_get(url)
         return result[0]['sys_id']
 
 
@@ -128,10 +128,26 @@ class ServiceNowTicket(ticket.Ticket):
 
         # If we are receiving a ticket_id, set ticket_url.
         if self.ticket_id:
-            self.sys_id = get_sys_id() if not self.sys_id else self.sys_id
+            self.sys_id = self.get_sys_id() if not self.sys_id else self.sys_id
             ticket_url = "{0}/{1}.do?sys_id={2}".format(self.url, self.table,
                                                         self.sys_id)
         return ticket_url
+
+
+    def create(self,
+               short_description,
+               description,
+               u_category,
+               u_item,
+               **kwargs):
+        """
+        Create method wrapper for PNT DevOps One
+        """
+        fields = {'description' : description,
+                  'u_category' : u_category,
+                  'u_item' : u_item}
+        kwargs.update(fields)
+        self.create(short_description, **kwargs)
 
 
     def create(self, short_description, **kwargs):
@@ -152,12 +168,14 @@ class ServiceNowTicket(ticket.Ticket):
         self._create_ticket_request(params)
 
 
-    def _create_ticket_parameters(self, short_description, fields):
+    def _create_ticket_parameters(self,
+                                  short_description,
+                                  fields):
         """
         """
         params = '"short_description" : "{}"'.format(short_description)
         for key, value in fields.items():
-            params += ', "{}" : "{}"'.format(key.title(), value)
+            params += ', "{}" : "{}"'.format(key, value)
         params = '{' + params + '}'
         return params
 
@@ -173,26 +191,89 @@ class ServiceNowTicket(ticket.Ticket):
                                                       self.ticket_url))
 
 
-    def add_comment(self, comment):
-        """
-        """
+    def change_status(self, status):
         if not self.sys_id:
-            logging.error("Attribute sys_id needs before calling add_comment.")
+            logging.error("No ticket ID associated with ticket object. Set "
+                          "ticket ID with set_ticket_id(ticket_id)")
             return
 
+        try:
+            logging.info('Changing ticket status')
+            fields = {'state' : status}
+            self.edit(**fields)
+        except:
+            logging.error('Failed to change ticket status')
+
+
+
+    def edit(self, **kwargs):
+        if not self.sys_id:
+            logging.error("No ticket ID associated with ticket object. Set "
+                          "ticket ID with set_ticket_id(ticket_id)")
+            return
+        params = ''
+        for key, value in kwargs.items():
+            params += ', "{}" : "{}"'.format(key, value)
+        params = '{' + params[1:] + '}'
+
         url = self.rest_url + "/" + self.sys_id
-        data = '{"comments" : "' + comment + '" }'
-        result = api_put(url, data)
+        result = self.api_put(url, params)
         if result['number']:
-            logging.info("Added comment to issue {0} - {1}"
+            logging.info("Issue edited {0} - {1}"
                          .format(self.ticket_id, self.ticket_url))
         else:
-            logging.error("Error adding comment to issue")
+            logging.error("Error while editing issue")
 
 
-    # TODO
-    # def change_status(self, status):
-    # def edit(self, **kwargs):
+    def add_comment(self, comment):
+        """
+        Adds comment
+        :param comment: new comment
+        """
+        try:
+            logging.info('Adding comment')
+            fields = {'comments': comment}
+            self.edit(**fields)
+        except:
+            logging.error('Failed to add the comment')
+
+
+def test():
+    table = "/x_redha_pnt_devops_table"
+    server = "https://redhatqa.service-now.com"
+    user = "pnt_test_api"
+    f = open('/home/pzubaty/Documents/Snow_api.txt')
+    pwd = f.readline()[:-1]
+    auth = (user,pwd)
+
+    ticket = ServiceNowTicket(server, table, auth)
+    description = ("This is just a simple test for ticketutil library. Calling "
+                   "ServiceNowTicket class you are able to create tickets in "
+                   "the ServiceNow automatically. You need however to provide "
+                   "username and password (at the moment only basic auth is "
+                   "supported. Module created by pzubaty@redhat.com")
+
+    ticket.create(short_description="TEST adding SNow API into ticketutil",
+                  description=description,
+                  u_category="Communication",
+                  u_item="ServiceNow")
+    ticket.close_requests_session()
+
+
+def test_comment(ticket_id):
+    table = "/x_redha_pnt_devops_table"
+    server = "https://redhatqa.service-now.com"
+    user = "pnt_test_api"
+    f = open('/home/pzubaty/Documents/Snow_api.txt')
+    pwd = f.readline()[:-1]
+    auth = (user,pwd)
+
+    ticket = ServiceNowTicket(server, table, auth, ticket_id)
+    ticket.add_comment("Lorem ipsum dolor TEST")
+    fields = {'assigned_to':'pzubaty', 'priority':'3'}
+    ticket.edit(**fields)
+    ticket.change_status('Pending')
+    ticket.close_requests_session()
 
 
 def main():
