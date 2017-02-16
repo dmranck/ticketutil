@@ -60,85 +60,29 @@ class ServiceNowTicket(ticket.Ticket):
         # parent creates request session, ticket_id beforehand causes failure
         super(ServiceNowTicket, self).__init__(project, ticket_id=None)
         if ticket_id:
+            self.sys_id = self._get_sys_id()
             super(ServiceNowTicket, self).set_ticket_id(ticket_id)
 
-        # OK for GET, but will it blend? Accept part might be needed later
-        self.s.headers.update({'Content-Type': 'application/json'})
-
-    def process_response(self, response):
+    def _get_sys_id(self):
         """
-        Helper function to process Requests response or raise exception
+        Get sys_id from ticket_id
 
-        :param response: response of the Requests query
+        :return: sys_id - hashcode identifier in the ticket URL
         """
         try:
-            if (response.status_code != 201
-                and response.status_code != 200
-                ):
-                raise
-            result = response.json()['result']
-            return result
+            self.s.headers.update({'Content-Type': 'application/json'})
+            url = self.rest_url + '?sysparm_query=GOTOnumber%3D'
+            url += self.ticket_id
+            r = self.s.get(url)
+            r.raise_for_status()
+
+            logging.debug("Get sys_id: Status Code: {0}".format(r.status_code))
+            ticket_content = r.json()
+            return ticket_content['result'][0]['sys_id']
         except:
-            logging.error('Headers: {0}'.format(response.headers))
-            logging.error('Error Response: {0}'.format(response.json()))
-
-    def api_get(self, url):
-        """
-        API GET wrapper
-
-        :param url: url containing REST API query
-        """
-        self.s.headers.update({'Content-Type': 'application/json'})
-        response = self.s.get(url)
-        logging.debug('GET request Status Code: {0}'
-                      .format(response.status_code))
-        return self.process_response(response)
-
-    def api_post(self, url, data):
-        """
-        API POST wrapper
-
-        :param url: url containing REST API query
-        :param text: text to be inserted into table record
-        """
-        self.s.headers.update({'Content-Type': 'application/json',
-                               'Accept': 'application/json'})
-        response = self.s.post(url, data=data)
-        logging.debug('POST request Status Code: {0}'
-                      .format(response.status_code))
-        return self.process_response(response)
-
-    def api_put(self, url, data):
-        """
-        API PUT wrapper
-        Updates table content.
-
-        :param url: url containing REST API query
-        :param text: text to be inserted into table record
-        """
-        self.s.headers.update({'Content-Type': 'application/json',
-                               'Accept': 'application/json'})
-        response = self.s.put(url, data=data)
-        logging.debug('PUT request Status Code: {0}'
-                      .format(response.status_code))
-        return self.process_response(response)
-
-    def get_sys_id(self):
-        """
-        Get sys_id query wrapper
-        TODO: what about security, encodeURIComponent in python?
-
-        :return: sys_id
-        """
-        url = self.rest_url + '?sysparm_query=GOTOnumber%3D'
-        url += self.ticket_id
-        result = self.api_get(url)
-        try:
-            return result[0]['sys_id']
-        except:
-            self.ticket_id = None
-            self.sys_id = None
-            logging.error("Failed to get sys_id")
+            requests.RequestException as e:
+            logging.error("Error while getting sys_id")
+            logging.error(e.args[0])
 
     def _generate_ticket_url(self):
         """
@@ -148,19 +92,13 @@ class ServiceNowTicket(ticket.Ticket):
         """
         ticket_url = None
 
-        # If we are receiving a ticket_id, set ticket_url.
-        if self.ticket_id:
-            self.sys_id = self.get_sys_id() if not self.sys_id else self.sys_id
+        # If we are receiving a ticket_id, we have sys_id
+        if self.sys_id:
             ticket_url = '{0}/{1}.do?sys_id={2}'.format(self.url, self.table,
                                                         self.sys_id)
         return ticket_url
 
-    def create(self,
-               short_description,
-               description,
-               u_category,
-               u_item,
-               **kwargs):
+    def create(self, short_description, description, category, item, **kwargs):
         """
         Creates new issue, new record in the ServiceNow table
 
@@ -180,53 +118,23 @@ class ServiceNowTicket(ticket.Ticket):
         'priority': '2'
         """
         fields = {'description': description,
-                  'u_category': u_category,
-                  'u_item': u_item}
+                  'short_description': short_description,
+                  'u_category': category,
+                  'u_item': item}
         kwargs.update(fields)
-        self.create_simple(short_description, **kwargs)
-
-    def create_simple(self, short_description, **kwargs):
-        """
-        Creates new issue, new record in the ServiceNow table
-
-        The required parameter is short description of the issue.
-        Keyword arguments are used for other issue fields.
-        note: pyflakes hate polymorphism
-
-        :param short_description: short description of the issue
-
-        :param kwargs: optional fields
-
-        Fields example:
-        'contact_type' : 'Email',
-        'u_opened_for' : 'PNT',
-        'assigned_to' : 'pzubaty',
-        'impact' : '2',
-        'urgency' : '2',
-        'priority' : '2'
-        """
-        if short_description is None:
-            logging.error('short_description '
-                          'is a necessary parameter for ticket creation.')
-            return
-
-        params = self._create_ticket_parameters(short_description, kwargs)
+        params = self._create_ticket_parameters(kwargs)
         self._create_ticket_request(params)
 
-    def _create_ticket_parameters(self,
-                                  short_description,
-                                  fields):
+    def _create_ticket_parameters(self, fields):
         """
         Creates the payload for the POST request when creating new ticket.
 
-        :param short_description: short description of the issue
-
         :param fields: optional fields
         """
-        params = '"short_description" : "{}"'.format(short_description)
-        for key, value in fields.items():
+        params = ''
+        for key, value in kwargs.items():
             params += ', "{}" : "{}"'.format(key, value)
-        params = '{' + params + '}'
+        params = '{' + params[1:] + '}'
         return params
 
     def _create_ticket_request(self, params):
@@ -236,12 +144,24 @@ class ServiceNowTicket(ticket.Ticket):
 
         :param params: The payload to send in the POST request.
         """
-        result = self.api_post(self.rest_url, params)
-        self.ticket_id = result['number']
-        self.sys_id = result['sys_id']
-        self.ticket_url = self._generate_ticket_url()
-        logging.info('Created issue {0} - {1}'.format(self.ticket_id,
-                                                      self.ticket_url))
+        try:
+            self.s.headers.update({'Content-Type': 'application/json',
+                                'Accept': 'application/json'})
+            r = self.s.post(self.rest_url, data=params)
+            r.raise_for_status()
+
+            logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
+            ticket_content = r.json()
+            ticket_content = ticket_content['result']
+
+            self.ticket_id = ticket_content['number']
+            self.sys_id = ticket_content['sys_id']
+            self.ticket_url = self._generate_ticket_url()
+            logging.info('Create ticket {0} - {1}'.format(self.ticket_id,
+                                                          self.ticket_url))
+        except requests.RequestException as e:
+            logging.error("Error creating ticket")
+            logging.error(e.args[0])
 
     def change_status(self, status):
         """
@@ -278,22 +198,25 @@ class ServiceNowTicket(ticket.Ticket):
         'urgency' : '2',
         'priority' : '2'
         """
-        if not self.sys_id:
-            logging.error('No ticket ID associated with ticket object. Set '
-                          'ticket ID with set_ticket_id(ticket_id)')
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set "
+                          "ticket ID with set_ticket_id(ticket_id)")
             return
-        params = ''
-        for key, value in kwargs.items():
-            params += ', "{}" : "{}"'.format(key, value)
-        params = '{' + params[1:] + '}'
+        params = self._create_ticket_parameters(kwargs)
 
-        url = self.rest_url + '/' + self.sys_id
-        result = self.api_put(url, params)
-        if result['number']:
-            logging.info('Issue edited {0} - {1}'
-                         .format(self.ticket_id, self.ticket_url))
-        else:
-            logging.error('Error while editing issue')
+        try:
+            self.s.headers.update({'Content-Type': 'application/json',
+                                   'Accept': 'application/json'})
+            url = self.rest_url + '/' + self.sys_id
+            r = self.s.put(url, data=params)
+            r.raise_for_status()
+            logging.debug("Editing Ticket: Status Code: {0}"
+                          .format(r.status_code))
+            logging.info("Edited ticket {0} - {1}".format(self.ticket_id,
+                                                          self.ticket_url))
+        except requests.RequestException as e:
+            logging.error("Error editing ticket")
+            logging.error(e.args[0])
 
     def add_comment(self, comment):
         """
