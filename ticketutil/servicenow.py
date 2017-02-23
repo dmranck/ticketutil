@@ -44,7 +44,7 @@ class ServiceNowTicket(ticket.Ticket):
         :param url: ServiceNow service url
         :param project: ServiceNow table or project
         :param auth: (<username>, <password>) for HTTP Basic Authentication
-        :param ticked_id: ticked number, eg. PNT1234567
+        :param ticked_id: ticked number, eg. 'PNT1234567'
         """
         self.ticketing_tool = 'ServiceNow'
         self.sys_id = None
@@ -60,10 +60,12 @@ class ServiceNowTicket(ticket.Ticket):
         # parent creates request session, ticket_id beforehand causes failure
         super(ServiceNowTicket, self).__init__(project, ticket_id=None)
         if ticket_id:
-            self.sys_id = self._get_sys_id()
+            self.ticket_id = ticket_id
+            self._get_ticket_content()
+            self.sys_id = self.ticket_content['sys_id']
             super(ServiceNowTicket, self).set_ticket_id(ticket_id)
 
-    def _get_sys_id(self):
+    def _get_ticket_content(self):
         """
         Get sys_id from ticket_id
 
@@ -76,12 +78,12 @@ class ServiceNowTicket(ticket.Ticket):
             r = self.s.get(url)
             r.raise_for_status()
 
-            logging.debug("Get sys_id: Status Code: {0}".format(r.status_code))
+            logging.debug("Get ticket content: Status Code: {0}".format(r.status_code))
             ticket_content = r.json()
-            return ticket_content['result'][0]['sys_id']
-        except:
-            requests.RequestException as e:
-            logging.error("Error while getting sys_id")
+            print(ticket_content)
+            self.ticket_content = ticket_content['result'][0]
+        except requests.RequestException as e:
+            logging.error("Error while getting ticket content")
             logging.error(e.args[0])
 
     def _generate_ticket_url(self):
@@ -98,11 +100,11 @@ class ServiceNowTicket(ticket.Ticket):
                                                         self.sys_id)
         return ticket_url
 
-    def create(self, short_description, description, category, item, **kwargs):
+    def create(self, subject, description, category, item, **kwargs):
         """
         Creates new issue, new record in the ServiceNow table
 
-        :param short_description: short description of the issue
+        :param subject: short description of the issue
         :param description: full description of the issue
         :param u_category: ticket category (Category in WebUI)
         :param u_item: ticket category item (Item in WebUI)
@@ -110,15 +112,15 @@ class ServiceNowTicket(ticket.Ticket):
         :param kwargs: optional fields
 
         Fields example:
-        'contact_type': 'Email',
-        'u_opened_for': 'PNT',
-        'assigned_to': 'pzubaty',
-        'impact': '2',
-        'urgency': '2',
-        'priority': '2'
+        contact_type = 'Email',
+        opened_for = 'PNT',
+        assigned_to = 'pzubaty',
+        impact = '2',
+        urgency = '2',
+        priority = '2'
         """
         fields = {'description': description,
-                  'short_description': short_description,
+                  'short_description': subject,
                   'u_category': category,
                   'u_item': item}
         kwargs.update(fields)
@@ -131,8 +133,10 @@ class ServiceNowTicket(ticket.Ticket):
 
         :param fields: optional fields
         """
+        fields = self._prepare_ticket_fields(fields)
+
         params = ''
-        for key, value in kwargs.items():
+        for key, value in fields.items():
             params += ', "{}" : "{}"'.format(key, value)
         params = '{' + params[1:] + '}'
         return params
@@ -152,10 +156,10 @@ class ServiceNowTicket(ticket.Ticket):
 
             logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
             ticket_content = r.json()
-            ticket_content = ticket_content['result']
+            self.ticket_content = ticket_content['result']
 
-            self.ticket_id = ticket_content['number']
-            self.sys_id = ticket_content['sys_id']
+            self.ticket_id = self.ticket_content['number']
+            self.sys_id = self.ticket_content['sys_id']
             self.ticket_url = self._generate_ticket_url()
             logging.info('Create ticket {0} - {1}'.format(self.ticket_id,
                                                           self.ticket_url))
@@ -191,12 +195,12 @@ class ServiceNowTicket(ticket.Ticket):
         :param kwargs: optional fields
 
         Fields example:
-        'contact_type' : 'Email',
-        'u_opened_for' : 'PNT',
-        'assigned_to' : 'pzubaty',
-        'impact' : '2',
-        'urgency' : '2',
-        'priority' : '2'
+        contact_type = 'Email',
+        opened_for = 'PNT',
+        assigned_to = 'pzubaty',
+        impact = '2',
+        urgency = '2',
+        priority = '2'
         """
         if not self.ticket_id:
             logging.error("No ticket ID associated with ticket object. Set "
@@ -226,10 +230,92 @@ class ServiceNowTicket(ticket.Ticket):
         """
         try:
             logging.info('Adding comment')
-            fields = {'comments': comment}
-            self.edit(**fields)
+            self.edit(comments = comment)
         except:
             logging.error('Failed to add the comment')
+
+    def add_cc(self, user):
+        """
+        Adds user(s) to cc list.
+        :param user: A string representing one user's email address, or a list
+        of strings for multiple users.
+        :return:
+        """
+        try:
+            watch_list = self.ticket_content['watch_list'].split(',')
+            watch_list = [item.strip() for item in watch_list]
+            if isinstance(user, str):
+                user = [user]
+            for item in user:
+                if item not in watch_list:
+                    watch_list.append(item)
+
+            logging.info('Adding user(s) to CC list')
+            watch_list = ', '.join(watch_list)
+            self.edit(watch_list=watch_list)
+        except:
+            logging.error('Failed to add user(s) to CC list')
+
+    def rewrite_cc(self, user):
+        """
+        Rewrites user(s) in cc list.
+        :param user: A string representing one user's email address, or a list
+        of strings for multiple users.
+        :return:
+        """
+        try:
+            if isinstance(user, str):
+                user = [user]
+            logging.info('Rewriting CC list')
+            watch_list = ', '.join(user)
+            self.edit(watch_list=watch_list)
+        except:
+            logging.error('Failed to rewrite CC list')
+
+    def remove_cc(self, user):
+        """
+        Removes user(s) from cc list.
+        :param user: A string representing one user's email address, or a list of strings for multiple users.
+        :return:
+        """
+        try:
+            watch_list = self.ticket_content['watch_list'].split(',')
+            watch_list = [item.strip() for item in watch_list]
+            if isinstance(user, str):
+                user = [user]
+            for item in user:
+                print(item)
+                if item in watch_list:
+                    watch_list.remove(item)
+
+            logging.info('Removing user(s) from CC list')
+            watch_list = ', '.join(watch_list)
+            self.edit(watch_list=watch_list)
+        except:
+            logging.error('Failed to remove user(s) from CC list')
+
+    def _prepare_ticket_fields(self, fields):
+        """
+        Makes sure each key value pair in the fields dictionary is in the correct form.
+        :param fields: Ticket fields.
+        :return: fields: Ticket fields in the correct form for the ticketing tool.
+        """
+        if 'urgency' not in fields:
+            fields['urgency'] = '3'
+        if 'impact' not in fields:
+            fields['impact'] = '3'
+        for key, value in fields.items():
+            if key in ['opened_for', 'operating_system', 'category', 'item',
+                        'severity', 'hostname_affected', 'opened_by_dept']:
+                fields['u_{}'.format(key)] = value
+                fields.pop(key)
+            if key == 'topic':
+                fields['u_topic_reportable'] = value
+                fields.pop(key)
+            if key == 'email_from':
+                fields['u_email_from_address'] = value
+                fields.pop(key)
+        return fields
 
 
 def main():
