@@ -45,6 +45,14 @@ class Ticket(object):
 
         logging.info("Current ticket: {0} - {1}".format(self.ticket_id, self.ticket_url))
 
+    def get_ticket_id(self):
+        """
+        Returns the ticket_id for the current ticket object.
+        :return:
+        """
+        logging.info("Returned ticket id: {0}".format(self.ticket_id))
+        return self.ticket_id
+
     def _create_requests_session(self):
         """
         Creates a Requests Session and authenticates to base API URL with kerberos-requests.
