@@ -350,7 +350,7 @@ class JiraTicket(ticket.Ticket):
 
         status_json = r.json()
         for status in status_json['transitions']:
-            if status['name'] == status_name:
+            if status['to']['name'] == status_name:
                 return status['id']
 
 
