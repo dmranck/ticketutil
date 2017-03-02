@@ -1,16 +1,3 @@
-"""
-ServiceNow ticket
-
-Provided, you have user and pwd, you can create new ticket like this,
-but you should need other attributes like Category, Item and other non-optional
-attributes from the ServiceNow web GUI.
-
-TODO:
-api PATCH method would enable editing comment
-api DELETE method - maybe, not that necessary
-"""
-
-
 import logging
 import os
 
@@ -40,7 +27,6 @@ class ServiceNowTicket(ticket.Ticket):
         :param ticked_id: ticked number, eg. 'PNT1234567'
         """
         self.ticketing_tool = 'ServiceNow'
-        self.sys_id = None
 
         # The auth param should be of the form (<username>, <password>) for
         # HTTP Basic authentication.
@@ -49,14 +35,15 @@ class ServiceNowTicket(ticket.Ticket):
         self.table = project
         self.rest_url = '{0}/api/now/v1/table/{1}'.format(self.url, self.table)
         self.auth_url = self.rest_url
+        self.headers_post_ = {'Content-Type': 'application/json',
+                              'Accept': 'application/json'}
 
-        # parent creates request session, ticket_id beforehand causes failure
-        super(ServiceNowTicket, self).__init__(project, ticket_id=None)
+        self.s = self._create_requests_session()
         if ticket_id:
             self.ticket_id = ticket_id
-            self._get_ticket_content()
+            self.ticket_url = self._generate_ticket_url()
+            self.ticket_content = self._get_ticket_content()
             self.sys_id = self.ticket_content['sys_id']
-            super(ServiceNowTicket, self).set_ticket_id(ticket_id)
 
     def _get_ticket_content(self):
         """
@@ -73,8 +60,7 @@ class ServiceNowTicket(ticket.Ticket):
 
             logging.debug("Get ticket content: Status Code: {0}".format(r.status_code))
             ticket_content = r.json()
-            print(ticket_content)
-            self.ticket_content = ticket_content['result'][0]
+            return ticket_content['result'][0]
         except requests.RequestException as e:
             logging.error("Error while getting ticket content")
             logging.error(e.args[0])
@@ -93,14 +79,14 @@ class ServiceNowTicket(ticket.Ticket):
                                                         self.sys_id)
         return ticket_url
 
-    def create(self, subject, description, category, item, **kwargs):
+    def create(self, short_description, description, category, item, **kwargs):
         """
         Creates new issue, new record in the ServiceNow table
 
-        :param subject: short description of the issue
+        :param short_description: short description of the issue
         :param description: full description of the issue
-        :param u_category: ticket category (Category in WebUI)
-        :param u_item: ticket category item (Item in WebUI)
+        :param category: ticket category (Category in WebUI)
+        :param item: ticket category item (Item in WebUI)
 
         :param kwargs: optional fields
 
@@ -112,8 +98,23 @@ class ServiceNowTicket(ticket.Ticket):
         urgency = '2',
         priority = '2'
         """
+        msg = 'is a mandatory parameter for ticket creation.'
+        if description is None:
+            logging.error('description {}'.format(msg))
+            return
+        if short_description is None:
+            logging.error('short_description {}'.format(msg))
+            return
+        if category is None:
+            logging.error('category {}'.format(msg))
+            return
+        if item is None:
+            logging.error('item {}'.format(msg))
+            return
+
+
         fields = {'description': description,
-                  'short_description': subject,
+                  'short_description': short_description,
                   'u_category': category,
                   'u_item': item}
         kwargs.update(fields)
@@ -142,8 +143,7 @@ class ServiceNowTicket(ticket.Ticket):
         :param params: The payload to send in the POST request.
         """
         try:
-            self.s.headers.update({'Content-Type': 'application/json',
-                                'Accept': 'application/json'})
+            self.s.headers.update(self.headers_post_)
             r = self.s.post(self.rest_url, data=params)
             r.raise_for_status()
 
@@ -154,6 +154,7 @@ class ServiceNowTicket(ticket.Ticket):
             self.ticket_id = self.ticket_content['number']
             self.sys_id = self.ticket_content['sys_id']
             self.ticket_url = self._generate_ticket_url()
+            self.ticket_rest_url = self.rest_url + '/' + self.sys_id
             logging.info('Create ticket {0} - {1}'.format(self.ticket_id,
                                                           self.ticket_url))
         except requests.RequestException as e:
@@ -174,8 +175,13 @@ class ServiceNowTicket(ticket.Ticket):
         try:
             logging.info('Changing ticket status')
             fields = {'state': status}
-            self.edit(**fields)
-        except:
+            params = self._create_ticket_parameters(fields)
+            self.s.headers.update(self.headers_post_)
+            r = self.s.put(self.ticket_rest_url, data=params)
+            r.raise_for_status()
+            logging.info('Ticket {0} status changed successfully'
+                         .format(self.ticket_id))
+        except requests.RequestException as e:
             logging.error('Failed to change ticket status')
 
     def edit(self, **kwargs):
@@ -202,10 +208,8 @@ class ServiceNowTicket(ticket.Ticket):
         params = self._create_ticket_parameters(kwargs)
 
         try:
-            self.s.headers.update({'Content-Type': 'application/json',
-                                   'Accept': 'application/json'})
-            url = self.rest_url + '/' + self.sys_id
-            r = self.s.put(url, data=params)
+            self.s.headers.update(self.headers_post_)
+            r = self.s.put(self.ticket_rest_url, data=params)
             r.raise_for_status()
             logging.debug("Editing Ticket: Status Code: {0}"
                           .format(r.status_code))
@@ -222,9 +226,13 @@ class ServiceNowTicket(ticket.Ticket):
         :param comment: new ticket comment
         """
         try:
-            logging.info('Adding comment')
-            self.edit(comments = comment)
-        except:
+            logging.info('Adding comment to {0}'.format(self.ticket_id))
+            params = self._create_ticket_parameters(comments = comment)
+            self.s.headers.update(self.headers_post_)
+            r = self.s.put(self.ticket_rest_url, data=params)
+            r.raise_for_status()
+            logging.info('Comment created successfully')
+        except requests.RequestException as e:
             logging.error('Failed to add the comment')
 
     def add_cc(self, user):
@@ -245,8 +253,13 @@ class ServiceNowTicket(ticket.Ticket):
 
             logging.info('Adding user(s) to CC list')
             watch_list = ', '.join(watch_list)
-            self.edit(watch_list=watch_list)
-        except:
+            params = self._create_ticket_parameters(watch_list=watch_list)
+            self.s.headers.update(self.headers_post_)
+            r = self.s.put(self.ticket_rest_url, data=params)
+            r.raise_for_status()
+            logging.info('Users added to CC list of {0}'
+                         .format(self.ticket_id))
+        except requests.RequestException as e:
             logging.error('Failed to add user(s) to CC list')
 
     def rewrite_cc(self, user):
@@ -261,14 +274,20 @@ class ServiceNowTicket(ticket.Ticket):
                 user = [user]
             logging.info('Rewriting CC list')
             watch_list = ', '.join(user)
-            self.edit(watch_list=watch_list)
-        except:
+            params = self._create_ticket_parameters(watch_list=watch_list)
+            self.s.headers.update(self.headers_post_)
+            r = self.s.put(self.ticket_rest_url, data=params)
+            r.raise_for_status()
+            logging.info('CC list rewritten for {0}'
+                         .format(self.ticket_id))
+        except requests.RequestException as e:
             logging.error('Failed to rewrite CC list')
 
     def remove_cc(self, user):
         """
         Removes user(s) from cc list.
-        :param user: A string representing one user's email address, or a list of strings for multiple users.
+        :param user: A string representing one user's email address, or a list
+        of strings for multiple users.
         :return:
         """
         try:
@@ -277,26 +296,31 @@ class ServiceNowTicket(ticket.Ticket):
             if isinstance(user, str):
                 user = [user]
             for item in user:
-                print(item)
                 if item in watch_list:
                     watch_list.remove(item)
 
             logging.info('Removing user(s) from CC list')
             watch_list = ', '.join(watch_list)
-            self.edit(watch_list=watch_list)
-        except:
+            params = self._create_ticket_parameters(watch_list=watch_list)
+            self.s.headers.update(self.headers_post_)
+            r = self.s.put(self.ticket_rest_url, data=params)
+            r.raise_for_status()
+            logging.info('User(s) removed from CC list of {0}'
+                         .format(self.ticket_id))
+        except requests.RequestException as e:
             logging.error('Failed to remove user(s) from CC list')
+
+    def get_ticket_content(self):
+        # TODO: return ticket content (there is create, edit, but no get ticket content)
+        pass
 
     def _prepare_ticket_fields(self, fields):
         """
-        Makes sure each key value pair in the fields dictionary is in the correct form.
+        Makes sure each key value pair in the fields dictionary is in
+        the correct form.
         :param fields: Ticket fields.
-        :return: fields: Ticket fields in the correct form for the ticketing tool.
+        :return: fields: Ticket fields for the ticketing tool.
         """
-        if 'urgency' not in fields:
-            fields['urgency'] = '3'
-        if 'impact' not in fields:
-            fields['impact'] = '3'
         for key, value in fields.items():
             if key in ['opened_for', 'operating_system', 'category', 'item',
                         'severity', 'hostname_affected', 'opened_by_dept']:
