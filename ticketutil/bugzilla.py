@@ -1,8 +1,6 @@
 import logging
 import os
-
 import requests
-
 from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
@@ -17,6 +15,63 @@ if DEBUG == 'True':
 else:
     logging.basicConfig(level=logging.INFO)
 
+class AUTHBase():
+    def getCredentials(self):
+        raise NotImplemented()
+    
+    # We can add login + getAuthURL here, but it will require to set the server FQDN here as well
+    # which can be achieved by multiple ways. 1) Tight the credentials with URL (which is done on daily
+    # basis since mostly you have different credentials for different server or set of servers, 2)
+    # add method setServer which will be called i.e. from constructor of BZ ticket, since the URL is being provided.
+    # 3) add this URL to login method
+    
+
+class APIKeyAuth(AUTHBase):
+    apiKey = None
+    
+    def __init__(self, apiKey):
+
+        self.apiKey = apiKey
+
+    def getKey(self):
+        return self.apiKey
+    
+    def getCredentials(self):
+        return {"api_key": self.getKey()}
+    
+class UPAuth(AUTHBase):
+    username = None
+    password = None
+    
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        
+    def getUsername(self):
+        return self.username
+    
+    def getPassword(self):
+        return self.password
+    
+    def getCredentials(self):
+        return {"login": self.getUsername(), "password": self.getPassword()}
+
+class TokenAuth(AUTHBase):
+    token = None
+    
+    def __init__(self, token):
+        self.token = token
+    
+    def getToken(self):
+        return self.token
+    
+    def getCredentials(self):
+        return {"token": self.getToken()}
+        
+class KerberosAuth(AUTHBase):
+    def getCredentials(self):
+        return "kerberos"
+    
 
 class BugzillaTicket(ticket.Ticket):
     """
@@ -27,15 +82,17 @@ class BugzillaTicket(ticket.Ticket):
 
         # Kerberos is default auth if the auth param is not specified.
         # A tuple of the form (<username>, <password>) can also be passed in.
-        if isinstance(auth, tuple):
-            self.auth = auth
-            username, password = auth
-            self.credentials = {"login": username, "password": password}
-        else:
-            self.auth = 'kerberos'
+       
+        if not auth:
+            auth = KerberosAuth()
+            
+        self.auth = auth
+        self.credentials = auth.getCredentials()
+        
         self.token = None
 
         # BZ URLs
+        ###TODO: Should be moved to *Auth classes
         self.url = url
         self.rest_url = '{0}/rest/bug'.format(self.url)
         self.auth_url = '{0}/rest/login'.format(self.url)
@@ -63,18 +120,27 @@ class BugzillaTicket(ticket.Ticket):
         We're using a Session to persist cookies across all requests made from the Session instance.
         :return s: Requests Session.
         """
-        if self.auth == 'kerberos':
+        #if self.auth == 'kerberos':
+        if isinstance(self.auth, KerberosAuth):
             return super(BugzillaTicket, self)._create_requests_session()
 
         # If basic authentication is passed in, generate a token to be used in all requests.
         try:
             s = requests.Session()
-            r = s.get(self.auth_url, params=self.credentials, verify=False)
-            r.raise_for_status()
-            resp = r.json()
-            self.token = resp['token']
-            logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
-            logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
+            
+            if isinstance(self.auth, UPAuth):
+                # TODO: This should be encapsulated in the UPAuth class, which should authenticate and then always return token...
+                # Also the auth_url should not be exposed here. I think each Auth class should have method login whoich will
+                # verify if the key/token/credentials is/are valid and throw exception if it is not.
+                r = s.get(self.auth_url, params=self.credentials, verify=False)
+                r.raise_for_status()
+                resp = r.json()
+                self.auth = TokenAuth(resp["token"])
+                
+                logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
+                logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
+                
+            
             return s
 
         # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
@@ -149,10 +215,12 @@ class BugzillaTicket(ticket.Ticket):
         """
         # Attempt to create ticket.
         try:
-            if self.token:
-                params['token'] = self.token
+            #if self.token:
+            #    params['token'] = self.token
+            params.update(self.auth.getCredentials())
+            
 
-            r = self.s.post(self.rest_url, json=params)
+            r = self.s.post(self.rest_url, json=params, verify=False)
             r.raise_for_status()
             logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
 
@@ -197,12 +265,14 @@ class BugzillaTicket(ticket.Ticket):
         kwargs = _prepare_ticket_fields(kwargs)
 
         params = kwargs
-        if self.token:
-            params['token'] = self.token
+        #if self.token:
+        #    params['token'] = self.token
+            
+        params.update(self.auth.getCredentials())
 
         # Attempt to edit ticket.
         try:
-            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params, verify=False)
             r.raise_for_status()
             if 'bugs' in r.json():
                 if r.json()['bugs'][0]['changes'] == {}:
@@ -231,8 +301,11 @@ class BugzillaTicket(ticket.Ticket):
 
         # Attempt to add comment to ticket.
         try:
-            if self.token:
-                params['token'] = self.token
+            #if self.token:
+            #    params['token'] = self.token
+            
+            params.update(self.auth.getCredentials())
+            
             r = self.s.post("{0}/{1}/comment".format(self.rest_url, self.ticket_id), json=params)
             r.raise_for_status()
             logging.debug("Add comment: Status Code: {0}".format(r.status_code))
@@ -258,8 +331,10 @@ class BugzillaTicket(ticket.Ticket):
 
         # Attempt to change status of ticket.
         try:
-            if self.token:
-                params['token'] = self.token
+            #if self.token:
+            #    params['token'] = self.token
+                
+            params.update(self.auth.getCredentials())
 
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
             r.raise_for_status()
@@ -287,8 +362,9 @@ class BugzillaTicket(ticket.Ticket):
         else:
             params = {'cc': {'add': [user]}}
 
-        if self.token:
-            params['token'] = self.token
+        #if self.token:
+        #    params['token'] = self.token
+        params.update(self.auth.getCredentials())
 
         # Attempt to edit ticket.
         try:
@@ -322,8 +398,9 @@ class BugzillaTicket(ticket.Ticket):
         else:
             params = {'cc': {'remove': [user]}}
 
-        if self.token:
-            params['token'] = self.token
+        #if self.token:
+        #    params['token'] = self.token
+        params.update(self.auth.getCredentials())
 
         # Attempt to edit ticket.
         try:
@@ -361,7 +438,6 @@ def main():
     main() function, not directly callable.
     :return:
     """
-    print("Not directly executable")
 
 
 if __name__ == "__main__":
