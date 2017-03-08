@@ -19,11 +19,6 @@ class AUTHBase():
     def getCredentials(self):
         raise NotImplemented()
     
-    # We can add login + getAuthURL here, but it will require to set the server FQDN here as well
-    # which can be achieved by multiple ways. 1) Tight the credentials with URL (which is done on daily
-    # basis since mostly you have different credentials for different server or set of servers, 2)
-    # add method setServer which will be called i.e. from constructor of BZ ticket, since the URL is being provided.
-    # 3) add this URL to login method
     
 
 class APIKeyAuth(AUTHBase):
@@ -129,9 +124,6 @@ class BugzillaTicket(ticket.Ticket):
             s = requests.Session()
             
             if isinstance(self.auth, UPAuth):
-                # TODO: This should be encapsulated in the UPAuth class, which should authenticate and then always return token...
-                # Also the auth_url should not be exposed here. I think each Auth class should have method login whoich will
-                # verify if the key/token/credentials is/are valid and throw exception if it is not.
                 r = s.get(self.auth_url, params=self.credentials, verify=False)
                 r.raise_for_status()
                 resp = r.json()
