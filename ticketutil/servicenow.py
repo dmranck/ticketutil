@@ -1,5 +1,6 @@
-import logging
 import os
+import logging
+import requests
 
 from . import ticket
 
@@ -41,24 +42,30 @@ class ServiceNowTicket(ticket.Ticket):
         self.s = self._create_requests_session()
         if ticket_id:
             self.ticket_id = ticket_id
-            self.ticket_url = self._generate_ticket_url()
-            self.ticket_content = self._get_ticket_content()
+            self.ticket_content = self.get_ticket_content()
             self.sys_id = self.ticket_content['sys_id']
+            self.ticket_rest_url = self.rest_url + '/' + self.sys_id
+            self.ticket_url = self._generate_ticket_url()
 
-    def _get_ticket_content(self):
+    def get_ticket_content(self, ticket_id=None):
         """
-        Get sys_id from ticket_id
+        Get ticket_content using ticket_id
 
-        :return: sys_id - hashcode identifier in the ticket URL
+        :param ticked_id: ticked number, if not set self.ticket_id is used
+        :return: ticket content
         """
         try:
+            if ticket_id is None:
+                ticket_id = self.ticket_id
+
             self.s.headers.update({'Content-Type': 'application/json'})
             url = self.rest_url + '?sysparm_query=GOTOnumber%3D'
-            url += self.ticket_id
+            url += ticket_id
             r = self.s.get(url)
             r.raise_for_status()
 
-            logging.debug("Get ticket content: Status Code: {0}".format(r.status_code))
+            logging.debug("Get ticket content: Status Code: {0}"
+                          .format(r.status_code))
             ticket_content = r.json()
             return ticket_content['result'][0]
         except requests.RequestException as e:
@@ -147,7 +154,8 @@ class ServiceNowTicket(ticket.Ticket):
             r = self.s.post(self.rest_url, data=params)
             r.raise_for_status()
 
-            logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
+            logging.debug("Create ticket: Status Code: {0}"
+                          .format(r.status_code))
             ticket_content = r.json()
             self.ticket_content = ticket_content['result']
 
@@ -174,11 +182,11 @@ class ServiceNowTicket(ticket.Ticket):
 
         try:
             logging.info('Changing ticket status')
-            fields = {'state': status}
-            params = self._create_ticket_parameters(fields)
+            params = self._create_ticket_parameters({'state': status})
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             r.raise_for_status()
+            self.ticket_content = r.json()['result']
             logging.info('Ticket {0} status changed successfully'
                          .format(self.ticket_id))
         except requests.RequestException as e:
@@ -211,6 +219,7 @@ class ServiceNowTicket(ticket.Ticket):
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             r.raise_for_status()
+            self.ticket_content = r.json()['result']
             logging.debug("Editing Ticket: Status Code: {0}"
                           .format(r.status_code))
             logging.info("Edited ticket {0} - {1}".format(self.ticket_id,
@@ -227,10 +236,11 @@ class ServiceNowTicket(ticket.Ticket):
         """
         try:
             logging.info('Adding comment to {0}'.format(self.ticket_id))
-            params = self._create_ticket_parameters(comments = comment)
+            params = self._create_ticket_parameters({'comments' : comment})
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             r.raise_for_status()
+            self.ticket_content = r.json()['result']
             logging.info('Comment created successfully')
         except requests.RequestException as e:
             logging.error('Failed to add the comment')
@@ -243,6 +253,7 @@ class ServiceNowTicket(ticket.Ticket):
         :return:
         """
         try:
+            logging.info('Adding user(s) to CC list')
             watch_list = self.ticket_content['watch_list'].split(',')
             watch_list = [item.strip() for item in watch_list]
             if isinstance(user, str):
@@ -251,12 +262,12 @@ class ServiceNowTicket(ticket.Ticket):
                 if item not in watch_list:
                     watch_list.append(item)
 
-            logging.info('Adding user(s) to CC list')
-            watch_list = ', '.join(watch_list)
-            params = self._create_ticket_parameters(watch_list=watch_list)
+            fields = {'watch_list' : ', '.join(watch_list)}
+            params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             r.raise_for_status()
+            self.ticket_content = r.json()['result']
             logging.info('Users added to CC list of {0}'
                          .format(self.ticket_id))
         except requests.RequestException as e:
@@ -270,14 +281,16 @@ class ServiceNowTicket(ticket.Ticket):
         :return:
         """
         try:
+            logging.info('Rewriting CC list')
             if isinstance(user, str):
                 user = [user]
-            logging.info('Rewriting CC list')
-            watch_list = ', '.join(user)
-            params = self._create_ticket_parameters(watch_list=watch_list)
+
+            fields = {'watch_list' : ', '.join(user)}
+            params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             r.raise_for_status()
+            self.ticket_content = r.json()['result']
             logging.info('CC list rewritten for {0}'
                          .format(self.ticket_id))
         except requests.RequestException as e:
@@ -291,6 +304,7 @@ class ServiceNowTicket(ticket.Ticket):
         :return:
         """
         try:
+            logging.info('Removing user(s) from CC list')
             watch_list = self.ticket_content['watch_list'].split(',')
             watch_list = [item.strip() for item in watch_list]
             if isinstance(user, str):
@@ -299,20 +313,16 @@ class ServiceNowTicket(ticket.Ticket):
                 if item in watch_list:
                     watch_list.remove(item)
 
-            logging.info('Removing user(s) from CC list')
-            watch_list = ', '.join(watch_list)
-            params = self._create_ticket_parameters(watch_list=watch_list)
+            fields = {'watch_list' : ', '.join(watch_list)}
+            params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             r.raise_for_status()
+            self.ticket_content = r.json()['result']
             logging.info('User(s) removed from CC list of {0}'
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to remove user(s) from CC list')
-
-    def get_ticket_content(self):
-        # TODO: return ticket content (there is create, edit, but no get ticket content)
-        pass
 
     def _prepare_ticket_fields(self, fields):
         """
