@@ -112,7 +112,6 @@ class BugzillaTicket(ticket.Ticket):
         # If basic authentication is passed in, generate a token to be used in all requests.
         try:
             s = requests.Session()
-            if isinstance(self.auth, UPAuth):
             s.params.update(self.auth.get_credentials())
             s.verify = False
             if isinstance(self.auth, HTTPBasicAuth):
