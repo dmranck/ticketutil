@@ -168,6 +168,7 @@ class BugzillaTicket(ticket.Ticket):
         priority='high'
         severity='medium'
         alias='SomeAlias'
+        groups='Group Name'
 
         :param summary: The ticket summary.
         :param description: The ticket description.
