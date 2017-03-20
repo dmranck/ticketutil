@@ -2,7 +2,7 @@
 
 This document contains information on the methods available when working
 with a BugzillaTicket object. A list of the Bugzilla fields that have 
-been tested when creating and editing tickets will be included. Because 
+been tested when creating and editing tickets is included. Because 
 each instance of Bugzilla can have custom fields and custom values, some 
 of the tested fields may not be applicable to certain instances of 
 Bugzilla. Additionally, your Bugzilla instance may contain ticket fields

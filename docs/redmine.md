@@ -2,7 +2,7 @@
 
 This document contains information on the methods available when working
 with a RedmineTicket object. A list of the Redmine fields that have 
-been tested when creating and editing tickets will be included. Because 
+been tested when creating and editing tickets is included. Because 
 each instance of Redmine can have custom fields and custom values, some 
 of the tested fields may not be applicable to certain instances of 
 Redmine. Additionally, your Redmine instance may contain ticket fields

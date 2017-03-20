@@ -2,7 +2,7 @@
 
 This document contains information on the methods available when working
 with a RTTicket object. A list of the RT fields that have 
-been tested when creating and editing tickets will be included. Because 
+been tested when creating and editing tickets is included. Because 
 each instance of RT can have custom fields and custom values, some 
 of the tested fields may not be applicable to certain instances of 
 RT. Additionally, your RT instance may contain ticket fields
