@@ -10,12 +10,18 @@ __author__ = 'dranck, rnester, kshirsal'
 # Disable warnings for requests because we aren't doing certificate verification
 requests.packages.urllib3.disable_warnings()
 
-DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
+LOG_LEVEL = os.environ.get('TICKETUTIL_LOG_LEVEL', 'INFO')
 
-if DEBUG == 'True':
+if LOG_LEVEL == 'DEBUG':
     logging.basicConfig(level=logging.DEBUG)
-else:
+elif LOG_LEVEL == 'INFO':
     logging.basicConfig(level=logging.INFO)
+elif LOG_LEVEL == 'WARNING':
+    logging.basicConfig(level=logging.WARNING)
+elif LOG_LEVEL == 'ERROR':
+    logging.basicConfig(level=logging.ERROR)
+elif LOG_LEVEL == 'CRITICAL':
+    logging.basicConfig(level=logging.CRITICAL)
 
 
 class Ticket(object):

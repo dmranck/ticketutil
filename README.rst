@@ -50,11 +50,6 @@ packages, type ``pip install -r requirements.txt``.
 Usage
 -----
 
-Note: To enable debug logging for ticketutil, set an environment 
-variable named TICKETUTIL_DEBUG to 'True'. If this environment variable
-is set to anything else or does not exist, debug logging will be 
-disabled.
-
 The general usage workflow for creating new tickets is:
 
 * Create a JiraTicket, RTTicket, RedmineTicket, or BugzillaTicket
@@ -89,6 +84,12 @@ method to begin working on another ticket.
 
 See the docstrings in the code or the tool-specific files in the docs
 and examples directories for more information.
+
+Note on logging: To enable debug logging for ticketutil, set an environment
+variable named TICKETUTIL_LOG_LEVEL to 'DEBUG'. You may specify the following
+log levels using this environment variable: DEBUG, INFO, WARNING, ERROR,
+CRITICAL. If this environment variable does not exist, the log level will be
+set to INFO by default.
 
 Comments? / Questions? / Coming Soon
 ------------------------------------

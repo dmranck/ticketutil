@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 
 import requests
@@ -7,16 +6,6 @@ import requests
 from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
-
-# Disable warnings for requests because we aren't doing certificate verification
-requests.packages.urllib3.disable_warnings()
-
-DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
-
-if DEBUG == 'True':
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
 
 
 class RTTicket(ticket.Ticket):
