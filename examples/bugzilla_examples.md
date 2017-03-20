@@ -55,7 +55,9 @@ t.create(summary='Ticket summary',
          priority='high',
          severity='medium',
          assignee='username@mail.com',
-         qa_contact='username@mail.com)
+         qa_contact='username@mail.com
+         groups='Group Name')
+         
 t.add_comment('Test Comment')
 t.edit(priority='medium',
        qa_contact='username@mail.com')
