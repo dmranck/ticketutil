@@ -27,7 +27,7 @@ create a BugzillaTicket object with a url and product name (and with a
 ticket id when working with existing tickets), and the last step is 
 closing the Requests session with `t.close_requests_session()`.
 
-When creating a RT ticket, `summary` and `description` are required
+When creating a Bugzilla ticket, `summary` and `description` are required
 parameters. Also, the Reporter is automatically filled in as the current
 kerberos principal or username supplied during authentication.
 
