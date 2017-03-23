@@ -14,12 +14,24 @@ else:
     logging.basicConfig(level=logging.INFO)
 
 
+STATE = {'new':'0',
+         'open':'1',
+         'work in progress':'2',
+         'pending':'-6',
+         'pending approval':'-9',
+         'pending customer':'-1',
+         'pending change':'-4',
+         'pending vendor':'-5',
+         'resolved':'5',
+         'closed completed':'3',
+         'closed cancelled':'8'}
+
+
 class ServiceNowTicket(ticket.Ticket):
     """
     ServiceNow Ticket object. Contains ServiceNow specific methods for working
     with tickets.
     """
-
     def __init__(self, url, project, auth=None, ticket_id=None):
         """
         :param url: ServiceNow service url
@@ -41,11 +53,19 @@ class ServiceNowTicket(ticket.Ticket):
 
         self.s = self._create_requests_session()
         if ticket_id:
-            self.ticket_id = ticket_id
-            self.ticket_content = self.get_ticket_content()
-            self.sys_id = self.ticket_content['sys_id']
-            self.ticket_rest_url = self.rest_url + '/' + self.sys_id
-            self.ticket_url = self._generate_ticket_url()
+            self.set_ticket_id(ticket_id)
+
+    def set_ticket_id(self, ticket_id):
+        """
+        Sets ticket vars for the current ticket object.
+        :param ticket_id: Ticket id you would like to set.
+        :return:
+        """
+        self.ticket_id = ticket_id
+        self.ticket_content = self.get_ticket_content()
+        self.sys_id = self.ticket_content['sys_id']
+        self.ticket_rest_url = self.rest_url + '/' + self.sys_id
+        self.ticket_url = self._generate_ticket_url()
 
     def get_ticket_content(self, ticket_id=None):
         """
@@ -182,7 +202,7 @@ class ServiceNowTicket(ticket.Ticket):
 
         try:
             logging.info('Changing ticket status')
-            params = self._create_ticket_parameters({'state': status})
+            params = self._create_ticket_parameters({'state':STATE[status.lower()]})
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             r.raise_for_status()
