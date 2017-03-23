@@ -15,10 +15,10 @@ creating and editing tickets. These are processed by the ServiceNow REST API
 right afterwards. You can also use [get_ticket_content](#content) to get ticket
 content including preset field names.
 
-For more information about REST API and fields see ServiceNow's Wiki:<br />
-[REST API](http://wiki.servicenow.com/index.php?title=REST_API)<br />
-[Introduction to Fields](http://wiki.servicenow.com/index.php?title=Introduction_to_Fields)<br />
-[Dot-Walking](http://wiki.servicenow.com/index.php?title=Dot-Walking)
+For more information about REST API and fields see ServiceNow's Wiki:
+- [REST API](http://wiki.servicenow.com/index.php?title=REST_API)
+- [Introduction to Fields](http://wiki.servicenow.com/index.php?title=Introduction_to_Fields)
+- [Dot-Walking](http://wiki.servicenow.com/index.php?title=Dot-Walking)
 
 
 ## Table of contents

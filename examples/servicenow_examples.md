@@ -4,10 +4,7 @@ Currently, ticketutil supports HTTP Basic Authentication for ServiceNow.
 When creating a ServiceNowTicket object, pass in your username
 and password as a tuple into the auth argument. The code then retrieves
 a token that will be used as authentication for subsequent API calls.
-For more details, see:<br />
-[REST API](http://wiki.servicenow.com/index.php?title=REST_API)<br />
-[Introduction_to_Fields](http://wiki.servicenow.com/index.php?title=Introduction_to_Fields)<br />
-[Dot-Walking](http://wiki.servicenow.com/index.php?title=Dot-Walking)
+For more details see [documentation](../docs/servicenow.md).
 
 ```python
 >>> from ticketutil.servicenow import ServiceNowTicket
