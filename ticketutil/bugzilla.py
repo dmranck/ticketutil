@@ -3,6 +3,8 @@ import os
 
 import requests
 
+import json
+
 from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
@@ -18,12 +20,12 @@ else:
     logging.basicConfig(level=logging.INFO)
 
 
-class AuthBase():
+class AUTHBase():
     def get_credentials(self):
         raise NotImplemented()
 
 
-class HTTPApiKeyAuth(AuthBase):
+class HTTPApiKeyAuth(AUTHBase):
     apiKey = None
     
     def __init__(self, apiKey):
@@ -37,7 +39,7 @@ class HTTPApiKeyAuth(AuthBase):
         return {"api_key": self.getKey()}
 
 
-class HTTPBasicAuth(AuthBase):
+class HTTPBasicAuth(AUTHBase):
     username = None
     password = None
     
@@ -55,7 +57,7 @@ class HTTPBasicAuth(AuthBase):
         return {"login": self.get_username(), "password": self.get_password()}
 
 
-class HTTPKerberosAuth(AuthBase):
+class HTTPKerberosAuth(AUTHBase):
     def get_credentials(self):
         return "kerberos"
 
@@ -66,7 +68,6 @@ class BugzillaTicket(ticket.Ticket):
     """
     def __init__(self, url, project, auth=None, ticket_id=None):
         self.ticketing_tool = 'Bugzilla'
-        self.resp = None
 
         # Kerberos is default auth if the auth param is not specified.
         # A tuple of the form (<username>, <password>) can also be passed in.
@@ -98,6 +99,7 @@ class BugzillaTicket(ticket.Ticket):
             ticket_url = "{0}/show_bug.cgi?id={1}".format(self.url, self.ticket_id)
 
         return ticket_url
+
 
     def _create_requests_session(self):
         """
@@ -150,6 +152,8 @@ class BugzillaTicket(ticket.Ticket):
 
         # Create our ticket.
         self._create_ticket_request(params)
+        ticket_id = self.ticket_id
+        return ticket_id
 
     def _create_ticket_parameters(self, summary, description, fields):
         """
@@ -168,7 +172,6 @@ class BugzillaTicket(ticket.Ticket):
         priority='high'
         severity='medium'
         alias='SomeAlias'
-        groups='Group Name'
 
         :param summary: The ticket summary.
         :param description: The ticket description.
@@ -254,6 +257,7 @@ class BugzillaTicket(ticket.Ticket):
                 return
             logging.debug("Editing Ticket: Status Code: {0}".format(r.status_code))
             logging.info("Edited ticket with the mentioned fields {0} - {1}".format(self.ticket_id, self.ticket_url))
+            return r
         except requests.RequestException as e:
             logging.error("Error editing ticket")
             logging.error(e.args[0])
@@ -299,6 +303,33 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to change status of ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r.raise_for_status()
+            if 'message' in r.json():
+                logging.error("Change status error message: {0}".format(r.json()['message']))
+                return
+            logging.debug("Changing status of ticket: Status Code: {0}".format(r.status_code))
+            logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        except requests.RequestException as e:
+            logging.error("Error changing status of ticket")
+            logging.error(e.args[0])
+
+    def add_attachment(self, **kwargs):
+        """
+        :param status: Status to change to.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+        # Some of the ticket fields need to be in a specific form for the tool.
+
+        kwargs = _prepare_ticket_fields(kwargs)
+        params = kwargs
+
+        # Attempt to change status of ticket.
+        try:
+            headers = {"Content-Type": "application/json"}
+            r = self.s.post("{0}/{1}/attachment".format(self.rest_url, self.ticket_id), json=params, headers=headers)
             r.raise_for_status()
             if 'message' in r.json():
                 logging.error("Change status error message: {0}".format(r.json()['message']))
