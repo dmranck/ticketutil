@@ -42,7 +42,7 @@ class Ticket(object):
 
     def set_ticket_id(self, ticket_id):
         """
-        Sets the ticket_id and ticket_url instance vars for the current ticket object.
+        Sets the ticket_id and ticket_url instance vars for the current Ticket object.
         :param ticket_id: Ticket id you would like to set.
         :return:
         """
@@ -53,11 +53,19 @@ class Ticket(object):
 
     def get_ticket_id(self):
         """
-        Returns the ticket_id for the current ticket object.
-        :return:
+        Returns the ticket_id for the current Ticket object.
+        :return: self.ticket_id: The ID of the ticket.
         """
         logging.info("Returned ticket id: {0}".format(self.ticket_id))
         return self.ticket_id
+
+    def get_ticket_url(self):
+        """
+        Returns the ticket_url for the current Ticket object.
+        :return: self.ticket_url: The URL of the ticket.
+        """
+        logging.info("Returned ticket url: {0}".format(self.ticket_url))
+        return self.ticket_url
 
     def _create_requests_session(self):
         """
