@@ -1,4 +1,5 @@
 import logging
+import os
 
 import requests
 
@@ -6,22 +7,74 @@ from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
 
+# Disable warnings for requests because we aren't doing certificate verification
+requests.packages.urllib3.disable_warnings()
+
+DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
+
+if DEBUG == 'True':
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+
+class AUTHBase():
+    def get_credentials(self):
+        raise NotImplemented()
+
+
+class HTTPApiKeyAuth(AUTHBase):
+    apiKey = None
+
+    def __init__(self, apiKey):
+        self.apiKey = apiKey
+
+    def getKey(self):
+        return self.apiKey
+
+    def get_credentials(self):
+        return {"api_key": self.getKey()}
+
+
+class HTTPBasicAuth(AUTHBase):
+    username = None
+    password = None
+
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+    def get_username(self):
+        return self.username
+
+    def get_password(self):
+        return self.password
+
+    def get_credentials(self):
+        return {"login": self.get_username(), "password": self.get_password()}
+
+
+class HTTPKerberosAuth(AUTHBase):
+    def get_credentials(self):
+        return "kerberos"
+
 
 class BugzillaTicket(ticket.Ticket):
     """
     A BZ Ticket object. Contains BZ-specific methods for working with tickets.
     """
+
     def __init__(self, url, project, auth=None, ticket_id=None):
         self.ticketing_tool = 'Bugzilla'
 
         # Kerberos is default auth if the auth param is not specified.
         # A tuple of the form (<username>, <password>) can also be passed in.
-        if isinstance(auth, tuple):
-            self.auth = auth
-            username, password = auth
-            self.credentials = {"login": username, "password": password}
-        else:
-            self.auth = 'kerberos'
+
+        if not auth:
+            auth = HTTPKerberosAuth()
+
+        self.auth = auth
+        self.credentials = auth.get_credentials()
         self.token = None
 
         # BZ URLs
@@ -52,18 +105,21 @@ class BugzillaTicket(ticket.Ticket):
         We're using a Session to persist cookies across all requests made from the Session instance.
         :return s: Requests Session.
         """
-        if self.auth == 'kerberos':
+        if isinstance(self.auth, HTTPKerberosAuth):
             return super(BugzillaTicket, self)._create_requests_session()
 
         # If basic authentication is passed in, generate a token to be used in all requests.
         try:
             s = requests.Session()
-            r = s.get(self.auth_url, params=self.credentials, verify=False)
-            r.raise_for_status()
-            resp = r.json()
-            self.token = resp['token']
-            logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
-            logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
+            s.params.update(self.auth.get_credentials())
+            s.verify = False
+            if isinstance(self.auth, HTTPBasicAuth):
+                r = s.get(self.auth_url, params=self.credentials, verify=False)
+                r.raise_for_status()
+                resp = r.json()
+                self.token = resp['token']
+                logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
+                logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
             return s
 
         # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
@@ -93,6 +149,8 @@ class BugzillaTicket(ticket.Ticket):
 
         # Create our ticket.
         self._create_ticket_request(params)
+        ticket_id = self.ticket_id
+        return ticket_id
 
     def _create_ticket_parameters(self, summary, description, fields):
         """
@@ -138,10 +196,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         # Attempt to create ticket.
         try:
-            if self.token:
-                params['token'] = self.token
-
-            r = self.s.post(self.rest_url, json=params)
+            r = self.s.post(self.rest_url, json=params, verify=False)
             r.raise_for_status()
             logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
 
@@ -184,14 +239,11 @@ class BugzillaTicket(ticket.Ticket):
 
         # Some of the ticket fields need to be in a specific form for the tool.
         kwargs = _prepare_ticket_fields(kwargs)
-
         params = kwargs
-        if self.token:
-            params['token'] = self.token
 
         # Attempt to edit ticket.
         try:
-            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params, verify=False)
             r.raise_for_status()
             if 'bugs' in r.json():
                 if r.json()['bugs'][0]['changes'] == {}:
@@ -202,11 +254,12 @@ class BugzillaTicket(ticket.Ticket):
                 return
             logging.debug("Editing Ticket: Status Code: {0}".format(r.status_code))
             logging.info("Edited ticket with the mentioned fields {0} - {1}".format(self.ticket_id, self.ticket_url))
+            return r
         except requests.RequestException as e:
             logging.error("Error editing ticket")
             logging.error(e.args[0])
 
-    def add_comment(self, comment):
+    def add_comment(self, comment, **kwargs):
         """
         Adds a comment to a Bugzilla ticket.
         :param comment: A string representing the comment to be added.
@@ -216,12 +269,11 @@ class BugzillaTicket(ticket.Ticket):
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
             return
 
-        params = {'comment': comment}
+        params = {"comment": comment}
+        params.update(kwargs)
 
         # Attempt to add comment to ticket.
         try:
-            if self.token:
-                params['token'] = self.token
             r = self.s.post("{0}/{1}/comment".format(self.rest_url, self.ticket_id), json=params)
             r.raise_for_status()
             logging.debug("Add comment: Status Code: {0}".format(r.status_code))
@@ -247,9 +299,6 @@ class BugzillaTicket(ticket.Ticket):
 
         # Attempt to change status of ticket.
         try:
-            if self.token:
-                params['token'] = self.token
-
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
             r.raise_for_status()
             if 'message' in r.json():
@@ -275,9 +324,6 @@ class BugzillaTicket(ticket.Ticket):
             params = {'cc': {'add': user}}
         else:
             params = {'cc': {'add': [user]}}
-
-        if self.token:
-            params['token'] = self.token
 
         # Attempt to edit ticket.
         try:
@@ -310,9 +356,6 @@ class BugzillaTicket(ticket.Ticket):
             params = {'cc': {'remove': user}}
         else:
             params = {'cc': {'remove': [user]}}
-
-        if self.token:
-            params['token'] = self.token
 
         # Attempt to edit ticket.
         try:
@@ -350,7 +393,6 @@ def main():
     main() function, not directly callable.
     :return:
     """
-    print("Not directly executable")
 
 
 if __name__ == "__main__":
