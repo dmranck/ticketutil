@@ -91,6 +91,40 @@ log levels using this environment variable: DEBUG, INFO, WARNING, ERROR,
 CRITICAL. If this environment variable does not exist, the log level will be
 set to INFO by default.
 
+How to run our tests
+--------------------
+
+Our tests uses `py.test` framework. The tests are stored in a directory `tests`
+and they are not included in a pypi package.
+
+* create `local_settings.py` file.
+
+  It contains of variables that are confidential.
+
+  - `password`
+  - `username`
+  - `apikey` ... key for access to Bugzilla using REST API
+
+  .. note::
+
+     This file should not be stored in repository since it contains of confidential data
+
+* run test
+
+.. code-block:: shell
+
+   py.test
+
+.. note::
+
+   You can use automatic reloading of the tests once a source code is changed.
+   In such case install `pytest-watch` package and run the tests:
+
+   .. code-block:: shell
+
+      ptw
+
+
 Comments? / Questions? / Coming Soon
 ------------------------------------
 
