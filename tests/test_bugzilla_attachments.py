@@ -18,8 +18,8 @@ new_ticket = t.create(summary='Ticket Summary',
                       component='RHN/API',
                       version='_unset')
 
-
-t.add_attachment(file_name="test_attachment.patch",
-                 data=json.loads(base64.b64encode(open('/home/kumudini/Documents/Can-B-Erased/examples.txt', 'rb').read())),
+data = base64.b64encode(open("resources/rose_PNG658.png",'rb').read())
+t.add_attachment(file_name="rose PNG658",
+                 data=json.loads(data),
                  summary="NEW_Attachment",
                  content_type="text/plain")
