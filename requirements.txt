@@ -1,3 +1,4 @@
 gssapi>=1.2.0
 requests>=2.9.1
 requests-kerberos>=0.8.0
+pytest>=3.0.0
