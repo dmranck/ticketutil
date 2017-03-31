@@ -1,23 +1,10 @@
 import logging
-import os
 
 import requests
-
-import base64
 
 from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
-
-# Disable warnings for requests because we aren't doing certificate verification
-requests.packages.urllib3.disable_warnings()
-
-DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
-
-if DEBUG == 'True':
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
 
 
 class BugzillaTicket(ticket.Ticket):
@@ -35,12 +22,10 @@ class BugzillaTicket(ticket.Ticket):
             username, password = auth
             self.credentials = {"login": username, "password": password}
         elif 'api_key' in auth:
-            self.auth = 'api_key'
+            self.auth = auth
             self.credentials = {"api_key": auth['api_key']}
         elif auth == 'kerberos':
             self.auth = 'kerberos'
-
-        self.token = None
 
         # BZ URLs
         self.url = url
@@ -85,8 +70,6 @@ class BugzillaTicket(ticket.Ticket):
             try:
                 r = s.get(self.auth_url)
                 r.raise_for_status()
-                resp = r.json()
-                self.token = resp['token']
                 logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
                 logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
                 return s
@@ -98,7 +81,7 @@ class BugzillaTicket(ticket.Ticket):
                 logging.error(e.args[0])
 
         # API Key Auth
-        elif self.auth == 'api_key':
+        elif 'api_key' in self.auth:
             try:
                 r = s.get(self.auth_url)
                 r.raise_for_status()
