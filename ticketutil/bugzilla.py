@@ -1,10 +1,23 @@
 import logging
+import os
 
 import requests
+
+import base64
 
 from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
+
+# Disable warnings for requests because we aren't doing certificate verification
+requests.packages.urllib3.disable_warnings()
+
+DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
+
+if DEBUG == 'True':
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 
 class BugzillaTicket(ticket.Ticket):
@@ -16,12 +29,17 @@ class BugzillaTicket(ticket.Ticket):
 
         # Kerberos is default auth if the auth param is not specified.
         # A tuple of the form (<username>, <password>) can also be passed in.
+
         if isinstance(auth, tuple):
             self.auth = auth
             username, password = auth
             self.credentials = {"login": username, "password": password}
-        else:
+        elif 'api_key' in auth:
+            self.auth = 'api_key'
+            self.credentials = {"api_key": auth['api_key']}
+        elif auth == 'kerberos':
             self.auth = 'kerberos'
+
         self.token = None
 
         # BZ URLs
@@ -52,25 +70,47 @@ class BugzillaTicket(ticket.Ticket):
         We're using a Session to persist cookies across all requests made from the Session instance.
         :return s: Requests Session.
         """
+        # Kerberos Auth
         if self.auth == 'kerberos':
             return super(BugzillaTicket, self)._create_requests_session()
 
-        # If basic authentication is passed in, generate a token to be used in all requests.
-        try:
-            s = requests.Session()
-            r = s.get(self.auth_url, params=self.credentials, verify=False)
-            r.raise_for_status()
-            resp = r.json()
-            self.token = resp['token']
-            logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
-            logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
-            return s
+        # Run the following lines for both HTTP Basic Auth and APIKey Auth
+        s = requests.Session()
+        s.params.update(self.credentials)
+        s.verify = False
 
-        # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
-        # If authentication wasn't successful, a token will not be in resp. Add KeyError as exception.
-        except (KeyError, requests.RequestException) as e:
-            logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
-            logging.error(e.args[0])
+        # HTTP Basic Auth
+        if isinstance(self.auth, tuple):
+            # If basic authentication is passed in, generate a token to be used in all requests.
+            try:
+                r = s.get(self.auth_url)
+                r.raise_for_status()
+                resp = r.json()
+                self.token = resp['token']
+                logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
+                logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
+                return s
+
+            # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
+            # If authentication wasn't successful, a token will not be in resp. Add KeyError as exception.
+            except (KeyError, requests.RequestException) as e:
+                logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
+                logging.error(e.args[0])
+
+        # API Key Auth
+        elif self.auth == 'api_key':
+            try:
+                r = s.get(self.auth_url)
+                r.raise_for_status()
+                logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
+                logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
+                return s
+
+            # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
+            # If authentication wasn't successful, a token will not be in resp. Add KeyError as exception.
+            except (KeyError, requests.RequestException) as e:
+                logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
+                logging.error(e.args[0])
 
     def create(self, summary, description, **kwargs):
         """
@@ -93,6 +133,8 @@ class BugzillaTicket(ticket.Ticket):
 
         # Create our ticket.
         self._create_ticket_request(params)
+        ticket_id = self.ticket_id
+        return ticket_id
 
     def _create_ticket_parameters(self, summary, description, fields):
         """
@@ -138,10 +180,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         # Attempt to create ticket.
         try:
-            if self.token:
-                params['token'] = self.token
-
-            r = self.s.post(self.rest_url, json=params)
+            r = self.s.post(self.rest_url, json=params, verify=False)
             r.raise_for_status()
             logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
 
@@ -184,14 +223,11 @@ class BugzillaTicket(ticket.Ticket):
 
         # Some of the ticket fields need to be in a specific form for the tool.
         kwargs = _prepare_ticket_fields(kwargs)
-
         params = kwargs
-        if self.token:
-            params['token'] = self.token
 
         # Attempt to edit ticket.
         try:
-            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params, verify=False)
             r.raise_for_status()
             if 'bugs' in r.json():
                 if r.json()['bugs'][0]['changes'] == {}:
@@ -202,11 +238,12 @@ class BugzillaTicket(ticket.Ticket):
                 return
             logging.debug("Editing Ticket: Status Code: {0}".format(r.status_code))
             logging.info("Edited ticket with the mentioned fields {0} - {1}".format(self.ticket_id, self.ticket_url))
+            return r
         except requests.RequestException as e:
             logging.error("Error editing ticket")
             logging.error(e.args[0])
 
-    def add_comment(self, comment):
+    def add_comment(self, comment, **kwargs):
         """
         Adds a comment to a Bugzilla ticket.
         :param comment: A string representing the comment to be added.
@@ -216,12 +253,11 @@ class BugzillaTicket(ticket.Ticket):
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
             return
 
-        params = {'comment': comment}
+        params = {"comment": comment}
+        params.update(kwargs)
 
         # Attempt to add comment to ticket.
         try:
-            if self.token:
-                params['token'] = self.token
             r = self.s.post("{0}/{1}/comment".format(self.rest_url, self.ticket_id), json=params)
             r.raise_for_status()
             logging.debug("Add comment: Status Code: {0}".format(r.status_code))
@@ -247,10 +283,42 @@ class BugzillaTicket(ticket.Ticket):
 
         # Attempt to change status of ticket.
         try:
-            if self.token:
-                params['token'] = self.token
-
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            r.raise_for_status()
+            if 'message' in r.json():
+                logging.error("Change status error message: {0}".format(r.json()['message']))
+                return
+            logging.debug("Changing status of ticket: Status Code: {0}".format(r.status_code))
+            logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        except requests.RequestException as e:
+            logging.error("Error changing status of ticket")
+            logging.error(e.args[0])
+
+    def add_attachment(self, data, **kwargs):
+        """
+        :param status: Status to change to.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        f = open(data, "+rb")
+        file_name = f.read()
+
+        content = kwargs['content_type']
+        if content == "image/png":
+            data = base64.standard_b64encode(file_name).decode('utf-8')
+        else:
+            data = base64.standard_b64encode(file_name).decode('ascii')
+
+        params = {"data": data}
+        params.update(kwargs)
+
+        # Attempt to change status of ticket.
+        try:
+            headers = {"Content-Type": "application/json"}
+            r = self.s.post("{0}/{1}/attachment".format(self.rest_url, self.ticket_id), json=params, headers=headers)
             r.raise_for_status()
             if 'message' in r.json():
                 logging.error("Change status error message: {0}".format(r.json()['message']))
@@ -275,9 +343,6 @@ class BugzillaTicket(ticket.Ticket):
             params = {'cc': {'add': user}}
         else:
             params = {'cc': {'add': [user]}}
-
-        if self.token:
-            params['token'] = self.token
 
         # Attempt to edit ticket.
         try:
@@ -310,9 +375,6 @@ class BugzillaTicket(ticket.Ticket):
             params = {'cc': {'remove': user}}
         else:
             params = {'cc': {'remove': [user]}}
-
-        if self.token:
-            params['token'] = self.token
 
         # Attempt to edit ticket.
         try:
@@ -350,8 +412,6 @@ def main():
     main() function, not directly callable.
     :return:
     """
-    print("Not directly executable")
-
 
 if __name__ == "__main__":
     main()
