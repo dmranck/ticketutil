@@ -294,41 +294,6 @@ class BugzillaTicket(ticket.Ticket):
             logging.error("Error changing status of ticket")
             logging.error(e.args[0])
 
-    def add_attachment(self, data, **kwargs):
-        """
-        :param status: Status to change to.
-        :return:
-        """
-        if not self.ticket_id:
-            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
-            return
-
-        f = open(data, "+rb")
-        file_name = f.read()
-
-        content = kwargs['content_type']
-        if content == "image/png":
-            data = base64.standard_b64encode(file_name).decode('utf-8')
-        else:
-            data = base64.standard_b64encode(file_name).decode('ascii')
-
-        params = {"data": data}
-        params.update(kwargs)
-
-        # Attempt to change status of ticket.
-        try:
-            headers = {"Content-Type": "application/json"}
-            r = self.s.post("{0}/{1}/attachment".format(self.rest_url, self.ticket_id), json=params, headers=headers)
-            r.raise_for_status()
-            if 'message' in r.json():
-                logging.error("Change status error message: {0}".format(r.json()['message']))
-                return
-            logging.debug("Changing status of ticket: Status Code: {0}".format(r.status_code))
-            logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
-        except requests.RequestException as e:
-            logging.error("Error changing status of ticket")
-            logging.error(e.args[0])
-
     def add_cc(self, user):
         """
         Adds user(s) to cc list.
