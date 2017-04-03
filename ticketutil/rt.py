@@ -79,22 +79,24 @@ class RTTicket(ticket.Ticket):
         :param subject: The ticket subject.
         :param text: The ticket text.
         :param fields: Other ticket fields.
-        :return: params: A string to pass in to the POST request containing ticket details.
+        :return: params: A dict to pass in to the POST request containing ticket details.
         """
-        # Weird format for request data that RT is expecting...
         # RT requires a special encoding on the Text parameter.
-        params = 'content='
-        params += 'Queue: {0}\n'.format(self.project)
-        params += 'Requestor: {0}\n'.format(self.principal)
-        params += 'Subject: {0}\n'.format(subject)
-        params += 'Text: {0}\n'.format(_text_encode(text))
+        encoded_text = text.replace('\n', '\n      ')
+
+        content = 'Queue: {0}\n'.format(self.project)
+        content += 'Requestor: {0}\n'.format(self.principal)
+        content += 'Subject: {0}\n'.format(subject)
+        content += 'Text: {0}\n'.format(encoded_text)
 
         # Some of the ticket fields need to be in a specific form for the tool.
         fields = _prepare_ticket_fields(fields)
 
         # Iterate through our options and add them to the params dict.
         for key, value in fields.items():
-            params += '{0}: {1}\n'.format(key.title(), value)
+            content += '{0}: {1}\n'.format(key.title(), value)
+
+        params = {'content': content}
 
         return params
 
@@ -140,11 +142,13 @@ class RTTicket(ticket.Ticket):
         # Some of the ticket fields need to be in a specific form for the tool.
         fields = _prepare_ticket_fields(kwargs)
 
-        params = 'content='
+        content = ''
 
-        # Iterate through our kwargs and add them to the params dict.
+        # Iterate through our kwargs and add them to the content string.
         for key, value in fields.items():
-            params += '{0}: {1}\n'.format(key.title(), value)
+            content += '{0}: {1}\n'.format(key.title(), value)
+
+        params = {'content': content}
 
         # Attempt to edit ticket.
         try:
@@ -166,9 +170,13 @@ class RTTicket(ticket.Ticket):
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
             return
 
-        params = 'content='
-        params += 'Action: correspond\n'
-        params += 'Text: {0}\n'.format(comment)
+        # RT requires a special encoding on the comment parameter.
+        encoded_comment = comment.replace('\n', '\n      ')
+
+        content = 'Action: correspond\n'
+        content += 'Text: {0}\n'.format(encoded_comment)
+
+        params = {'content': content}
 
         # Attempt to add comment to ticket.
         try:
@@ -190,8 +198,9 @@ class RTTicket(ticket.Ticket):
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
             return
 
-        params = 'content='
-        params += 'Status: {0}\n'.format(status.lower())
+        content = 'Status: {0}\n'.format(status.lower())
+
+        params = {'content': content}
 
         # Attempt to change status of ticket.
         try:
@@ -203,17 +212,33 @@ class RTTicket(ticket.Ticket):
             logging.error("Error changing status of ticket")
             logging.error(e.args[0])
 
+    def add_attachment(self, file_name):
+        """
+        Attaches a file to a RT ticket.
+        :param file_name: A string representing the file to attach.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
 
-def _text_encode(text):
-    """
-    Encodes the text parameter in the form expected by RT's REST API when creating a ticket.
-    Replaces spaces with '+' and new lines with '%0A+'.
-    :param text: The string that will be used in the text field for our ticket.
-    :return: The string containing the replaced characters.
-    """
-    text = text.replace(' ', '+')
-    text = text.replace('\n', '%0A+')
-    return text
+        content = 'Action: correspond\n'
+        content += 'Attachment: {0}\n'.format(file_name)
+
+        params = {'content': content}
+        files = {'attachment_1': open(file_name, 'rb')}
+
+        # Attempt to attach file.
+        try:
+            r = self.s.post("{0}/ticket/{1}/comment".format(self.rest_url, self.ticket_id), data=params, files=files)
+            r.raise_for_status()
+            logging.debug("Add attachment: Status Code: {0}".format(r.status_code))
+            logging.info("Attached File {0}: {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+        except requests.RequestException as e:
+            logging.error("Error attaching file {0}".format(file_name))
+            logging.error(e.args[0])
+        except IOError:
+            logging.error("{0} not found".format(file_name))
 
 
 def _prepare_ticket_fields(fields):

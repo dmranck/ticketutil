@@ -57,6 +57,7 @@ t.create(subject='Ticket subject',
 t.add_comment('Test Comment')
 t.edit(priority='4',
        cc='username1@mail.com')
+t.add_attachment('file_to_attach.txt')
 t.change_status('Resolved')
 
 # Close Requests session.

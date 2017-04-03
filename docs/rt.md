@@ -17,6 +17,7 @@ https://rt-wiki.bestpractical.com/wiki/REST
 - [edit()](#edit)
 - [add_comment()](#comment)
 - [change_status()](#status)
+- [add_attachment()](#add_attachment)
 
 ### create(self, subject, text, \*\*kwargs) <a name="create"></a>
 
@@ -76,4 +77,12 @@ Changes status of a RT ticket.
 
 ```python
 t.change_status('Resolved')
+```
+
+### add_attachment(self, file_name) <a name="add_attachment"></a>
+
+Attaches a file to a RT ticket.
+
+```python
+t.add_attachment('filename.txt')
 ```
