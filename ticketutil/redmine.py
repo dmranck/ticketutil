@@ -286,7 +286,7 @@ class RedmineTicket(ticket.Ticket):
 
     def _upload_file(self, file_name):
         """
-        Uploads a file to /uploads.json
+        Uploads a file to /uploads.json.
         :param file_name: A string representing the file to upload.
         :return: token: A token to be used in the request to add attachment.
         """
