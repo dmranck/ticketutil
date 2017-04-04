@@ -24,6 +24,7 @@ methods, so you can use the name instead of having to look up the id.
 - [change_status()](#status)
 - [remove_watcher()](#remove_watcher)
 - [add_watcher()](#add_watcher)
+- [add_attachment()](#add_attachment)
 
 ### create(self, subject, description, \*\*kwargs) <a name="create"></a>
 
@@ -99,4 +100,12 @@ Adds watcher to a Redmine ticket. Accepts an email or username.
 
 ```python
 t.add_watcher('username')
+```
+
+### add_attachment(self, file_name) <a name="add_attachment"></a>
+
+Attaches a file to a Redmine ticket.
+
+```python
+t.add_attachment('filename.txt')
 ```

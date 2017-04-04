@@ -256,6 +256,61 @@ class RedmineTicket(ticket.Ticket):
                 logging.error("Error adding {0} as a watcher to ticket".format(watcher))
                 logging.error(e.args[0])
 
+    def add_attachment(self, file_name):
+        """
+        Attaches a file to a Redmine ticket.
+        :param file_name: A string representing the file to attach.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        # First, upload the file to Redmine and retrieve a token to be used in subsequent request.
+        token = self._upload_file(file_name)
+
+        if token:
+            params = {'issue': {}}
+            params['issue']['uploads'] = [{'token': token, 'filename': file_name}]
+
+            try:
+                r = self.s.put('{0}/{1}.json'.format(self.rest_url, self.ticket_id), json=params)
+                r.raise_for_status()
+                logging.debug("Add attachment: Status Code: {0}".format(r.status_code))
+                logging.info("Attached file {0}: {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+            except requests.RequestException as e:
+                logging.error("Error attaching file {0}".format(file_name))
+                logging.error(e.args[0])
+            except IOError:
+                logging.error("{0} not found".format(file_name))
+
+    def _upload_file(self, file_name):
+        """
+        Uploads a file to /uploads.json
+        :param file_name: A string representing the file to upload.
+        :return: token: A token to be used in the request to add attachment.
+        """
+        headers = {'Content-Type': 'application/octet-stream'}
+        token = ''
+
+        # Upload file to uploads.json and retrieve token to be used in the add_attachment() request.
+        try:
+            params = open(file_name, 'rb')
+            r = self.s.post("{0}/uploads.json".format(self.url),
+                            data=params,
+                            headers=headers)
+            r.raise_for_status()
+            token = r.json()['upload']['token']
+            logging.debug("Upload attachment: Status Code: {0}".format(r.status_code))
+            logging.info("Uploaded file {0} to Redmine".format(file_name))
+        except requests.RequestException as e:
+            logging.error("Error uploading file {0}".format(file_name))
+            logging.error(e.args[0])
+        except IOError:
+            logging.error("{0} not found".format(file_name))
+
+        return token
+
     def _get_project_id(self):
         """
         Get project id from project name.

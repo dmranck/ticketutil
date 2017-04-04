@@ -60,6 +60,7 @@ t.create(subject='Ticket subject',
 t.add_comment('Test Comment')
 t.edit(priority='Normal',
        due_date='2017-02-25')
+t.add_attachment('file_to_attach.txt')
 t.add_watcher('username1')
 t.remove_watcher('username2')
 t.change_status('Closed')
