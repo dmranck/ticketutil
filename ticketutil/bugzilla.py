@@ -163,7 +163,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         # Attempt to create ticket.
         try:
-            r = self.s.post(self.rest_url, json=params, verify=False)
+            r = self.s.post(self.rest_url, json=params)
             r.raise_for_status()
             logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
 
@@ -210,7 +210,7 @@ class BugzillaTicket(ticket.Ticket):
 
         # Attempt to edit ticket.
         try:
-            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params, verify=False)
+            r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
             r.raise_for_status()
             if 'bugs' in r.json():
                 if r.json()['bugs'][0]['changes'] == {}:
@@ -221,7 +221,7 @@ class BugzillaTicket(ticket.Ticket):
                 return
             logging.debug("Editing Ticket: Status Code: {0}".format(r.status_code))
             logging.info("Edited ticket with the mentioned fields {0} - {1}".format(self.ticket_id, self.ticket_url))
-            return r
+
         except requests.RequestException as e:
             logging.error("Error editing ticket")
             logging.error(e.args[0])
@@ -360,6 +360,7 @@ def main():
     main() function, not directly callable.
     :return:
     """
+    print("Not directly executable")
 
 if __name__ == "__main__":
     main()
