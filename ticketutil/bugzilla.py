@@ -14,18 +14,8 @@ class BugzillaTicket(ticket.Ticket):
     def __init__(self, url, project, auth=None, ticket_id=None):
         self.ticketing_tool = 'Bugzilla'
 
-        # Kerberos is default auth if the auth param is not specified.
-        # A tuple of the form (<username>, <password>) can also be passed in.
-
-        if isinstance(auth, tuple):
-            self.auth = auth
-            username, password = auth
-            self.credentials = {"login": username, "password": password}
-        elif 'api_key' in auth:
-            self.auth = auth
-            self.credentials = {"api_key": auth['api_key']}
-        elif auth == 'kerberos':
-            self.auth = 'kerberos'
+        self.auth = auth
+        self.credentials = None
 
         # BZ URLs
         self.url = url
@@ -59,41 +49,33 @@ class BugzillaTicket(ticket.Ticket):
         if self.auth == 'kerberos':
             return super(BugzillaTicket, self)._create_requests_session()
 
-        # Run the following lines for both HTTP Basic Auth and APIKey Auth
+        # Run the rest of this method for both HTTP Basic Auth and APIKey Auth
+
+        # HTTP Basic Auth
+        if isinstance(self.auth, tuple):
+            username, password = self.auth
+            self.credentials = {"login": username, "password": password}
+        # API Key Auth
+        elif 'api_key' in self.auth:
+            self.credentials = self.auth
+
         s = requests.Session()
         s.params.update(self.credentials)
         s.verify = False
 
-        # HTTP Basic Auth
-        if isinstance(self.auth, tuple):
-            # If basic authentication is passed in, generate a token to be used in all requests.
-            try:
-                r = s.get(self.auth_url)
-                r.raise_for_status()
-                logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
-                logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
-                return s
+        try:
+            r = s.get(self.auth_url)
+            r.raise_for_status()
 
-            # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
-            # If authentication wasn't successful, a token will not be in resp. Add KeyError as exception.
-            except (KeyError, requests.RequestException) as e:
-                logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
-                logging.error(e.args[0])
+            logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
+            logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
+            return s
 
-        # API Key Auth
-        elif 'api_key' in self.auth:
-            try:
-                r = s.get(self.auth_url)
-                r.raise_for_status()
-                logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
-                logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
-                return s
-
-            # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
-            # If authentication wasn't successful, a token will not be in resp. Add KeyError as exception.
-            except (KeyError, requests.RequestException) as e:
-                logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
-                logging.error(e.args[0])
+        # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
+        # If authentication wasn't successful, a token will not be in resp. Add KeyError as exception.
+        except (KeyError, requests.RequestException) as e:
+            logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
+            logging.error(e.args[0])
 
     def create(self, summary, description, **kwargs):
         """
