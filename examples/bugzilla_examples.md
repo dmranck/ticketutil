@@ -1,8 +1,8 @@
 # ticketutil.bugzilla code examples
 
-Currently, ticketutil supports HTTP Basic authentication for Bugzilla and API key authentication. 
+Currently, ticketutil supports `HTTP Basic authentication` and `API key authentication` for Bugzilla. 
 
-While creating a bugzilla ticket you can either pass in your username
+While creating a bugzilla ticket you can pass in your username
 and password as a tuple into the auth argument. The code then authenticates for subsequent API calls. 
 For more details, see: 
 http://bugzilla.readthedocs.io/en/latest/api/index.html.
