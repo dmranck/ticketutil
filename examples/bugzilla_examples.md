@@ -1,9 +1,9 @@
 # ticketutil.bugzilla code examples
 
-Currently, ticketutil supports HTTP Basic authentication for Bugzilla. 
-When creating a BugzillaTicket object, pass in your username
-and password as a tuple into the auth argument. The code then retrieves
-a token that will be used as authentication for subsequent API calls. 
+Currently, ticketutil supports `HTTP Basic authentication` and `API key authentication` for Bugzilla. 
+
+While creating a bugzilla ticket you can pass in your username
+and password as a tuple into the auth argument. The code then authenticates for subsequent API calls. 
 For more details, see: 
 http://bugzilla.readthedocs.io/en/latest/api/index.html.
 
@@ -14,11 +14,18 @@ http://bugzilla.readthedocs.io/en/latest/api/index.html.
                        auth=(<username>, <password>))
 ```
 
-You should see the following response:
+OR, you can use API key authentication.  Before you use API key authentication, you need to generate the API key for your account by clicking on the API Keys section under your user preferences in Bugzilla. 
+When creating a BugzillaTicket object, you can pass in a dictionary of the form {'api_key': '<your_api_key'>} into the auth argument. The code then authenticates for subsequent API calls.
+For more details, see:
+http://bugzilla.readthedocs.io/en/latest/api/core/v1/general.html#authentication.
+
 ```python
-INFO:requests.packages.urllib3.connectionpool:Starting new HTTP connection (1): <bugzilla_url>
-INFO:root:Successfully authenticated to Bugzilla with token: <token-id>
+>>> from ticketutil.bugzilla import BugzillaTicket
+>>> t = BugzillaTicket(<bugzilla_url>, 
+                       <product_name>, 
+                       auth=({'api_key': '<your-api-key>'})
 ```
+
 You now have a `BugzillaTicket` object that is associated with the 
 `<product_name>` product.
 

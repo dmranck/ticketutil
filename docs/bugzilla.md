@@ -67,9 +67,10 @@ severity='medium'
 alias='SomeAlias'
 ```
 
-### add_comment(self, comment) <a name="comment"></a>
+### add_comment(self, comment,\*\*kwargs ) <a name="comment"></a>
 
-Adds a comment to a Bugzilla ticket.
+Adds a comment to a Bugzilla ticket. Keyword arguments are used to 
+specify comment options.
 
 ```python
 t.add_comment('Test comment')
