@@ -63,19 +63,19 @@ class BugzillaTicket(ticket.Ticket):
         s.params.update(self.credentials)
         s.verify = False
 
+        # Try to authenticate to auth_url.
         try:
             r = s.get(self.auth_url)
             r.raise_for_status()
-
             logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
             logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
             return s
-
         # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
         # If authentication wasn't successful, a token will not be in resp. Add KeyError as exception.
         except (KeyError, requests.RequestException) as e:
-            logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
+            logging.error("Error authenticating to {0}.".format(self.auth_url))
             logging.error(e.args[0])
+            s.close()
 
     def create(self, summary, description, **kwargs):
         """
