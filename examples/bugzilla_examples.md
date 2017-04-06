@@ -14,9 +14,8 @@ http://bugzilla.readthedocs.io/en/latest/api/index.html.
                        auth=(<username>, <password>))
 ```
 
-OR, you can use API key authentication. Before you use API key authentication you need to generate 
-the API key for your account by hovering to the tab on your bugzilla application,
-https://<your-FQDN-for-bugzilla>/userprefs.cgi?tab=apikey. Once you pass the api_key the code then authenticates for subsequent API calls.
+OR, you can use API key authentication.  Before you use API key authentication, you need to generate the API key for your account by clicking on the API Keys section under your user preferences in Bugzilla. 
+When creating a BugzillaTicket object, you can pass in a dictionary of the form {'api_key': '<your_api_key'>} into the auth argument. The code then authenticates for subsequent API calls.
 For more details, see:
 http://bugzilla.readthedocs.io/en/latest/api/core/v1/general.html#authentication.
 
@@ -24,7 +23,7 @@ http://bugzilla.readthedocs.io/en/latest/api/core/v1/general.html#authentication
 >>> from ticketutil.bugzilla import BugzillaTicket
 >>> t = BugzillaTicket(<bugzilla_url>, 
                        <product_name>, 
-                       auth=({'api_key': "<your-api-key>"})
+                       auth=({'api_key': '<your-api-key>'})
 ```
 
 You now have a `BugzillaTicket` object that is associated with the 
