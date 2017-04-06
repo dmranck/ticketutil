@@ -70,7 +70,7 @@ alias='SomeAlias'
 ### add_comment(self, comment,\*\*kwargs ) <a name="comment"></a>
 
 Adds a comment to a Bugzilla ticket. Keyword arguments are used to 
-specify ticket fields.
+specify comment options.
 
 ```python
 t.add_comment('Test comment')
