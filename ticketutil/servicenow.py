@@ -2,7 +2,8 @@ import os
 import logging
 import requests
 
-from . import ticket
+# from . import ticket
+from ticketutil.ticket import Ticket
 
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
 
@@ -27,7 +28,7 @@ STATE = {'new':'0',
          'closed cancelled':'8'}
 
 
-class ServiceNowTicket(ticket.Ticket):
+class ServiceNowTicket(Ticket):
     """
     ServiceNow Ticket object. Contains ServiceNow specific methods for working
     with tickets.
@@ -74,10 +75,9 @@ class ServiceNowTicket(ticket.Ticket):
         :param ticked_id: ticked number, if not set self.ticket_id is used
         :return: ticket content
         """
+        if ticket_id is None:
+            ticket_id = self.ticket_id
         try:
-            if ticket_id is None:
-                ticket_id = self.ticket_id
-
             self.s.headers.update({'Content-Type': 'application/json'})
             url = self.rest_url + '?sysparm_query=GOTOnumber%3D'
             url += ticket_id
@@ -90,7 +90,8 @@ class ServiceNowTicket(ticket.Ticket):
             return ticket_content['result'][0]
         except requests.RequestException as e:
             logging.error("Error while getting ticket content")
-            logging.error(e.args[0])
+            logging.error(e.args)
+            raise
 
     def _generate_ticket_url(self):
         """
@@ -187,7 +188,8 @@ class ServiceNowTicket(ticket.Ticket):
                                                           self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error creating ticket")
-            logging.error(e.args[0])
+            logging.error(e.args)
+            raise
 
     def change_status(self, status):
         """
@@ -211,6 +213,7 @@ class ServiceNowTicket(ticket.Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to change ticket status')
+            raise
 
     def edit(self, **kwargs):
         """
@@ -246,7 +249,8 @@ class ServiceNowTicket(ticket.Ticket):
                                                           self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error editing ticket")
-            logging.error(e.args[0])
+            logging.error(e.args)
+            raise
 
     def add_comment(self, comment):
         """
@@ -264,6 +268,7 @@ class ServiceNowTicket(ticket.Ticket):
             logging.info('Comment created successfully')
         except requests.RequestException as e:
             logging.error('Failed to add the comment')
+            raise
 
     def add_cc(self, user):
         """
@@ -292,6 +297,7 @@ class ServiceNowTicket(ticket.Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to add user(s) to CC list')
+            raise
 
     def rewrite_cc(self, user):
         """
@@ -315,6 +321,7 @@ class ServiceNowTicket(ticket.Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to rewrite CC list')
+            raise
 
     def remove_cc(self, user):
         """
@@ -343,6 +350,7 @@ class ServiceNowTicket(ticket.Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to remove user(s) from CC list')
+            raise
 
     def _prepare_ticket_fields(self, fields):
         """
@@ -363,6 +371,49 @@ class ServiceNowTicket(ticket.Ticket):
                 fields['u_email_from_address'] = value
                 fields.pop(key)
         return fields
+
+
+def test():
+    table = 'x_redha_pnt_devops_table'
+    server = 'https://redhatqa.service-now.com'
+    user = 'pnt_test_api'
+    f = open('/etc/servicenow-pass.conf')
+    pwd = f.readline()[:-1] # move to system env instead
+    auth = (user,pwd)
+
+    ticket = ServiceNowTicket(server, table, auth)
+    description = ('This is just a simple test for ticketutil library. Calling '
+                   'ServiceNowTicket class you are able to create tickets in '
+                   'the ServiceNow automatically. You need however to provide '
+                   'username and password (at the moment only basic auth is '
+                   'supported. Module created by pzubaty@redhat.com')
+
+    ticket.create(short_description='TEST adding SNow API into ticketutil',
+                  description=description,
+                  category='Communication',
+                  item='ServiceNow')
+    ticket.close_requests_session()
+
+
+def test_comment(ticket_id):
+    table = 'x_redha_pnt_devops_table'
+    server = 'https://redhatqa.service-now.com'
+    user = 'pnt_test_api'
+
+    pwd = f.readline()[:-1]
+    auth = (user,pwd)
+
+    ticket = ServiceNowTicket(server, table, auth, ticket_id)
+    print(ticket.get_ticket_content())
+    ticket.add_comment('This is test of adding CC to SNow ticket, sorry for incovenience.')
+    ticket.edit(assigned_to = 'pzubaty', priority = '3',
+                email_from = 'pzubaty@redhat.com', category='Application',
+                hostname_affected = '127.0.0.1')
+    # ticket.rewrite_cc(['pzubaty@redhat.com', 'dranck@redhat.com'])
+    ticket.remove_cc(['dranck@redhat.com', 'dranck.com'])
+    ticket.add_cc('pzubaty@redhat.com')
+    ticket.change_status('Pending')
+    ticket.close_requests_session()
 
 
 def main():
