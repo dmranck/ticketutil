@@ -3,6 +3,8 @@ import logging
 
 import requests
 
+import mimetypes
+
 from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
@@ -232,25 +234,29 @@ class BugzillaTicket(ticket.Ticket):
             logging.error("Error adding comment to ticket")
             logging.error(e.args[0])
 
-    def add_attachment(self, data, **kwargs):
+    def add_attachment(self, data, file_name, summary, **kwargs):
         """
-        :param status: Status to change to.
+        :param data: The content of the attachment which is base64 encoded.
+        :param file_name: The "file name" that will be displayed in the UI for this attachment.
+        :param summary: A short string describing the attachment.
         :return:
         """
         if not self.ticket_id:
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
             return
 
+        # Read the contents from the file path, guess the mimetypes and update the params.
         f = open(data, "+rb")
-        file_name = f.read()
-
-        content = kwargs['content_type']
-        if content == "image/png":
-            data = base64.standard_b64encode(file_name).decode('utf-8')
-        else:
-            data = base64.standard_b64encode(file_name).decode('ascii')
-
-        params = {"data": data}
+        f_name = f.read()
+        content_type = mimetypes.guess_type(data)[0]
+        if not content_type:
+            content_type = 'application/octet-stream'
+        data = base64.standard_b64encode(f_name).decode()
+        params = {"data": data,
+                  "is_patch": False,
+                  "summary": summary,
+                  "file_name": file_name,
+                  "content_type": content_type}
         params.update(kwargs)
 
         # Attempt to change status of ticket.

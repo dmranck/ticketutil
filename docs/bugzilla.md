@@ -19,6 +19,7 @@ http://bugzilla.readthedocs.io/en/latest/api/index.html
 - [change_status()](#status)
 - [remove_cc()](#remove_cc)
 - [add_cc()](#add_cc)
+- [add_attachment()](#add_attachment)
 
 ### create(self, summary, description, \*\*kwargs) <a name="create"></a>
 
@@ -107,3 +108,16 @@ users.
 ```python
 t.add_cc(['username1@mail.com', 'username2@mail.com'])
 ```
+
+### add_attachment(self, data, file_name, summary, \*\*kwargs ) <a name="add_attachment"></a>
+
+Add attachment in a Bugzilla ticket. Keyword arguments are used to 
+specify ticket fields if any.
+
+```python
+t.add_attachment(file_name='e Name to be displayed on UI',
+                 data='Location(path) or contents of the attachment',
+                 summary='A short string describing the attachment.')
+```
+
+
