@@ -264,10 +264,10 @@ class BugzillaTicket(ticket.Ticket):
             r = self.s.post("{0}/{1}/attachment".format(self.rest_url, self.ticket_id), json=params, headers=headers)
             r.raise_for_status()
             if 'message' in r.json():
-                logging.error("Change status error message: {0}".format(r.json()['message']))
+                logging.error("Add attachment: {0}".format(r.json()['message']))
                 return
-            logging.debug("Adding attachment for the ticket: Status Code: {0}".format(r.status_code))
-            logging.info("Added a new attachment for: {0} - {1}".format(self.ticket_id, self.ticket_url))
+            logging.debug("Adding attachment to ticket: Status Code: {0}".format(r.status_code))
+            logging.info("Added a new attachment to: {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error changing status of ticket")
             logging.error(e.args[0])

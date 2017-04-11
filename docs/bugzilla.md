@@ -109,7 +109,7 @@ users.
 t.add_cc(['username1@mail.com', 'username2@mail.com'])
 ```
 
-### add_attachment(self, data, file_name, summary, \*\*kwargs ) <a name="add_attachment"></a>
+### add_attachment(self, file_name, data, summary, \*\*kwargs ) <a name="add_attachment"></a>
 
 Add attachment in a Bugzilla ticket. Keyword arguments are used to specify
 additional attachment options.
