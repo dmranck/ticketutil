@@ -1,4 +1,6 @@
+import base64
 import logging
+import mimetypes
 
 import requests
 
@@ -229,6 +231,45 @@ class BugzillaTicket(ticket.Ticket):
             logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error adding comment to ticket")
+            logging.error(e.args[0])
+
+    def add_attachment(self, file_name, data, summary, **kwargs):
+        """
+        :param file_name: The "file name" that will be displayed in the UI for this attachment.
+        :param data: The content of the attachment which is base64 encoded.
+        :param summary: A short string describing the attachment.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        # Read the contents from the file path, guess the mimetypes and update the params.
+        f = open(data, "rb")
+        file_content = f.read()
+        content_type = mimetypes.guess_type(data)[0]
+        if not content_type:
+            content_type = 'application/octet-stream'
+        file_content = base64.standard_b64encode(file_content).decode()
+        params = {"file_name": file_name,
+                  "data": file_content,
+                  "summary": summary,
+                  "is_patch": False,
+                  "content_type": content_type}
+        params.update(kwargs)
+
+        # Attempt to change status of ticket.
+        try:
+            headers = {"Content-Type": "application/json"}
+            r = self.s.post("{0}/{1}/attachment".format(self.rest_url, self.ticket_id), json=params, headers=headers)
+            r.raise_for_status()
+            if 'message' in r.json():
+                logging.error("Add attachment: {0}".format(r.json()['message']))
+                return
+            logging.debug("Adding attachment to ticket: Status Code: {0}".format(r.status_code))
+            logging.info("Added a new attachment to: {0} - {1}".format(self.ticket_id, self.ticket_url))
+        except requests.RequestException as e:
+            logging.error("Error adding attachment to ticket")
             logging.error(e.args[0])
 
     def change_status(self, status, **kwargs):

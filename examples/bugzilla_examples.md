@@ -88,6 +88,9 @@ t = BugzillaTicket(<bugzilla_url>,
 t.add_comment('Test Comment')
 t.edit(priority='low',
        severity='low')
+t.add_attchment(file_name='test_attachment.patch',
+                data=<contents/file-location>,
+                summary=<summary describing attachment>)
        
 # Work with a different ticket.
 t.set_ticket_id(<new_ticket_id>)
