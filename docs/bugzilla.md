@@ -111,11 +111,11 @@ t.add_cc(['username1@mail.com', 'username2@mail.com'])
 
 ### add_attachment(self, data, file_name, summary, \*\*kwargs ) <a name="add_attachment"></a>
 
-Add attachment in a Bugzilla ticket. Keyword arguments are used to 
-specify ticket fields if any.
+Add attachment in a Bugzilla ticket. Keyword arguments are used to specify
+additional attachment options.
 
 ```python
-t.add_attachment(file_name='e Name to be displayed on UI',
+t.add_attachment(file_name='Name to be displayed on UI',
                  data='Location(path) or contents of the attachment',
                  summary='A short string describing the attachment.')
 ```
