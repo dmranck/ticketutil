@@ -269,7 +269,7 @@ class BugzillaTicket(ticket.Ticket):
             logging.debug("Adding attachment to ticket: Status Code: {0}".format(r.status_code))
             logging.info("Added a new attachment to: {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
-            logging.error("Error changing status of ticket")
+            logging.error("Error adding attachment to ticket")
             logging.error(e.args[0])
 
     def change_status(self, status, **kwargs):
