@@ -45,7 +45,8 @@ MOCK_RESULT = {'number': TICKET_ID,
 
 
 class FakeResponse(object):
-
+    """Mock response coming from server via Requests
+    """
     def __init__(self, status_code=666):
         self.status_code = status_code
         self.content = "ABC"
@@ -56,6 +57,9 @@ class FakeResponse(object):
             raise requests.RequestException
 
     def json(self, data=None):
+        """Returns json-like mock result of the ServiceNow REST API query
+        :param data: append extra data to simulate expected result
+        """
         result = MOCK_RESULT
         if data:
             result.update(data)
@@ -63,16 +67,16 @@ class FakeResponse(object):
 
 
 class FakeResponseQuery(FakeResponse):
-    """ServiceNow API returns response on query,
+    """Response on search query,
     eg. '<REST_URL>?sysparm_query=GOTOnumber%3D<TICKET_ID>'
     """
-
     def json(self):
         return {'result': [MOCK_RESULT]}
 
 
 class FakeSession(object):
-
+    """Mocks Requests session behavior
+    """
     def __init__(self, status_code=666):
         self.status_code = status_code
         self.headers = {'Content-Type': 'application/json', }
@@ -88,7 +92,8 @@ class FakeSession(object):
 
 
 class FakeSessionQuery(FakeSession):
-
+    """Mocks Requests session behavior for search query
+    """
     def get(self, url):
         return FakeResponseQuery(status_code=self.status_code)
 
@@ -98,7 +103,11 @@ def mock_get_ticket_content(ticket_id):
 
 
 class TestServiceNowTicket(TestCase):
-
+    """ServiceNowTicket unit tests
+    Depending on REST API request following objects are being called and used:
+    _create_requests_session->FakeSession->FakeResponse
+    _create_requests_session->FakeSessionQuery->FakeResponseQuery
+    """
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     def test_get_ticket_content(self, mock_session):
         mock_session.return_value = FakeSessionQuery()
