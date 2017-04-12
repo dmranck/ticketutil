@@ -10,12 +10,22 @@ __author__ = 'dranck, rnester, kshirsal'
 # Disable warnings for requests because we aren't doing certificate verification
 requests.packages.urllib3.disable_warnings()
 
-DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
+LOG_LEVEL = os.environ.get('TICKETUTIL_LOG_LEVEL', 'INFO')
 
-if DEBUG == 'True':
+if LOG_LEVEL == 'DEBUG':
     logging.basicConfig(level=logging.DEBUG)
-else:
+elif LOG_LEVEL == 'INFO':
     logging.basicConfig(level=logging.INFO)
+elif LOG_LEVEL == 'WARNING':
+    logging.basicConfig(level=logging.WARNING)
+elif LOG_LEVEL == 'ERROR':
+    logging.basicConfig(level=logging.ERROR)
+elif LOG_LEVEL == 'CRITICAL':
+    logging.basicConfig(level=logging.CRITICAL)
+
+
+class TicketException(Exception):
+    """An issue occurred when performing a ticketing operation."""
 
 
 class Ticket(object):
@@ -31,19 +41,47 @@ class Ticket(object):
         else:
             self.ticket_url = None
 
-        # Create our requests session below.
+        # Create our requests session below. Raise an exception if a session object is not returned.
         self.s = self._create_requests_session()
+        if not self.s:
+            raise TicketException("Error authenticating to {0}.".format(self.auth_url))
+
+        # TODO: Add get_projects() method to all tools and verify project is valid.
+        # TODO: If project is not valid, raise exception and close requests session,
+        # TODO: or create a set_project() method that the user can set project through?
+
+        # TODO: Add get_tickets() method to all tools and verify ticket_id is valid
+        # TODO: If ticket_id is not valid, raise exception and close requests session,
+        # TODO: or prompt user to set ticket_id with set_ticket_id()?
 
     def set_ticket_id(self, ticket_id):
         """
-        Sets the ticket_id and ticket_url instance vars for the current ticket object.
+        Sets the ticket_id and ticket_url instance vars for the current Ticket object.
         :param ticket_id: Ticket id you would like to set.
         :return:
         """
+        # TODO: Add get_tickets() method to all tools and verify ticket_id is valid
+
         self.ticket_id = ticket_id
         self.ticket_url = self._generate_ticket_url()
 
         logging.info("Current ticket: {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+    def get_ticket_id(self):
+        """
+        Returns the ticket_id for the current Ticket object.
+        :return: self.ticket_id: The ID of the ticket.
+        """
+        logging.info("Returned ticket id: {0}".format(self.ticket_id))
+        return self.ticket_id
+
+    def get_ticket_url(self):
+        """
+        Returns the ticket_url for the current Ticket object.
+        :return: self.ticket_url: The URL of the ticket.
+        """
+        logging.info("Returned ticket url: {0}".format(self.ticket_url))
+        return self.ticket_url
 
     def _create_requests_session(self):
         """
@@ -67,19 +105,21 @@ class Ticket(object):
             r.raise_for_status()
             logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
             logging.info("Successfully authenticated to {0}".format(self.ticketing_tool))
+            return s
         # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
         # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
         except requests.RequestException as e:
-            logging.error("Error authenticating to {0}. No valid kerberos principal found.".format(self.auth_url))
+            logging.error("Error authenticating to {0}.".format(self.auth_url))
             logging.error(e.args[0])
-        return s
+            s.close()
 
     def close_requests_session(self):
         """
         Closes requests session for Ticket object.
         :return:
         """
-        self.s.close()
+        if self.s:
+            self.s.close()
 
 
 def _get_kerberos_principal():

@@ -3,17 +3,9 @@ import logging
 import requests
 
 # from . import ticket
-from ticketutil.ticket import Ticket
+from ticketutil.ticket import Ticket, LOG_LEVEL
 
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
-
-DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
-
-if DEBUG == 'True':
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
-
 
 STATE = {'new':'0',
          'open':'1',
@@ -373,47 +365,12 @@ class ServiceNowTicket(Ticket):
         return fields
 
 
-def test():
-    table = 'x_redha_pnt_devops_table'
-    server = 'https://redhatqa.service-now.com'
-    user = 'pnt_test_api'
-    f = open('/etc/servicenow-pass.conf')
-    pwd = f.readline()[:-1] # move to system env instead
-    auth = (user,pwd)
-
-    ticket = ServiceNowTicket(server, table, auth)
-    description = ('This is just a simple test for ticketutil library. Calling '
-                   'ServiceNowTicket class you are able to create tickets in '
-                   'the ServiceNow automatically. You need however to provide '
-                   'username and password (at the moment only basic auth is '
-                   'supported. Module created by pzubaty@redhat.com')
-
-    ticket.create(short_description='TEST adding SNow API into ticketutil',
-                  description=description,
-                  category='Communication',
-                  item='ServiceNow')
-    ticket.close_requests_session()
-
-
-def test_comment(ticket_id):
-    table = 'x_redha_pnt_devops_table'
-    server = 'https://redhatqa.service-now.com'
-    user = 'pnt_test_api'
-
-    pwd = f.readline()[:-1]
-    auth = (user,pwd)
-
-    ticket = ServiceNowTicket(server, table, auth, ticket_id)
-    print(ticket.get_ticket_content())
-    ticket.add_comment('This is test of adding CC to SNow ticket, sorry for incovenience.')
-    ticket.edit(assigned_to = 'pzubaty', priority = '3',
-                email_from = 'pzubaty@redhat.com', category='Application',
-                hostname_affected = '127.0.0.1')
-    # ticket.rewrite_cc(['pzubaty@redhat.com', 'dranck@redhat.com'])
-    ticket.remove_cc(['dranck@redhat.com', 'dranck.com'])
-    ticket.add_cc('pzubaty@redhat.com')
-    ticket.change_status('Pending')
-    ticket.close_requests_session()
+def DevOpsOne(server, table, sys_id):
+    """
+    Creates DevOps One URL of the existing ticket
+    """
+    return '{server}/pnt/?id=ticket&sys_id={sys_id}&table={table}'.format(
+            server=server, sys_id=sys_id, table=table)
 
 
 def main():
