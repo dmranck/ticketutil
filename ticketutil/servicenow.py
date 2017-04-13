@@ -2,7 +2,6 @@ import os
 import logging
 import requests
 
-# from . import ticket
 from ticketutil.ticket import Ticket, LOG_LEVEL
 
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
@@ -365,7 +364,7 @@ class ServiceNowTicket(Ticket):
         return fields
 
 
-def DevOpsOne(server, table, sys_id):
+def devops_one_url(server, table, sys_id):
     """
     Creates DevOps One URL of the existing ticket
     """
