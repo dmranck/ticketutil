@@ -79,6 +79,53 @@ class BugzillaTicket(ticket.Ticket):
             logging.error(e.args[0])
             s.close()
 
+    def _verify_project(self, project):
+        """
+        Queries the Bugzilla API to see if project is a valid project for the given Bugzilla instance.
+        :param project: The project you're verifying.
+        :return: True or False depending on if project is valid.
+        """
+        try:
+            r = self.s.get("{0}/rest/product/{1}".format(self.url, project.replace(" ", "%20")))
+            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            # Bugzilla's API returns 200 even if the project is not valid. We need to parse the response.
+            if r.json() == {"products": []}:
+                logging.error("Project {0} is not valid.".format(project))
+                return False
+            else:
+                logging.debug("Project {0} is valid".format(project))
+                return True
+        except requests.RequestException as e:
+            logging.error("Unexpected error occurred when verifying project.")
+            logging.error(e.args[0])
+            return False
+
+    def _verify_ticket_id(self, ticket_id):
+        """
+        Queries the Bugzilla API to see if ticket_id is a valid ticket for the given Bugzilla instance.
+        :param ticket_id: The ticket you're verifying.
+        :return: True or False depending on if ticket is valid.
+        """
+        try:
+            r = self.s.get("{0}/{1}".format(self.rest_url, ticket_id))
+            logging.debug("Verify ticket_id: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            error_responses = ["Bug #{0} does not exist.".format(ticket_id),
+                               "\\\"{0}\\\" is out of range for type integer".format(ticket_id),
+                               "\'{0}\' is not a valid bug number nor an alias to a bug.".format(ticket_id)]
+            # Bugzilla's API returns 200 even if the ticket is not valid. We need to parse the response.
+            if any(error in r.text for error in error_responses):
+                logging.error("Ticket {0} is not valid.".format(ticket_id))
+                return False
+            else:
+                logging.debug("Ticket {0} is valid".format(ticket_id))
+                return True
+        except requests.RequestException as e:
+            logging.error("Unexpected error occurred when verifying ticket_id.")
+            logging.error(e.args[0])
+            return False
+
     def create(self, summary, description, **kwargs):
         """
         Creates a ticket.

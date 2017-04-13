@@ -20,7 +20,7 @@ class RedmineTicket(ticket.Ticket):
         # Redmine URLs
         self.url = url
         self.rest_url = '{0}/issues'.format(self.url)
-        self.auth_url = '{0}/projects/{1}.json'.format(self.url, project)
+        self.auth_url = '{0}/projects.json'.format(self.url)
 
         # Call our parent class's init method which creates our requests session.
         super(RedmineTicket, self).__init__(project, ticket_id)
@@ -40,6 +40,38 @@ class RedmineTicket(ticket.Ticket):
             ticket_url = "{0}/{1}".format(self.rest_url, self.ticket_id)
 
         return ticket_url
+
+    def _verify_project(self, project):
+        """
+        Queries the Redmine API to see if project is a valid project for the given Redmine instance.
+        :param project: The project you're verifying.
+        :return: True or False depending on if project is valid.
+        """
+        try:
+            r = self.s.get("{0}/projects/{1}.json".format(self.url, project))
+            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            logging.debug("Project {0} is valid".format(project))
+            return True
+        except requests.RequestException as e:
+            logging.error("Project {0} is not valid.".format(project))
+            return False
+
+    def _verify_ticket_id(self, ticket_id):
+        """
+        Queries the Redmine API to see if ticket_id is a valid ticket for the given Redmine instance.
+        :param ticket_id: The ticket you're verifying.
+        :return: True or False depending on if ticket is valid.
+        """
+        try:
+            r = self.s.get("{0}/{1}.json".format(self.rest_url, ticket_id))
+            logging.debug("Verify ticket_id: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            logging.debug("Ticket {0} is valid".format(ticket_id))
+            return True
+        except requests.RequestException as e:
+            logging.error("Ticket {0} is not valid.".format(ticket_id))
+            return False
 
     def create(self, subject, description, **kwargs):
         """
