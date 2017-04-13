@@ -371,6 +371,11 @@ def _prepare_ticket_fields(fields):
     :param fields: Ticket fields.
     :return: fields: Ticket fields in the correct form for the ticketing tool.
     """
+    if "groups" in fields:
+        if not isinstance(fields["groups"], list):
+            fields["groups"] = [fields["groups"]]
+    fields["groups"] = {"add": fields["groups"]}
+
     for key, value in fields.items():
         if key == 'assignee':
             fields['assigned_to'] = value
