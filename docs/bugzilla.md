@@ -66,6 +66,7 @@ version='version'
 priority='high'
 severity='medium'
 alias='SomeAlias'
+groups='Group Name'
 ```
 
 ### add_comment(self, comment,\*\*kwargs ) <a name="comment"></a>
