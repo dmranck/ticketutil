@@ -29,8 +29,7 @@ fields.
 
 ```python
 t.create(summary='Ticket summary',
-         description='Ticket description',
-         groups='Group Name')
+         description='Ticket description')
 ```
 
 Tested create() ticket fields:
@@ -45,6 +44,7 @@ version='version'
 priority='high'
 severity='medium'
 alias='SomeAlias'
+groups='GroupName'
 ```
 
 ### edit(self, \*\*kwargs) <a name="edit"></a>
