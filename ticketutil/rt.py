@@ -39,6 +39,52 @@ class RTTicket(ticket.Ticket):
 
         return ticket_url
 
+    def _verify_project(self, project):
+        """
+        Queries the RT API to see if project is a valid project for the given RT instance.
+        :param project: The project you're verifying.
+        :return: True or False depending on if project is valid.
+        """
+        try:
+            r = self.s.get("{0}/queue/{1}".format(self.rest_url, project))
+            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            error_response = "No queue named {0} exists.".format(project)
+            # RT's API returns 200 even if the project is not valid. We need to parse the response.
+            if error_response in r.text:
+                logging.error("Project {0} is not valid.".format(project))
+                return False
+            else:
+                logging.debug("Project {0} is valid".format(project))
+                return True
+        except requests.RequestException as e:
+            logging.error("Unexpected error occurred when verifying project.")
+            logging.error(e.args[0])
+            return False
+
+    def _verify_ticket_id(self, ticket_id):
+        """
+        Queries the RT API to see if ticket_id is a valid ticket for the given RT instance.
+        :param ticket_id: The ticket you're verifying.
+        :return: True or False depending on if ticket is valid.
+        """
+        try:
+            r = self.s.get("{0}/ticket/{1}/show".format(self.rest_url, ticket_id))
+            logging.debug("Verify ticket_id: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            error_response = "Ticket {0} does not exist.".format(ticket_id)
+            # RT's API returns 200 even if the ticket is not valid. We need to parse the response.
+            if error_response in r.text:
+                logging.error("Ticket {0} is not valid.".format(ticket_id))
+                return False
+            else:
+                logging.debug("Ticket {0} is valid".format(ticket_id))
+                return True
+        except requests.RequestException as e:
+            logging.error("Unexpected error occurred when verifying ticket_id.")
+            logging.error(e.args[0])
+            return False
+
     def create(self, subject, text, **kwargs):
         """
         Creates a ticket.
