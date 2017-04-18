@@ -132,7 +132,7 @@ class BugzillaTicket(ticket.Ticket):
                   "description": description}
 
         # Some of the ticket fields need to be in a specific form for the tool.
-        fields = _prepare_ticket_fields(fields)
+        fields = _prepare_ticket_fields("create", fields)
 
         # Update params dict with items from fields dict.
         params.update(fields)
@@ -189,7 +189,7 @@ class BugzillaTicket(ticket.Ticket):
             return
 
         # Some of the ticket fields need to be in a specific form for the tool.
-        kwargs = _prepare_ticket_fields(kwargs)
+        kwargs = _prepare_ticket_fields("edit", kwargs)
         params = kwargs
 
         # Attempt to edit ticket.
@@ -365,16 +365,23 @@ class BugzillaTicket(ticket.Ticket):
             logging.error(e.args[0])
 
 
-def _prepare_ticket_fields(fields):
+def _prepare_ticket_fields(operation, fields):
     """
     Makes sure each key value pair in the fields dictionary is in the correct form.
     :param fields: Ticket fields.
     :return: fields: Ticket fields in the correct form for the ticketing tool.
     """
+    if "edit" in operation:
+        if "groups" in fields:
+            if not isinstance(fields["groups"], list):
+                fields["groups"] = [fields["groups"]]
+        fields["groups"] = {"add": fields["groups"]}
+
     for key, value in fields.items():
         if key == 'assignee':
             fields['assigned_to'] = value
             fields.pop('assignee')
+
     return fields
 
 

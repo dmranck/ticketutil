@@ -62,7 +62,8 @@ t.create(summary='Ticket summary',
          priority='high',
          severity='medium',
          assignee='username@mail.com',
-         qa_contact='username@mail.com)
+         qa_contact='username@mail.com',
+         groups='beta')
 t.add_comment('Test Comment')
 t.edit(priority='medium',
        qa_contact='username@mail.com')
@@ -87,7 +88,9 @@ t = BugzillaTicket(<bugzilla_url>,
 # Perform some common ticketing operations.
 t.add_comment('Test Comment')
 t.edit(priority='low',
-       severity='low')
+       severity='low',
+       groups='beta')
+       
 t.add_attchment(file_name='test_attachment.patch',
                 data=<contents/file-location>,
                 summary=<summary describing attachment>)

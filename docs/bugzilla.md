@@ -44,6 +44,7 @@ version='version'
 priority='high'
 severity='medium'
 alias='SomeAlias'
+groups='GroupName'
 ```
 
 ### edit(self, \*\*kwargs) <a name="edit"></a>
@@ -66,6 +67,7 @@ version='version'
 priority='high'
 severity='medium'
 alias='SomeAlias'
+groups='Group Name'
 ```
 
 ### add_comment(self, comment,\*\*kwargs ) <a name="comment"></a>
