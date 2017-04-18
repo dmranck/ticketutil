@@ -29,7 +29,8 @@ fields.
 
 ```python
 t.create(summary='Ticket summary',
-         description='Ticket description')
+         description='Ticket description',
+         groups='Group Name')
 ```
 
 Tested create() ticket fields:
