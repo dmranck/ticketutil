@@ -2,17 +2,9 @@ import os
 import logging
 import requests
 
-from . import ticket
+from ticketutil.ticket import Ticket
 
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
-
-DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
-
-if DEBUG == 'True':
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
-
 
 STATE = {'new':'0',
          'open':'1',
@@ -27,7 +19,7 @@ STATE = {'new':'0',
          'closed cancelled':'8'}
 
 
-class ServiceNowTicket(ticket.Ticket):
+class ServiceNowTicket(Ticket):
     """
     ServiceNow Ticket object. Contains ServiceNow specific methods for working
     with tickets.
@@ -74,10 +66,9 @@ class ServiceNowTicket(ticket.Ticket):
         :param ticked_id: ticked number, if not set self.ticket_id is used
         :return: ticket content
         """
+        if ticket_id is None:
+            ticket_id = self.ticket_id
         try:
-            if ticket_id is None:
-                ticket_id = self.ticket_id
-
             self.s.headers.update({'Content-Type': 'application/json'})
             url = self.rest_url + '?sysparm_query=GOTOnumber%3D'
             url += ticket_id
@@ -90,7 +81,8 @@ class ServiceNowTicket(ticket.Ticket):
             return ticket_content['result'][0]
         except requests.RequestException as e:
             logging.error("Error while getting ticket content")
-            logging.error(e.args[0])
+            logging.error(e.args)
+            return False
 
     def _generate_ticket_url(self):
         """
@@ -139,7 +131,7 @@ class ServiceNowTicket(ticket.Ticket):
             logging.error('item {}'.format(msg))
             return
 
-
+        self.ticket_content = None
         fields = {'description': description,
                   'short_description': short_description,
                   'u_category': category,
@@ -187,7 +179,7 @@ class ServiceNowTicket(ticket.Ticket):
                                                           self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error creating ticket")
-            logging.error(e.args[0])
+            logging.error(e.args)
 
     def change_status(self, status):
         """
@@ -211,6 +203,7 @@ class ServiceNowTicket(ticket.Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to change ticket status')
+            return False
 
     def edit(self, **kwargs):
         """
@@ -246,7 +239,8 @@ class ServiceNowTicket(ticket.Ticket):
                                                           self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error editing ticket")
-            logging.error(e.args[0])
+            logging.error(e.args)
+            return False
 
     def add_comment(self, comment):
         """
@@ -264,6 +258,7 @@ class ServiceNowTicket(ticket.Ticket):
             logging.info('Comment created successfully')
         except requests.RequestException as e:
             logging.error('Failed to add the comment')
+            return False
 
     def add_cc(self, user):
         """
@@ -292,6 +287,7 @@ class ServiceNowTicket(ticket.Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to add user(s) to CC list')
+            return False
 
     def rewrite_cc(self, user):
         """
@@ -315,6 +311,7 @@ class ServiceNowTicket(ticket.Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to rewrite CC list')
+            return False
 
     def remove_cc(self, user):
         """
@@ -343,6 +340,7 @@ class ServiceNowTicket(ticket.Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to remove user(s) from CC list')
+            return False
 
     def _prepare_ticket_fields(self, fields):
         """
@@ -363,6 +361,14 @@ class ServiceNowTicket(ticket.Ticket):
                 fields['u_email_from_address'] = value
                 fields.pop(key)
         return fields
+
+
+def devops_one_url(server, table, sys_id):
+    """
+    Creates DevOps One URL of the existing ticket
+    """
+    return '{server}/pnt/?id=ticket&sys_id={sys_id}&table={table}'.format(
+            server=server, sys_id=sys_id, table=table)
 
 
 def main():
