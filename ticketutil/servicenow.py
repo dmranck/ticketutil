@@ -2,7 +2,7 @@ import os
 import logging
 import requests
 
-from ticketutil.ticket import Ticket, LOG_LEVEL
+from ticketutil.ticket import Ticket
 
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
 
@@ -82,7 +82,7 @@ class ServiceNowTicket(Ticket):
         except requests.RequestException as e:
             logging.error("Error while getting ticket content")
             logging.error(e.args)
-            raise
+            return False
 
     def _generate_ticket_url(self):
         """
@@ -131,7 +131,7 @@ class ServiceNowTicket(Ticket):
             logging.error('item {}'.format(msg))
             return
 
-
+        self.ticket_content = None
         fields = {'description': description,
                   'short_description': short_description,
                   'u_category': category,
@@ -180,7 +180,6 @@ class ServiceNowTicket(Ticket):
         except requests.RequestException as e:
             logging.error("Error creating ticket")
             logging.error(e.args)
-            raise
 
     def change_status(self, status):
         """
@@ -204,7 +203,7 @@ class ServiceNowTicket(Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to change ticket status')
-            raise
+            return False
 
     def edit(self, **kwargs):
         """
@@ -241,7 +240,7 @@ class ServiceNowTicket(Ticket):
         except requests.RequestException as e:
             logging.error("Error editing ticket")
             logging.error(e.args)
-            raise
+            return False
 
     def add_comment(self, comment):
         """
@@ -259,7 +258,7 @@ class ServiceNowTicket(Ticket):
             logging.info('Comment created successfully')
         except requests.RequestException as e:
             logging.error('Failed to add the comment')
-            raise
+            return False
 
     def add_cc(self, user):
         """
@@ -288,7 +287,7 @@ class ServiceNowTicket(Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to add user(s) to CC list')
-            raise
+            return False
 
     def rewrite_cc(self, user):
         """
@@ -312,7 +311,7 @@ class ServiceNowTicket(Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to rewrite CC list')
-            raise
+            return False
 
     def remove_cc(self, user):
         """
@@ -341,7 +340,7 @@ class ServiceNowTicket(Ticket):
                          .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to remove user(s) from CC list')
-            raise
+            return False
 
     def _prepare_ticket_fields(self, fields):
         """

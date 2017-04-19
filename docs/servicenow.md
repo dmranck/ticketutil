@@ -31,6 +31,7 @@ For more information about REST API and fields see ServiceNow's Wiki:
 - [add_cc()](#add_cc)
 - [rewrite_cc()](#rewrite_cc)
 - [remove_cc()](#remove_cc)
+- [devops_one_url()](#devops_one)
 
 ### set_ticket_id(self, ticket_id)
 
@@ -159,4 +160,14 @@ one email address.
 
 ```python
 t.remove_cc(['username@domain.com', 'user3@domain.com'])
+```
+
+### devops_one_url(server, table, sys_id) <a name="devops_one"></a>
+
+This function is not part of the ServiceNowTicket, but it's related. It creates
+DevOps One URL of the existing ticket supplied by server name, table name and
+ticket sys_id.
+
+```python
+url = devops_one_url(server, table, sys_id)
 ```

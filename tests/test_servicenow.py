@@ -28,7 +28,7 @@ STATE = {'new': '0',
          'closed completed': '3',
          'closed cancelled': '8'}
 
-DESCRIPTION = 'full-lenght ticket description'
+DESCRIPTION = 'full-length ticket description'
 SHORT_DESCRIPTION = 'short description'
 CATEGORY = 'category'
 ITEM = 'item'
@@ -119,8 +119,8 @@ class TestServiceNowTicket(TestCase):
     def test_get_ticket_content_unexpected_response(self, mock_session):
         mock_session.return_value = FakeSessionQuery(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
-        with self.assertRaises(requests.RequestException):
-            ticket.get_ticket_content(ticket_id=TICKET_ID)
+        result = ticket.get_ticket_content(ticket_id=TICKET_ID)
+        self.assertEqual(result, False)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     def test_create(self, mock_session):
@@ -133,8 +133,8 @@ class TestServiceNowTicket(TestCase):
     def test_create_unexpected_response(self, mock_session):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
-        with self.assertRaises(requests.RequestException):
-            ticket.create(DESCRIPTION, SHORT_DESCRIPTION, CATEGORY, ITEM)
+        ticket.create(DESCRIPTION, SHORT_DESCRIPTION, CATEGORY, ITEM)
+        self.assertEqual(ticket.ticket_content, None)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
@@ -155,8 +155,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        with self.assertRaises(requests.RequestException):
-            ticket.change_status('Pending')
+        result = ticket.change_status('Pending')
+        self.assertEqual(result, False)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
@@ -177,8 +177,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        with self.assertRaises(requests.RequestException):
-            ticket.edit(priority='2', impact='2')
+        result = ticket.edit(priority='2', impact='2')
+        self.assertEqual(result, False)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
@@ -199,8 +199,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        with self.assertRaises(requests.RequestException):
-            ticket.add_comment('New comment')
+        result = ticket.add_comment('New comment')
+        self.assertEqual(result, False)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
@@ -221,8 +221,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        with self.assertRaises(requests.RequestException):
-            ticket.add_cc('pzubaty@redhat.com')
+        result = ticket.add_cc('pzubaty@redhat.com')
+        self.assertEqual(result, False)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
@@ -244,8 +244,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        with self.assertRaises(requests.RequestException):
-            ticket.rewrite_cc(['pzubaty@redhat.com', 'dranck@redhat.com'])
+        result = ticket.rewrite_cc(['pzubaty@redhat.com', 'dranck@redhat.com'])
+        self.assertEqual(result, False)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
@@ -266,8 +266,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        with self.assertRaises(requests.RequestException):
-            ticket.remove_cc(['dranck@redhat.com', 'dranck.com'])
+        result = ticket.remove_cc(['dranck@redhat.com', 'dranck.com'])
+        self.assertEqual(result, False)
 
 if __name__ == '__main__':
     main()
