@@ -169,5 +169,5 @@ DevOps One URL of the existing ticket supplied by server name, table name and
 ticket sys_id.
 
 ```python
-url = devops_one_url(server, table, sys_id)
+url = devops_one_url(<servicenow_url>, <table_name>, <sys_id>)
 ```
