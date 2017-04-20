@@ -1,21 +1,12 @@
+import base64
 import logging
-import os
+import mimetypes
 
 import requests
 
 from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
-
-# Disable warnings for requests because we aren't doing certificate verification
-requests.packages.urllib3.disable_warnings()
-
-DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
-
-if DEBUG == 'True':
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
 
 
 class BugzillaTicket(ticket.Ticket):
@@ -25,15 +16,8 @@ class BugzillaTicket(ticket.Ticket):
     def __init__(self, url, project, auth=None, ticket_id=None):
         self.ticketing_tool = 'Bugzilla'
 
-        # Kerberos is default auth if the auth param is not specified.
-        # A tuple of the form (<username>, <password>) can also be passed in.
-        if isinstance(auth, tuple):
-            self.auth = auth
-            username, password = auth
-            self.credentials = {"login": username, "password": password}
-        else:
-            self.auth = 'kerberos'
-        self.token = None
+        self.auth = auth
+        self.credentials = None
 
         # BZ URLs
         self.url = url
@@ -63,25 +47,84 @@ class BugzillaTicket(ticket.Ticket):
         We're using a Session to persist cookies across all requests made from the Session instance.
         :return s: Requests Session.
         """
+        # Kerberos Auth
         if self.auth == 'kerberos':
             return super(BugzillaTicket, self)._create_requests_session()
 
-        # If basic authentication is passed in, generate a token to be used in all requests.
+        # Run the rest of this method for both HTTP Basic Auth and APIKey Auth
+
+        # HTTP Basic Auth
+        if isinstance(self.auth, tuple):
+            username, password = self.auth
+            self.credentials = {"login": username, "password": password}
+        # API Key Auth
+        elif 'api_key' in self.auth:
+            self.credentials = self.auth
+
+        s = requests.Session()
+        s.params.update(self.credentials)
+        s.verify = False
+
+        # Try to authenticate to auth_url.
         try:
-            s = requests.Session()
-            r = s.get(self.auth_url, params=self.credentials, verify=False)
+            r = s.get(self.auth_url)
             r.raise_for_status()
-            resp = r.json()
-            self.token = resp['token']
             logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
             logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
             return s
-
         # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
         # If authentication wasn't successful, a token will not be in resp. Add KeyError as exception.
         except (KeyError, requests.RequestException) as e:
-            logging.error("Error authenticating to {0}. No valid credentials were provided.".format(self.auth_url))
+            logging.error("Error authenticating to {0}.".format(self.auth_url))
             logging.error(e.args[0])
+            s.close()
+
+    def _verify_project(self, project):
+        """
+        Queries the Bugzilla API to see if project is a valid project for the given Bugzilla instance.
+        :param project: The project you're verifying.
+        :return: True or False depending on if project is valid.
+        """
+        try:
+            r = self.s.get("{0}/rest/product/{1}".format(self.url, project.replace(" ", "%20")))
+            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            # Bugzilla's API returns 200 even if the project is not valid. We need to parse the response.
+            if r.json() == {"products": []}:
+                logging.error("Project {0} is not valid.".format(project))
+                return False
+            else:
+                logging.debug("Project {0} is valid".format(project))
+                return True
+        except requests.RequestException as e:
+            logging.error("Unexpected error occurred when verifying project.")
+            logging.error(e.args[0])
+            return False
+
+    def _verify_ticket_id(self, ticket_id):
+        """
+        Queries the Bugzilla API to see if ticket_id is a valid ticket for the given Bugzilla instance.
+        :param ticket_id: The ticket you're verifying.
+        :return: True or False depending on if ticket is valid.
+        """
+        try:
+            r = self.s.get("{0}/{1}".format(self.rest_url, ticket_id))
+            logging.debug("Verify ticket_id: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            error_responses = ["Bug #{0} does not exist.".format(ticket_id),
+                               "\\\"{0}\\\" is out of range for type integer".format(ticket_id),
+                               "\'{0}\' is not a valid bug number nor an alias to a bug.".format(ticket_id)]
+            # Bugzilla's API returns 200 even if the ticket is not valid. We need to parse the response.
+            if any(error in r.text for error in error_responses):
+                logging.error("Ticket {0} is not valid.".format(ticket_id))
+                return False
+            else:
+                logging.debug("Ticket {0} is valid".format(ticket_id))
+                return True
+        except requests.RequestException as e:
+            logging.error("Unexpected error occurred when verifying ticket_id.")
+            logging.error(e.args[0])
+            return False
 
     def create(self, summary, description, **kwargs):
         """
@@ -104,6 +147,8 @@ class BugzillaTicket(ticket.Ticket):
 
         # Create our ticket.
         self._create_ticket_request(params)
+        ticket_id = self.ticket_id
+        return ticket_id
 
     def _create_ticket_parameters(self, summary, description, fields):
         """
@@ -134,7 +179,7 @@ class BugzillaTicket(ticket.Ticket):
                   "description": description}
 
         # Some of the ticket fields need to be in a specific form for the tool.
-        fields = _prepare_ticket_fields(fields)
+        fields = _prepare_ticket_fields("create", fields)
 
         # Update params dict with items from fields dict.
         params.update(fields)
@@ -149,9 +194,6 @@ class BugzillaTicket(ticket.Ticket):
         """
         # Attempt to create ticket.
         try:
-            if self.token:
-                params['token'] = self.token
-
             r = self.s.post(self.rest_url, json=params)
             r.raise_for_status()
             logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
@@ -194,11 +236,8 @@ class BugzillaTicket(ticket.Ticket):
             return
 
         # Some of the ticket fields need to be in a specific form for the tool.
-        kwargs = _prepare_ticket_fields(kwargs)
-
+        kwargs = _prepare_ticket_fields("edit", kwargs)
         params = kwargs
-        if self.token:
-            params['token'] = self.token
 
         # Attempt to edit ticket.
         try:
@@ -213,11 +252,12 @@ class BugzillaTicket(ticket.Ticket):
                 return
             logging.debug("Editing Ticket: Status Code: {0}".format(r.status_code))
             logging.info("Edited ticket with the mentioned fields {0} - {1}".format(self.ticket_id, self.ticket_url))
+
         except requests.RequestException as e:
             logging.error("Error editing ticket")
             logging.error(e.args[0])
 
-    def add_comment(self, comment):
+    def add_comment(self, comment, **kwargs):
         """
         Adds a comment to a Bugzilla ticket.
         :param comment: A string representing the comment to be added.
@@ -227,18 +267,56 @@ class BugzillaTicket(ticket.Ticket):
             logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
             return
 
-        params = {'comment': comment}
+        params = {"comment": comment}
+        params.update(kwargs)
 
         # Attempt to add comment to ticket.
         try:
-            if self.token:
-                params['token'] = self.token
             r = self.s.post("{0}/{1}/comment".format(self.rest_url, self.ticket_id), json=params)
             r.raise_for_status()
             logging.debug("Add comment: Status Code: {0}".format(r.status_code))
             logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error adding comment to ticket")
+            logging.error(e.args[0])
+
+    def add_attachment(self, file_name, data, summary, **kwargs):
+        """
+        :param file_name: The "file name" that will be displayed in the UI for this attachment.
+        :param data: The content of the attachment which is base64 encoded.
+        :param summary: A short string describing the attachment.
+        :return:
+        """
+        if not self.ticket_id:
+            logging.error("No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(ticket_id)")
+            return
+
+        # Read the contents from the file path, guess the mimetypes and update the params.
+        f = open(data, "rb")
+        file_content = f.read()
+        content_type = mimetypes.guess_type(data)[0]
+        if not content_type:
+            content_type = 'application/octet-stream'
+        file_content = base64.standard_b64encode(file_content).decode()
+        params = {"file_name": file_name,
+                  "data": file_content,
+                  "summary": summary,
+                  "is_patch": False,
+                  "content_type": content_type}
+        params.update(kwargs)
+
+        # Attempt to change status of ticket.
+        try:
+            headers = {"Content-Type": "application/json"}
+            r = self.s.post("{0}/{1}/attachment".format(self.rest_url, self.ticket_id), json=params, headers=headers)
+            r.raise_for_status()
+            if 'message' in r.json():
+                logging.error("Add attachment: {0}".format(r.json()['message']))
+                return
+            logging.debug("Adding attachment to ticket: Status Code: {0}".format(r.status_code))
+            logging.info("Added a new attachment to: {0} - {1}".format(self.ticket_id, self.ticket_url))
+        except requests.RequestException as e:
+            logging.error("Error adding attachment to ticket")
             logging.error(e.args[0])
 
     def change_status(self, status, **kwargs):
@@ -258,9 +336,6 @@ class BugzillaTicket(ticket.Ticket):
 
         # Attempt to change status of ticket.
         try:
-            if self.token:
-                params['token'] = self.token
-
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
             r.raise_for_status()
             if 'message' in r.json():
@@ -286,9 +361,6 @@ class BugzillaTicket(ticket.Ticket):
             params = {'cc': {'add': user}}
         else:
             params = {'cc': {'add': [user]}}
-
-        if self.token:
-            params['token'] = self.token
 
         # Attempt to edit ticket.
         try:
@@ -322,9 +394,6 @@ class BugzillaTicket(ticket.Ticket):
         else:
             params = {'cc': {'remove': [user]}}
 
-        if self.token:
-            params['token'] = self.token
-
         # Attempt to edit ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
@@ -343,16 +412,23 @@ class BugzillaTicket(ticket.Ticket):
             logging.error(e.args[0])
 
 
-def _prepare_ticket_fields(fields):
+def _prepare_ticket_fields(operation, fields):
     """
     Makes sure each key value pair in the fields dictionary is in the correct form.
     :param fields: Ticket fields.
     :return: fields: Ticket fields in the correct form for the ticketing tool.
     """
+    if "edit" in operation:
+        if "groups" in fields:
+            if not isinstance(fields["groups"], list):
+                fields["groups"] = [fields["groups"]]
+        fields["groups"] = {"add": fields["groups"]}
+
     for key, value in fields.items():
         if key == 'assignee':
             fields['assigned_to'] = value
             fields.pop('assignee')
+
     return fields
 
 
@@ -362,7 +438,6 @@ def main():
     :return:
     """
     print("Not directly executable")
-
 
 if __name__ == "__main__":
     main()

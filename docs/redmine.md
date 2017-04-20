@@ -2,7 +2,7 @@
 
 This document contains information on the methods available when working
 with a RedmineTicket object. A list of the Redmine fields that have 
-been tested when creating and editing tickets will be included. Because 
+been tested when creating and editing tickets is included. Because 
 each instance of Redmine can have custom fields and custom values, some 
 of the tested fields may not be applicable to certain instances of 
 Redmine. Additionally, your Redmine instance may contain ticket fields
@@ -24,6 +24,7 @@ methods, so you can use the name instead of having to look up the id.
 - [change_status()](#status)
 - [remove_watcher()](#remove_watcher)
 - [add_watcher()](#add_watcher)
+- [add_attachment()](#add_attachment)
 
 ### create(self, subject, description, \*\*kwargs) <a name="create"></a>
 
@@ -99,4 +100,12 @@ Adds watcher to a Redmine ticket. Accepts an email or username.
 
 ```python
 t.add_watcher('username')
+```
+
+### add_attachment(self, file_name) <a name="add_attachment"></a>
+
+Attaches a file to a Redmine ticket.
+
+```python
+t.add_attachment('filename.txt')
 ```

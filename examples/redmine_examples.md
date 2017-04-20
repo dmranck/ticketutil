@@ -28,7 +28,7 @@ create a RedmineTicket object with a url and project key (and with a
 ticket id when working with existing tickets), and the last step is 
 closing the Requests session with `t.close_requests_session()`.
 
-When creating a JIRA ticket, `subject` and `description` are 
+When creating a Redmine ticket, `subject` and `description` are 
 required parameters. Also, the Reporter is automatically filled in as
 the current username.
 
@@ -60,6 +60,7 @@ t.create(subject='Ticket subject',
 t.add_comment('Test Comment')
 t.edit(priority='Normal',
        due_date='2017-02-25')
+t.add_attachment('file_to_attach.txt')
 t.add_watcher('username1')
 t.remove_watcher('username2')
 t.change_status('Closed')

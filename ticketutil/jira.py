@@ -1,21 +1,10 @@
 import logging
-import os
 
 import requests
 
 from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
-
-# Disable warnings for requests because we aren't doing certificate verification
-requests.packages.urllib3.disable_warnings()
-
-DEBUG = os.environ.get('TICKETUTIL_DEBUG', 'False')
-
-if DEBUG == 'True':
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
 
 
 class JiraTicket(ticket.Ticket):
@@ -51,6 +40,46 @@ class JiraTicket(ticket.Ticket):
             ticket_url = "{0}/browse/{1}".format(self.url, self.ticket_id)
 
         return ticket_url
+
+    def _verify_project(self, project):
+        """
+        Queries the JIRA API to see if project is a valid project for the given JIRA instance.
+        :param project: The project you're verifying.
+        :return: True or False depending on if project is valid.
+        """
+        try:
+            r = self.s.get("{0}/rest/api/2/project/{1}".format(self.url, project))
+            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            logging.debug("Project {0} is valid".format(project))
+            return True
+        except requests.RequestException as e:
+            if r.json()['errorMessages'][0] == "No project could be found with key \'{0}\'.".format(project):
+                logging.error("Project {0} is not valid.".format(project))
+            else:
+                logging.error("Unexpected error occurred when verifying project.")
+                logging.error(e.args[0])
+            return False
+
+    def _verify_ticket_id(self, ticket_id):
+        """
+        Queries the JIRA API to see if ticket_id is a valid ticket for the given JIRA instance.
+        :param ticket_id: The ticket you're verifying.
+        :return: True or False depending on if ticket is valid.
+        """
+        try:
+            r = self.s.get("{0}/{1}".format(self.rest_url, ticket_id))
+            logging.debug("Verify ticket_id: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            logging.debug("Ticket {0} is valid".format(ticket_id))
+            return True
+        except requests.RequestException as e:
+            if r.json()['errorMessages'][0] == "Issue Does Not Exist":
+                logging.error("Ticket {0} is not valid.".format(ticket_id))
+            else:
+                logging.error("Unexpected error occurred when verifying ticket_id.")
+                logging.error(e.args[0])
+            return False
 
     def create(self, summary, description, **kwargs):
         """
@@ -350,7 +379,7 @@ class JiraTicket(ticket.Ticket):
 
         status_json = r.json()
         for status in status_json['transitions']:
-            if status['name'] == status_name:
+            if status['to']['name'] == status_name:
                 return status['id']
 
 

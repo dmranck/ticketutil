@@ -2,7 +2,7 @@
 
 This document contains information on the methods available when working
 with a JiraTicket object. A list of the JIRA fields that have 
-been tested when creating and editing tickets will be included. Because 
+been tested when creating and editing tickets is included. Because 
 each instance of JIRA can have custom fields and custom values, some 
 of the tested fields may not be applicable to certain instances of 
 JIRA. Additionally, your JIRA instance may contain ticket fields

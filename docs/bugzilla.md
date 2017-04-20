@@ -2,7 +2,7 @@
 
 This document contains information on the methods available when working
 with a BugzillaTicket object. A list of the Bugzilla fields that have 
-been tested when creating and editing tickets will be included. Because 
+been tested when creating and editing tickets is included. Because 
 each instance of Bugzilla can have custom fields and custom values, some 
 of the tested fields may not be applicable to certain instances of 
 Bugzilla. Additionally, your Bugzilla instance may contain ticket fields
@@ -19,6 +19,7 @@ http://bugzilla.readthedocs.io/en/latest/api/index.html
 - [change_status()](#status)
 - [remove_cc()](#remove_cc)
 - [add_cc()](#add_cc)
+- [add_attachment()](#add_attachment)
 
 ### create(self, summary, description, \*\*kwargs) <a name="create"></a>
 
@@ -43,6 +44,7 @@ version='version'
 priority='high'
 severity='medium'
 alias='SomeAlias'
+groups='GroupName'
 ```
 
 ### edit(self, \*\*kwargs) <a name="edit"></a>
@@ -65,11 +67,13 @@ version='version'
 priority='high'
 severity='medium'
 alias='SomeAlias'
+groups='Group Name'
 ```
 
-### add_comment(self, comment) <a name="comment"></a>
+### add_comment(self, comment,\*\*kwargs ) <a name="comment"></a>
 
-Adds a comment to a Bugzilla ticket.
+Adds a comment to a Bugzilla ticket. Keyword arguments are used to 
+specify comment options.
 
 ```python
 t.add_comment('Test comment')
@@ -106,3 +110,16 @@ users.
 ```python
 t.add_cc(['username1@mail.com', 'username2@mail.com'])
 ```
+
+### add_attachment(self, file_name, data, summary, \*\*kwargs ) <a name="add_attachment"></a>
+
+Add attachment in a Bugzilla ticket. Keyword arguments are used to specify
+additional attachment options.
+
+```python
+t.add_attachment(file_name='Name to be displayed on UI',
+                 data='Location(path) or contents of the attachment',
+                 summary='A short string describing the attachment.')
+```
+
+

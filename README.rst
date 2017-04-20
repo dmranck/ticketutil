@@ -2,10 +2,10 @@ ticketutil
 ==========
 
 .. image:: https://img.shields.io/badge/python-2.7%2C%203.3%2C%203.4%2C%203.5%2C%203.6-blue.svg
-    :target: https://pypi.python.org/pypi/ticketutil/1.0.6
+    :target: https://pypi.python.org/pypi/ticketutil/1.1.0
 
-.. image:: https://img.shields.io/badge/pypi-v1.0.6-blue.svg
-    :target: https://pypi.python.org/pypi/ticketutil/1.0.6
+.. image:: https://img.shields.io/badge/pypi-v1.1.0-blue.svg
+    :target: https://pypi.python.org/pypi/ticketutil/1.1.0
 
 ticketutil is a Python module that allows you to easily interact with
 various ticketing tools using their REST APIs. Currently, the supported
@@ -88,8 +88,17 @@ on a separate ticket. Instead of creating a new Ticket object, you can
 simply pass an existing ``<ticket_id>`` in to the ``set_ticket_id()``
 method to begin working on another ticket.
 
+To return the current Ticket object's ticket_id or ticket_url, use the
+``get_ticket_id()`` or ``get_ticket_url()`` methods.
+
 See the docstrings in the code or the tool-specific files in the docs
 and examples directories for more information.
+
+Note on logging: To enable debug logging for ticketutil, set an environment
+variable named TICKETUTIL_LOG_LEVEL to 'DEBUG'. You may specify the following
+log levels using this environment variable: DEBUG, INFO, WARNING, ERROR,
+CRITICAL. If this environment variable does not exist, the log level will be
+set to INFO by default.
 
 Comments? / Questions? / Coming Soon
 ------------------------------------
