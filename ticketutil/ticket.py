@@ -1,30 +1,3 @@
-
-Skip to content
-This repository
-
-    Pull requests
-    Issues
-    Gist
-
-    @pzubaty
-
-4
-2
-
-    4
-
-dmranck/ticketutil
-Code
-Issues 9
-Pull requests 1
-Projects 0
-Wiki
-Pulse
-Graphs
-ticketutil/ticketutil/ticket.py
-2fbc3b7 7 days ago
-@dmranck dmranck ADD _verify_project() and _verify_ticket_id() to all tools
-146 lines (121 sloc) 4.94 KB
 import logging
 import os
 
@@ -170,8 +143,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    Contact GitHub API Training Shop Blog About
-
-    © 2017 GitHub, Inc. Terms Privacy Security Status Help
-
