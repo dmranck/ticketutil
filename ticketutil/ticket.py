@@ -35,24 +35,23 @@ class Ticket(object):
     def __init__(self, project, ticket_id):
         self.project = project
         self.ticket_id = ticket_id
-
-        if self.ticket_id:
-            self.ticket_url = self._generate_ticket_url()
-        else:
-            self.ticket_url = None
+        self.ticket_url = None
 
         # Create our requests session below. Raise an exception if a session object is not returned.
         self.s = self._create_requests_session()
         if not self.s:
             raise TicketException("Error authenticating to {0}.".format(self.auth_url))
 
-        # TODO: Add get_projects() method to all tools and verify project is valid.
-        # TODO: If project is not valid, raise exception and close requests session,
-        # TODO: or create a set_project() method that the user can set project through?
+        # Verify that project is valid.
+        if not self._verify_project(self.project):
+            raise TicketException("Project {0} is not valid.".format(self.project))
 
-        # TODO: Add get_tickets() method to all tools and verify ticket_id is valid
-        # TODO: If ticket_id is not valid, raise exception and close requests session,
-        # TODO: or prompt user to set ticket_id with set_ticket_id()?
+        # Verify that optional ticket_id parameter is valid. If valid, generate ticket_url.
+        if self.ticket_id:
+            if not self._verify_ticket_id(self.ticket_id):
+                raise TicketException("Ticket {0} is not valid.".format(self.ticket_id))
+            else:
+                self.ticket_url = self._generate_ticket_url()
 
     def set_ticket_id(self, ticket_id):
         """
@@ -60,12 +59,12 @@ class Ticket(object):
         :param ticket_id: Ticket id you would like to set.
         :return:
         """
-        # TODO: Add get_tickets() method to all tools and verify ticket_id is valid
-
-        self.ticket_id = ticket_id
-        self.ticket_url = self._generate_ticket_url()
-
-        logging.info("Current ticket: {0} - {1}".format(self.ticket_id, self.ticket_url))
+        if self._verify_ticket_id(ticket_id):
+            self.ticket_id = ticket_id
+            self.ticket_url = self._generate_ticket_url()
+            logging.info("Current ticket: {0} - {1}".format(self.ticket_id, self.ticket_url))
+        else:
+            logging.error("Unable to set ticket id to {0}.".format(ticket_id))
 
     def get_ticket_id(self):
         """

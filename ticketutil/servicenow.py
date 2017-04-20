@@ -2,7 +2,7 @@ import os
 import logging
 import requests
 
-from ticketutil.ticket import Ticket
+from ticketutil.ticket import Ticket, TicketException
 
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
 
@@ -42,22 +42,26 @@ class ServiceNowTicket(Ticket):
         self.auth_url = self.rest_url
         self.headers_post_ = {'Content-Type': 'application/json',
                               'Accept': 'application/json'}
+        # Call our parent class's init method which creates our requests session.
+        super(ServiceNowTicket, self).__init__(project, ticket_id)
 
-        self.s = self._create_requests_session()
-        if ticket_id:
-            self.set_ticket_id(ticket_id)
-
-    def set_ticket_id(self, ticket_id):
+    def _verify_project(self, project):
         """
-        Sets ticket vars for the current ticket object.
-        :param ticket_id: Ticket id you would like to set.
-        :return:
+        Queries the ServiceNow API to see if project is a valid table for
+        the given ServiceNow instance.
+        :param project: The project table you're verifying.
+        :return: True or False depending on if project is valid.
         """
-        self.ticket_id = ticket_id
-        self.ticket_content = self.get_ticket_content()
-        self.sys_id = self.ticket_content['sys_id']
-        self.ticket_rest_url = self.rest_url + '/' + self.sys_id
-        self.ticket_url = self._generate_ticket_url()
+        try:
+            r = self.s.get('{0}?sysparm_limit=1'.format(self.rest_url))
+            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            r.raise_for_status()
+            logging.debug("Project {0} is valid".format(project))
+            return True
+        except request.RequestException as e:
+            logging.error("Unexpected error occurred when verifying project.")
+            logging.error(e.args)
+            return False
 
     def get_ticket_content(self, ticket_id=None):
         """
@@ -81,6 +85,29 @@ class ServiceNowTicket(Ticket):
             return ticket_content['result'][0]
         except requests.RequestException as e:
             logging.error("Error while getting ticket content")
+            logging.error(e.args)
+            return False
+
+    def _verify_ticket_id(self, ticket_id):
+        """
+        Queries the ServiceNow API to see if ticket_id is a valid ticket for
+        the given ServiceNow instance.
+        :param ticket_id: The ticket you're verifying.
+        :return: True or False depending on if ticket is valid.
+        """
+        try:
+            result = self.get_ticket_content(ticket_id)
+            if not result:
+                raise requests.RequestException
+            else:
+                logging.debug("Ticket {0} is valid".format(ticket_id))
+                self.ticket_id = ticket_id
+                self.ticket_content = result
+                self.sys_id = self.ticket_content['sys_id']
+                self.ticket_rest_url = self.rest_url + '/' + self.sys_id
+                return True
+        except requests.RequestException as e:
+            logging.error("Ticket {0} is not valid.".format(ticket_id))
             logging.error(e.args)
             return False
 
