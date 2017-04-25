@@ -2,13 +2,14 @@
 
 This document contains information on the methods available when working
 with a ServiceNow object. A list of the ServiceNow fields that have been
-tested when creating and editing tickets is included. Because each
-instance of ServiceNow can have custom fields and custom values, some
-of the tested fields may not be applicable to certain instances of ServiceNow.
-Additionally, your ServiceNow instance may contain ticket fields that we have
-not tested. Keep in mind different ServiceNow tables contain different
-fields with different properties. Mandatory fields in one table may be optional
-or non-existent in another table.
+tested when creating and editing tickets is included.
+
+Note: Because each instance of ServiceNow can have custom fields and custom
+values, some of the tested fields may not be applicable to certain instances
+of ServiceNow. Additionally, your ServiceNow instance may contain ticket fields
+that we have not tested. Keep in mind different ServiceNow tables contain
+different fields with different properties. Mandatory fields in one table may
+be optional or non-existent in another table.
 
 Custom field names and values can be passed in as keyword arguments when
 creating and editing tickets. These are processed by the ServiceNow REST API
@@ -76,7 +77,7 @@ comments = 'New comment to be added'
 
 ### get_ticket_content(self, ticket_id) <a name="content"></a>
 
-Retrieves ticket content inside a dictionary. Optional parameter ticket_id
+Retrieves ticket content as a dictionary. Optional parameter ticket_id
 specifies which ticket should be retrieved this way. If not used, method calls
 for ticket_id provided by ServiceNowTicket constructor (or create method).
 
@@ -162,12 +163,11 @@ one email address.
 t.remove_cc(['username@domain.com', 'user3@domain.com'])
 ```
 
-### devops_one_url(server, table, sys_id) <a name="devops_one"></a>
+### devops_one_url() <a name="devops_one"></a>
 
-This function is not part of the ServiceNowTicket, but it's related. It creates
-DevOps One URL of the existing ticket supplied by server name, table name and
-ticket sys_id.
+Creates DevOps One URL of the existing ticket from ServiceNowTicket attributes.
+Method uses server URL and ticket ID provided by ServiceNowTicket object.
 
 ```python
-url = devops_one_url(<servicenow_url>, <table_name>, <sys_id>)
+url = t.devops_one_url()
 ```

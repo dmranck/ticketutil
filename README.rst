@@ -50,11 +50,6 @@ packages, type ``pip install -r requirements.txt``.
 Usage
 -----
 
-Note: To enable debug logging for ticketutil, set an environment
-variable named TICKETUTIL_DEBUG to 'True'. If this environment variable
-is set to anything else or does not exist, debug logging will be
-disabled.
-
 The general usage workflow for creating new tickets is:
 
 * Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
@@ -90,6 +85,9 @@ method to begin working on another ticket.
 
 To return the current Ticket object's ticket_id or ticket_url, use the
 ``get_ticket_id()`` or ``get_ticket_url()`` methods.
+
+To run unit tests in Bash terminal use this command:
+``python3 -m unittest discover ./tests/``
 
 See the docstrings in the code or the tool-specific files in the docs
 and examples directories for more information.

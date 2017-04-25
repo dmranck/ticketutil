@@ -98,8 +98,12 @@ class FakeSessionQuery(FakeSession):
         return FakeResponseQuery(status_code=self.status_code)
 
 
-def mock_get_ticket_content(ticket_id):
+def mock_get_ticket_content(self, ticket_id):
     return MOCK_RESULT
+
+
+def mock_verify_project(self, project):
+    return project==TABLE
 
 
 class TestServiceNowTicket(TestCase):
@@ -109,6 +113,7 @@ class TestServiceNowTicket(TestCase):
     _create_requests_session->FakeSessionQuery->FakeResponseQuery
     """
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     def test_get_ticket_content(self, mock_session):
         mock_session.return_value = FakeSessionQuery()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
@@ -116,6 +121,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(result, MOCK_RESULT)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     def test_get_ticket_content_unexpected_response(self, mock_session):
         mock_session.return_value = FakeSessionQuery(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
@@ -130,6 +136,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(ticket.ticket_content, MOCK_RESULT)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     def test_create_unexpected_response(self, mock_session):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
@@ -149,6 +156,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(ticket.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
            mock_get_ticket_content)
     def test_change_status_unexpected_response(self, mock_session):
@@ -171,6 +179,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(ticket.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
            mock_get_ticket_content)
     def test_edit_unexpected_response(self, mock_session):
@@ -181,6 +190,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(result, False)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
            mock_get_ticket_content)
     def test_add_comment(self, mock_session):
@@ -193,6 +203,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(ticket.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
            mock_get_ticket_content)
     def test_add_comment_unexpected_response(self, mock_session):
@@ -203,6 +214,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(result, False)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
            mock_get_ticket_content)
     def test_add_cc(self, mock_session):
@@ -215,6 +227,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(ticket.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
            mock_get_ticket_content)
     def test_add_cc_unexpected_response(self, mock_session):
@@ -225,6 +238,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(result, False)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
            mock_get_ticket_content)
     def test_rewrite_cc(self, mock_session):
@@ -238,6 +252,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(ticket.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
            mock_get_ticket_content)
     def test_rewrite_cc_unexpected_response(self, mock_session):
@@ -248,6 +263,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(result, False)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
            mock_get_ticket_content)
     def test_remove_cc(self, mock_session):
@@ -260,6 +276,7 @@ class TestServiceNowTicket(TestCase):
         self.assertEqual(ticket.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
            mock_get_ticket_content)
     def test_remove_cc_unexpected_response(self, mock_session):

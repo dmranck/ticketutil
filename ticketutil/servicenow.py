@@ -1,8 +1,9 @@
 import os
 import logging
 import requests
+import json
 
-from ticketutil.ticket import Ticket, TicketException
+from ticketutil.ticket import Ticket
 
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
 
@@ -37,8 +38,8 @@ class ServiceNowTicket(Ticket):
         # HTTP Basic authentication.
         self.url = url
         self.auth = auth
-        self.table = project
-        self.rest_url = '{0}/api/now/v1/table/{1}'.format(self.url, self.table)
+        self.project = project
+        self.rest_url = '{0}/api/now/v1/table/{1}'.format(self.url, self.project)
         self.auth_url = self.rest_url
         self.headers_post_ = {'Content-Type': 'application/json',
                               'Accept': 'application/json'}
@@ -58,7 +59,7 @@ class ServiceNowTicket(Ticket):
             r.raise_for_status()
             logging.debug("Project {0} is valid".format(project))
             return True
-        except request.RequestException as e:
+        except requests.RequestException as e:
             logging.error("Unexpected error occurred when verifying project.")
             logging.error(e.args)
             return False
@@ -121,7 +122,7 @@ class ServiceNowTicket(Ticket):
 
         # If we are receiving a ticket_id, we have sys_id
         if self.sys_id:
-            ticket_url = '{0}/{1}.do?sys_id={2}'.format(self.url, self.table,
+            ticket_url = '{0}/{1}.do?sys_id={2}'.format(self.url, self.project,
                                                         self.sys_id)
         return ticket_url
 
@@ -177,7 +178,7 @@ class ServiceNowTicket(Ticket):
 
         params = ''
         for key, value in fields.items():
-            params += ', "{}" : "{}"'.format(key, value)
+            params += ', {} : {}'.format(json.dumps(key), json.dumps(value))
         params = '{' + params[1:] + '}'
         return params
 
@@ -390,12 +391,60 @@ class ServiceNowTicket(Ticket):
         return fields
 
 
-def devops_one_url(server, table, sys_id):
-    """
-    Creates DevOps One URL of the existing ticket
-    """
-    return '{server}/pnt/?id=ticket&sys_id={sys_id}&table={table}'.format(
-            server=server, sys_id=sys_id, table=table)
+    def devops_one_url(self):
+        """
+        Creates DevOps One URL of the existing ticket
+        """
+        return '{server}/pnt/?id=ticket&sys_id={sys_id}&table={table}'.format(
+                server=self.url, sys_id=self.sys_id, table=self.project)
+
+
+def test():
+    table = 'x_redha_pnt_devops_table'
+    server = 'https://redhat.service-now.com'
+    # server = 'https://redhatqa.service-now.com'
+    # user = 'pnt_test_api'
+    user = 'pnt_ticketutil_api'
+    f = open('/etc/servicenow-pass.conf')
+    pwd = f.readline()[:-1] # move to system env instead
+    auth = (user,pwd)
+
+    ticket = ServiceNowTicket(server, table, auth)
+    description = ('This is just a simple test for ticketutil library. Calling'
+                   'ServiceNowTicket class you are able to create tickets in '
+                   'the ServiceNow automatically.\\n You need however to provide '
+                   'username and password (at the moment only basic auth is '
+                   'supported. Module created by pzubaty@redhat.com')
+
+    ticket.create(short_description='TEST adding ServiceNow API into ticketutil',
+                  description=description,
+                  category='Communication',
+                  item='ServiceNow')
+    pnt_url = ticket.devops_one_url()
+    logging.info('Ticket in DevOps One: {}'.format(pnt_url))
+    ticket.close_requests_session()
+
+
+def test_comment(ticket_id):
+    table = 'x_redha_pnt_devops_table'
+    server = 'https://redhat.service-now.com'
+    # server = 'https://redhatqa.service-now.com'
+    # user = 'pnt_test_api'
+    user = 'pnt_ticketutil_api'
+    f = open('/etc/servicenow-pass.conf')
+    pwd = f.readline()[:-1]
+    auth = (user,pwd)
+
+    ticket = ServiceNowTicket(server, table, auth, ticket_id)
+    ticket.add_comment('This is test of adding CC to ServiceNow ticket,\n sorry for incovenience. "quotation test"')
+    ticket.edit(assigned_to = 'pzubaty', priority = '3',
+                email_from = 'pzubaty@redhat.com', category='Application',
+                hostname_affected = '127.0.0.1')
+    # ticket.rewrite_cc(['pzubaty@redhat.com', 'dranck@redhat.com'])
+    ticket.remove_cc(['dranck@redhat.com', 'dranck.com'])
+    ticket.add_cc('pzubaty@redhat.com')
+    ticket.change_status('Pending')
+    ticket.close_requests_session()
 
 
 def main():
