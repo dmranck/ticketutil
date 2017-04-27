@@ -162,12 +162,3 @@ one email address.
 ```python
 t.remove_cc(['username@domain.com', 'user3@domain.com'])
 ```
-
-### devops_one_url() <a name="devops_one"></a>
-
-Creates DevOps One URL of the existing ticket from ServiceNowTicket attributes.
-Method uses server URL and ticket ID provided by ServiceNowTicket object.
-
-```python
-url = t.devops_one_url()
-```

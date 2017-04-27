@@ -47,6 +47,7 @@ MOCK_RESULT = {'number': TICKET_ID,
 class FakeResponse(object):
     """Mock response coming from server via Requests
     """
+
     def __init__(self, status_code=666):
         self.status_code = status_code
         self.content = "ABC"
@@ -70,6 +71,7 @@ class FakeResponseQuery(FakeResponse):
     """Response on search query,
     eg. '<REST_URL>?sysparm_query=GOTOnumber%3D<TICKET_ID>'
     """
+
     def json(self):
         return {'result': [MOCK_RESULT]}
 
@@ -77,6 +79,7 @@ class FakeResponseQuery(FakeResponse):
 class FakeSession(object):
     """Mocks Requests session behavior
     """
+
     def __init__(self, status_code=666):
         self.status_code = status_code
         self.headers = {'Content-Type': 'application/json', }
@@ -94,6 +97,7 @@ class FakeSession(object):
 class FakeSessionQuery(FakeSession):
     """Mocks Requests session behavior for search query
     """
+
     def get(self, url):
         return FakeResponseQuery(status_code=self.status_code)
 
@@ -103,7 +107,7 @@ def mock_get_ticket_content(self, ticket_id):
 
 
 def mock_verify_project(self, project):
-    return project==TABLE
+    return project == TABLE
 
 
 class TestServiceNowTicket(TestCase):
@@ -112,6 +116,7 @@ class TestServiceNowTicket(TestCase):
     _create_requests_session->FakeSession->FakeResponse
     _create_requests_session->FakeSessionQuery->FakeResponseQuery
     """
+
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     def test_get_ticket_content(self, mock_session):
@@ -270,7 +275,7 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        ticket.remove_cc(['dranck@redhat.com', 'dranck.com'])
+        ticket.remove_cc(['dranck@redhat.com', 'mail@redhat.com'])
         expected_result = MOCK_RESULT
         expected_result.update({'watch_list': 'pzubaty@redhat.com'})
         self.assertEqual(ticket.ticket_content, expected_result)
@@ -283,7 +288,7 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        result = ticket.remove_cc(['dranck@redhat.com', 'dranck.com'])
+        result = ticket.remove_cc(['dranck@redhat.com', 'mail@redhat.com'])
         self.assertEqual(result, False)
 
 if __name__ == '__main__':

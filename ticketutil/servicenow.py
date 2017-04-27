@@ -1,4 +1,3 @@
-import os
 import logging
 import requests
 import json
@@ -7,30 +6,19 @@ from ticketutil.ticket import Ticket
 
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
 
-STATE = {'new':'0',
-         'open':'1',
-         'work in progress':'2',
-         'pending':'-6',
-         'pending approval':'-9',
-         'pending customer':'-1',
-         'pending change':'-4',
-         'pending vendor':'-5',
-         'resolved':'5',
-         'closed completed':'3',
-         'closed cancelled':'8'}
-
 
 class ServiceNowTicket(Ticket):
     """
     ServiceNow Ticket object. Contains ServiceNow specific methods for working
     with tickets.
     """
+
     def __init__(self, url, project, auth=None, ticket_id=None):
         """
         :param url: ServiceNow service url
         :param project: ServiceNow table or project
         :param auth: (<username>, <password>) for HTTP Basic Authentication
-        :param ticked_id: ticked number, eg. 'PNT1234567'
+        :param ticket_id: ticket number, eg. 'PNT1234567'
         """
         self.ticketing_tool = 'ServiceNow'
 
@@ -39,24 +27,34 @@ class ServiceNowTicket(Ticket):
         self.url = url
         self.auth = auth
         self.project = project
-        self.rest_url = '{0}/api/now/v1/table/{1}'.format(self.url, self.project)
+        self.rest_url = '{0}/api/now/v1/table/{1}'.format(
+                        self.url, self.project)
         self.auth_url = self.rest_url
         self.headers_post_ = {'Content-Type': 'application/json',
                               'Accept': 'application/json'}
-        # Call our parent class's init method which creates our requests session.
+        # Call our parent class's init method which creates our requests
+        # session.
         super(ServiceNowTicket, self).__init__(project, ticket_id)
 
     def _verify_project(self, project):
         """
         Queries the ServiceNow API to see if project is a valid table for
-        the given ServiceNow instance.
+        the given ServiceNow instance. Query result is also used to get
+        display values of available ticket states.
         :param project: The project table you're verifying.
         :return: True or False depending on if project is valid.
         """
         try:
-            r = self.s.get('{0}?sysparm_limit=1'.format(self.rest_url))
-            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            url = self.url
+            url += '/api/now/v1/table/sys_choice?sysparm_query=name='
+            url += project + '^element=state^inactive=false'
+            r = self.s.get(url)
+            logging.debug("Verify project: Status Code: {0}".format(
+                          r.status_code))
             r.raise_for_status()
+            self.available_states = []
+            for state in r.json()['result']:
+                self.available_states.append(state['label'].lower())
             logging.debug("Project {0} is valid".format(project))
             return True
         except requests.RequestException as e:
@@ -68,7 +66,7 @@ class ServiceNowTicket(Ticket):
         """
         Get ticket_content using ticket_id
 
-        :param ticked_id: ticked number, if not set self.ticket_id is used
+        :param ticket_id: ticket number, if not set self.ticket_id is used
         :return: ticket content
         """
         if ticket_id is None:
@@ -222,7 +220,8 @@ class ServiceNowTicket(Ticket):
 
         try:
             logging.info('Changing ticket status')
-            params = self._create_ticket_parameters({'state':STATE[status.lower()]})
+            fields = {'state': self.available_states.index(status.lower())}
+            params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             r.raise_for_status()
@@ -278,7 +277,7 @@ class ServiceNowTicket(Ticket):
         """
         try:
             logging.info('Adding comment to {0}'.format(self.ticket_id))
-            params = self._create_ticket_parameters({'comments' : comment})
+            params = self._create_ticket_parameters({'comments': comment})
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             r.raise_for_status()
@@ -305,7 +304,7 @@ class ServiceNowTicket(Ticket):
                 if item not in watch_list:
                     watch_list.append(item)
 
-            fields = {'watch_list' : ', '.join(watch_list)}
+            fields = {'watch_list': ', '.join(watch_list)}
             params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
@@ -329,7 +328,7 @@ class ServiceNowTicket(Ticket):
             if isinstance(user, str):
                 user = [user]
 
-            fields = {'watch_list' : ', '.join(user)}
+            fields = {'watch_list': ', '.join(user)}
             params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
@@ -358,7 +357,7 @@ class ServiceNowTicket(Ticket):
                 if item in watch_list:
                     watch_list.remove(item)
 
-            fields = {'watch_list' : ', '.join(watch_list)}
+            fields = {'watch_list': ', '.join(watch_list)}
             params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
@@ -379,7 +378,7 @@ class ServiceNowTicket(Ticket):
         """
         for key, value in fields.items():
             if key in ['opened_for', 'operating_system', 'category', 'item',
-                        'severity', 'hostname_affected', 'opened_by_dept']:
+                       'severity', 'hostname_affected', 'opened_by_dept']:
                 fields['u_{}'.format(key)] = value
                 fields.pop(key)
             if key == 'topic':
@@ -389,62 +388,6 @@ class ServiceNowTicket(Ticket):
                 fields['u_email_from_address'] = value
                 fields.pop(key)
         return fields
-
-
-    def devops_one_url(self):
-        """
-        Creates DevOps One URL of the existing ticket
-        """
-        return '{server}/pnt/?id=ticket&sys_id={sys_id}&table={table}'.format(
-                server=self.url, sys_id=self.sys_id, table=self.project)
-
-
-def test():
-    table = 'x_redha_pnt_devops_table'
-    server = 'https://redhat.service-now.com'
-    # server = 'https://redhatqa.service-now.com'
-    # user = 'pnt_test_api'
-    user = 'pnt_ticketutil_api'
-    f = open('/etc/servicenow-pass.conf')
-    pwd = f.readline()[:-1] # move to system env instead
-    auth = (user,pwd)
-
-    ticket = ServiceNowTicket(server, table, auth)
-    description = ('This is just a simple test for ticketutil library. Calling'
-                   'ServiceNowTicket class you are able to create tickets in '
-                   'the ServiceNow automatically.\\n You need however to provide '
-                   'username and password (at the moment only basic auth is '
-                   'supported. Module created by pzubaty@redhat.com')
-
-    ticket.create(short_description='TEST adding ServiceNow API into ticketutil',
-                  description=description,
-                  category='Communication',
-                  item='ServiceNow')
-    pnt_url = ticket.devops_one_url()
-    logging.info('Ticket in DevOps One: {}'.format(pnt_url))
-    ticket.close_requests_session()
-
-
-def test_comment(ticket_id):
-    table = 'x_redha_pnt_devops_table'
-    server = 'https://redhat.service-now.com'
-    # server = 'https://redhatqa.service-now.com'
-    # user = 'pnt_test_api'
-    user = 'pnt_ticketutil_api'
-    f = open('/etc/servicenow-pass.conf')
-    pwd = f.readline()[:-1]
-    auth = (user,pwd)
-
-    ticket = ServiceNowTicket(server, table, auth, ticket_id)
-    ticket.add_comment('This is test of adding CC to ServiceNow ticket,\n sorry for incovenience. "quotation test"')
-    ticket.edit(assigned_to = 'pzubaty', priority = '3',
-                email_from = 'pzubaty@redhat.com', category='Application',
-                hostname_affected = '127.0.0.1')
-    # ticket.rewrite_cc(['pzubaty@redhat.com', 'dranck@redhat.com'])
-    ticket.remove_cc(['dranck@redhat.com', 'dranck.com'])
-    ticket.add_cc('pzubaty@redhat.com')
-    ticket.change_status('Pending')
-    ticket.close_requests_session()
 
 
 def main():
