@@ -7,7 +7,7 @@ setup(
     name='ticketutil',
     packages=['ticketutil'],
     version='1.2.0',
-    description='Python ticketing utility supporting JIRA, RT, Redmine, and Bugzilla',
+    description='Python ticketing utility supporting JIRA, RT, Redmine, Bugzilla, and ServiceNow',
     author='Danny Ranck',
     author_email='dmranck@gmail.com',
     url='https://github.com/dmranck/ticketutil',
