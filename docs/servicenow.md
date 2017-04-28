@@ -32,7 +32,6 @@ For more information about REST API and fields see ServiceNow's Wiki:
 - [add_cc()](#add_cc)
 - [rewrite_cc()](#rewrite_cc)
 - [remove_cc()](#remove_cc)
-- [devops_one_url()](#devops_one)
 
 ### set_ticket_id(self, ticket_id)
 

@@ -46,15 +46,17 @@ class ServiceNowTicket(Ticket):
         """
         try:
             url = self.url
-            url += '/api/now/v1/table/sys_choice?sysparm_query=name='
+            url += '/api/now/table/sys_choice?sysparm_query=name='
             url += project + '^element=state^inactive=false'
             r = self.s.get(url)
             logging.debug("Verify project: Status Code: {0}".format(
                           r.status_code))
             r.raise_for_status()
-            self.available_states = []
+
+            self.available_states = {}
             for state in r.json()['result']:
-                self.available_states.append(state['label'].lower())
+                label = state['label'].lower()
+                self.available_states[label] = state['value']
             logging.debug("Project {0} is valid".format(project))
             return True
         except requests.RequestException as e:
@@ -220,7 +222,7 @@ class ServiceNowTicket(Ticket):
 
         try:
             logging.info('Changing ticket status')
-            fields = {'state': self.available_states.index(status.lower())}
+            fields = {'state': self.available_states[status.lower()]}
             params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)

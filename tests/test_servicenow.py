@@ -16,17 +16,17 @@ TICKET_ID = 'PNT9999999'
 TEST_URL = 'servicenow.com'
 TABLE = 'x_table'
 
-STATE = {'new': '0',
-         'open': '1',
-         'work in progress': '2',
-         'pending': '-6',
-         'pending approval': '-9',
-         'pending customer': '-1',
-         'pending change': '-4',
-         'pending vendor': '-5',
-         'resolved': '5',
-         'closed completed': '3',
-         'closed cancelled': '8'}
+MOCK_STATE = {'new': '0',
+              'open': '1',
+              'work in progress': '2',
+              'pending': '-6',
+              'pending approval': '-9',
+              'pending customer': '-1',
+              'pending change': '-4',
+              'pending vendor': '-5',
+              'resolved': '5',
+              'closed completed': '3',
+              'closed cancelled': '8'}
 
 DESCRIPTION = 'full-length ticket description'
 SHORT_DESCRIPTION = 'short description'
@@ -34,7 +34,7 @@ CATEGORY = 'category'
 ITEM = 'item'
 
 MOCK_RESULT = {'number': TICKET_ID,
-               'state': STATE['new'],
+               'state': MOCK_STATE['new'],
                'watch_list': 'pzubaty@redhat.com',
                'comments': '',
                'sys_id': '#34346',
@@ -76,6 +76,17 @@ class FakeResponseQuery(FakeResponse):
         return {'result': [MOCK_RESULT]}
 
 
+class FakeResponseSysChoice(FakeResponse):
+    """Response when sys_choice is being searched
+    usually for getting available_states
+    """
+    def json(self):
+        result = []
+        for key, value in MOCK_STATE.items():
+            result.append({'label': key, 'value': value})
+        return {'result': result}
+
+
 class FakeSession(object):
     """Mocks Requests session behavior
     """
@@ -85,6 +96,10 @@ class FakeSession(object):
         self.headers = {'Content-Type': 'application/json', }
 
     def get(self, url):
+        if 'sys_choice' in url:
+            return FakeResponseSysChoice(status_code=self.status_code)
+        if 'sysparm_query=GOTOnumber%3D' in url:
+            return FakeResponseQuery(status_code=self.status_code)
         return FakeResponse(status_code=self.status_code)
 
     def post(self, url, data):
@@ -92,14 +107,6 @@ class FakeSession(object):
 
     def put(self, url, data):
         return FakeResponse(status_code=self.status_code)
-
-
-class FakeSessionQuery(FakeSession):
-    """Mocks Requests session behavior for search query
-    """
-
-    def get(self, url):
-        return FakeResponseQuery(status_code=self.status_code)
 
 
 def mock_get_ticket_content(self, ticket_id):
@@ -114,13 +121,14 @@ class TestServiceNowTicket(TestCase):
     """ServiceNowTicket unit tests
     Depending on REST API request following objects are being called and used:
     _create_requests_session->FakeSession->FakeResponse
-    _create_requests_session->FakeSessionQuery->FakeResponseQuery
+    _create_requests_session->FakeSession->FakeResponseQuery
+    _create_requests_session->FakeSession->FakeResponseSysChoice
     """
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     def test_get_ticket_content(self, mock_session):
-        mock_session.return_value = FakeSessionQuery()
+        mock_session.return_value = FakeSession()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
         result = ticket.get_ticket_content(ticket_id=TICKET_ID)
         self.assertEqual(result, MOCK_RESULT)
@@ -128,7 +136,7 @@ class TestServiceNowTicket(TestCase):
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     def test_get_ticket_content_unexpected_response(self, mock_session):
-        mock_session.return_value = FakeSessionQuery(status_code=404)
+        mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
         result = ticket.get_ticket_content(ticket_id=TICKET_ID)
         self.assertEqual(result, False)
@@ -157,7 +165,7 @@ class TestServiceNowTicket(TestCase):
                                              ticket_id=TICKET_ID)
         ticket.change_status('Pending')
         expected_result = MOCK_RESULT
-        expected_result.update({'state': STATE['pending']})
+        expected_result.update({'state': MOCK_STATE['pending']})
         self.assertEqual(ticket.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
@@ -168,6 +176,7 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
+        servicenow.ServiceNowTicket.available_states = MOCK_STATE
         result = ticket.change_status('Pending')
         self.assertEqual(result, False)
 
