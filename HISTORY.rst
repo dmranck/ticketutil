@@ -1,6 +1,18 @@
 Release History
 ---------------
 
+1.2.0 (04-28-2017)
+++++++++++++++++++
+
+* ServiceNow support has been added to ticketutil!
+
+  - ticketutil/servicenow.py has been created, supporting main ticketing
+    functions found in other tools.
+  - tests/test_servicenow.py has been created, containing unit tests for
+    servicenow.py.
+  - Two new documentation files have been created: docs/servicenow.md and
+    examples/servicenow_examples.md.
+
 1.1.0 (04-18-2017)
 ++++++++++++++++++
 
