@@ -233,6 +233,9 @@ class ServiceNowTicket(Ticket):
         except requests.RequestException as e:
             logging.error('Failed to change ticket status')
             return False
+        except KeyError as e:
+            logging.error('Invalid state {}'.format(e))
+            return False
 
     def edit(self, **kwargs):
         """
