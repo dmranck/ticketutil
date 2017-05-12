@@ -37,7 +37,8 @@ t.create(subject='Ticket subject',
          description='Ticket description')
 ```
 
-Tested create() ticket fields:
+The following keyword arguments were tested and accepted by our
+particular Redmine instance during ticket creation:
 
 ```python
 subject='Ticket subject'
@@ -58,7 +59,8 @@ specify ticket fields.
 t.edit(subject='Ticket subject')
 ```
 
-Tested edit() ticket fields:
+The following keyword arguments were tested and accepted by our
+particular Redmine instance during ticket editing:
 
 ```python
 subject='Ticket subject'

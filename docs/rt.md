@@ -30,9 +30,8 @@ t.create(subject='Ticket subject',
          text='Ticket text')
 ```
 
-Tested create() ticket fields:
-NOTE: cc and admincc accept a string representing one user's email 
-address, or a list of strings for multiple users.
+The following keyword arguments were tested and accepted by our
+particular RT instance during ticket creation:
 
 ```python
 subject='Ticket subject'
@@ -43,6 +42,9 @@ cc='username@mail.com'
 admincc=['username@mail.com', 'username2@mail.com']
 ```
 
+NOTE: cc and admincc accept a string representing one user's email
+address, or a list of strings for multiple users.
+
 ### edit(self, \*\*kwargs) <a name="edit"></a>
 
 Edits fields in a RT ticket. Keyword arguments are used to 
@@ -52,9 +54,8 @@ specify ticket fields.
 t.edit(owner='username@mail.com')
 ```
 
-Tested edit() ticket fields:
-NOTE: cc and admincc accept a string representing one user's email 
-address, or a list of strings for multiple users.
+The following keyword arguments were tested and accepted by our
+particular RT instance during ticket editing:
 
 ```python
 priority='5'
@@ -62,6 +63,9 @@ owner='username@mail.com'
 cc='username@mail.com'
 admincc=['username@mail.com', 'username2@mail.com']
 ```
+
+NOTE: cc and admincc accept a string representing one user's email
+address, or a list of strings for multiple users.
 
 ### add_comment(self, comment) <a name="comment"></a>
 

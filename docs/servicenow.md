@@ -56,7 +56,8 @@ t.create(short_description='Ticket summary',
          item='ServiceNow')
 ```
 
-Tested create() ticket fields:
+The following keyword arguments were tested and accepted by our
+particular ServiceNow instance during ticket creation:
 
 ```python
 category = 'Category'
@@ -98,7 +99,8 @@ specified.
 t.edit(short_description='Ticket summary')
 ```
 
-Tested edit() ticket fields:
+The following keyword arguments were tested and accepted by our
+particular ServiceNow instance during ticket editing:
 
 ```python
 category = 'Category'

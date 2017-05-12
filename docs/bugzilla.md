@@ -32,7 +32,8 @@ t.create(summary='Ticket summary',
          description='Ticket description')
 ```
 
-Tested create() ticket fields:
+The following keyword arguments were tested and accepted by our
+particular Bugzilla instance during ticket creation:
 
 ```python
 summary='Ticket summary'
@@ -56,7 +57,8 @@ specify ticket fields.
 t.edit(summary='Ticket summary')
 ```
 
-Tested edit() ticket fields:
+The following keyword arguments were tested and accepted by our
+particular Bugzilla instance during ticket editing:
 
 ```python
 summary='Ticket summary'
