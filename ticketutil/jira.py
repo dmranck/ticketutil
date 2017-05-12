@@ -49,7 +49,7 @@ class JiraTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/rest/api/2/project/{1}".format(self.url, project))
-            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            logging.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logging.debug("Project {0} is valid".format(project))
             return True
@@ -69,7 +69,7 @@ class JiraTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/{1}".format(self.rest_url, ticket_id))
-            logging.debug("Verify ticket_id: Status Code: {0}".format(r.status_code))
+            logging.debug("Verify ticket_id: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logging.debug("Ticket {0} is valid".format(ticket_id))
             return True
@@ -151,8 +151,8 @@ class JiraTicket(ticket.Ticket):
         # Attempt to create ticket.
         try:
             r = self.s.post(self.rest_url, json=params)
+            logging.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
 
             # Retrieve key from new ticket.
             ticket_content = r.json()
@@ -194,8 +194,8 @@ class JiraTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            logging.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Editing Ticket: Status Code: {0}".format(r.status_code))
             logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error creating ticket - {0}".format(list(r.json()['errors'].values())[0]))
@@ -216,8 +216,8 @@ class JiraTicket(ticket.Ticket):
         # Attempt to add comment to ticket.
         try:
             r = self.s.post("{0}/{1}/comment".format(self.rest_url, self.ticket_id), json=params)
+            logging.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Add comment: Status Code: {0}".format(r.status_code))
             logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error adding comment to ticket")
@@ -248,8 +248,8 @@ class JiraTicket(ticket.Ticket):
         # Attempt to change status of ticket
         try:
             r = self.s.post("{0}/{1}/transitions".format(self.rest_url,  self.ticket_id), json=params)
+            logging.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Changing status of ticket: Status Code: {0}".format(r.status_code))
             logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error changing status of ticket")
@@ -267,6 +267,7 @@ class JiraTicket(ticket.Ticket):
         try:
             # Get watchers list and convert to json. Then remove all watchers.
             r = self.s.get("{0}/{1}/watchers".format(self.rest_url, self.ticket_id))
+            logging.debug("Get watcher list: status code: {0}".format(r.status_code))
             r.raise_for_status()
             watchers_json = r.json()
             watchers_list = []
@@ -275,8 +276,8 @@ class JiraTicket(ticket.Ticket):
                 r = self.s.delete("{0}/{1}/watchers?username={2}".format(self.rest_url,
                                                                          self.ticket_id,
                                                                          watcher['name']))
+                logging.debug("Remove watcher {0}: status code: {1}".format(watcher['name'], r.status_code))
                 r.raise_for_status()
-                logging.debug("Remove watcher {0}: Status Code: {0}".format(watcher['name'], r.status_code))
             logging.info("Removed all watchers from ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
             return watchers_list
         except requests.RequestException as e:
@@ -299,8 +300,8 @@ class JiraTicket(ticket.Ticket):
 
         try:
             r = self.s.delete("{0}/{1}/watchers?username={2}".format(self.rest_url, self.ticket_id, watcher))
+            logging.debug("Remove watcher {0}: status code: {1}".format(watcher, r.status_code))
             r.raise_for_status()
-            logging.debug("Remove watcher {0}: Status Code: {0}".format(watcher, r.status_code))
             logging.info("Removed watcher {0} from ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error removing watcher {0} from ticket".format(watcher))
@@ -328,8 +329,8 @@ class JiraTicket(ticket.Ticket):
         if watcher:
             try:
                 r = self.s.post("{0}/{1}/watchers".format(self.rest_url, self.ticket_id), data=watcher)
+                logging.debug("Add watcher {0}: status code: {1}".format(watcher, r.status_code))
                 r.raise_for_status()
-                logging.debug("Add watcher {0}: Status Code: {0}".format(r.status_code))
                 logging.info("Added watcher {0} to ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
             except requests.RequestException as e:
                 logging.error("Error adding {0} as a watcher to ticket".format(watcher))
@@ -353,8 +354,8 @@ class JiraTicket(ticket.Ticket):
             r = self.s.post("{0}/{1}/attachments".format(self.rest_url, self.ticket_id),
                             files=params,
                             headers=headers)
+            logging.debug("Add attachment: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Add attachment: Status Code: {0}".format(r.status_code))
             logging.info("Attached File {0}: {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error attaching file {0}".format(file_name))
@@ -371,6 +372,7 @@ class JiraTicket(ticket.Ticket):
         """
         try:
             r = self.s.get('{0}/{1}/transitions'.format(self.rest_url, self.ticket_id))
+            logging.debug("Get status id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
             logging.error("Error retrieving JIRA status information")

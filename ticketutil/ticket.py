@@ -101,8 +101,8 @@ class Ticket(object):
         # Try to authenticate to auth_url.
         try:
             r = s.get(self.auth_url)
+            logging.debug("Create requests session: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
             logging.info("Successfully authenticated to {0}".format(self.ticketing_tool))
             return s
         # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.

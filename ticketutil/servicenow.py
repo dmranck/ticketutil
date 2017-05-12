@@ -49,8 +49,7 @@ class ServiceNowTicket(Ticket):
             url += '/api/now/table/sys_choice?sysparm_query=name='
             url += project + '^element=state^inactive=false'
             r = self.s.get(url)
-            logging.debug("Verify project: Status Code: {0}".format(
-                          r.status_code))
+            logging.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
 
             self.available_states = {}
@@ -78,10 +77,8 @@ class ServiceNowTicket(Ticket):
             url = self.rest_url + '?sysparm_query=GOTOnumber%3D'
             url += ticket_id
             r = self.s.get(url)
+            logging.debug("Get ticket content: status code: {0}".format(r.status_code))
             r.raise_for_status()
-
-            logging.debug("Get ticket content: Status Code: {0}"
-                          .format(r.status_code))
             ticket_content = r.json()
             return ticket_content['result'][0]
         except requests.RequestException as e:
@@ -192,10 +189,8 @@ class ServiceNowTicket(Ticket):
         try:
             self.s.headers.update(self.headers_post_)
             r = self.s.post(self.rest_url, data=params)
+            logging.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-
-            logging.debug("Create ticket: Status Code: {0}"
-                          .format(r.status_code))
             ticket_content = r.json()
             self.ticket_content = ticket_content['result']
 
@@ -221,11 +216,11 @@ class ServiceNowTicket(Ticket):
             return
 
         try:
-            logging.info('Changing ticket status')
             fields = {'state': self.available_states[status.lower()]}
             params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
+            logging.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
             self.ticket_content = r.json()['result']
             logging.info('Ticket {0} status changed successfully'
@@ -263,10 +258,9 @@ class ServiceNowTicket(Ticket):
         try:
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
+            logging.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
             self.ticket_content = r.json()['result']
-            logging.debug("Editing Ticket: Status Code: {0}"
-                          .format(r.status_code))
             logging.info("Edited ticket {0} - {1}".format(self.ticket_id,
                                                           self.ticket_url))
         except requests.RequestException as e:
@@ -285,6 +279,7 @@ class ServiceNowTicket(Ticket):
             params = self._create_ticket_parameters({'comments': comment})
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
+            logging.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
             self.ticket_content = r.json()['result']
             logging.info('Comment created successfully')
@@ -313,6 +308,7 @@ class ServiceNowTicket(Ticket):
             params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
+            logging.debug("Add cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
             self.ticket_content = r.json()['result']
             logging.info('Users added to CC list of {0}'
@@ -337,6 +333,7 @@ class ServiceNowTicket(Ticket):
             params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
+            logging.debug("Rewrite cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
             self.ticket_content = r.json()['result']
             logging.info('CC list rewritten for {0}'
@@ -366,6 +363,7 @@ class ServiceNowTicket(Ticket):
             params = self._create_ticket_parameters(fields)
             self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
+            logging.debug("Remove cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
             self.ticket_content = r.json()['result']
             logging.info('User(s) removed from CC list of {0}'

@@ -47,7 +47,7 @@ class RTTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/queue/{1}".format(self.rest_url, project))
-            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            logging.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
             error_response = "No queue named {0} exists.".format(project)
             # RT's API returns 200 even if the project is not valid. We need to parse the response.
@@ -70,7 +70,7 @@ class RTTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/ticket/{1}/show".format(self.rest_url, ticket_id))
-            logging.debug("Verify ticket_id: Status Code: {0}".format(r.status_code))
+            logging.debug("Verify ticket_id: status code: {0}".format(r.status_code))
             r.raise_for_status()
             error_response = "Ticket {0} does not exist.".format(ticket_id)
             # RT's API returns 200 even if the ticket is not valid. We need to parse the response.
@@ -156,8 +156,8 @@ class RTTicket(ticket.Ticket):
         # Attempt to create ticket.
         try:
             r = self.s.post('{0}/ticket/new'.format(self.rest_url), data=params)
+            logging.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
 
             # Retrieve key from new ticket.
             ticket_content = r.text
@@ -199,8 +199,8 @@ class RTTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.post("{0}/ticket/{1}/edit".format(self.rest_url, self.ticket_id), data=params)
+            logging.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Editing Ticket: Status Code: {0}".format(r.status_code))
             logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error editing ticket")
@@ -227,8 +227,8 @@ class RTTicket(ticket.Ticket):
         # Attempt to add comment to ticket.
         try:
             r = self.s.post('{0}/ticket/{1}/comment'.format(self.rest_url, self.ticket_id), data=params)
+            logging.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Add comment: Status Code: {0}".format(r.status_code))
             logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error adding comment to ticket")
@@ -251,8 +251,8 @@ class RTTicket(ticket.Ticket):
         # Attempt to change status of ticket.
         try:
             r = self.s.post('{0}/ticket/{1}/edit'.format(self.rest_url, self.ticket_id), data=params)
+            logging.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Changing status of ticket: Status Code: {0}".format(r.status_code))
             logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error changing status of ticket")
@@ -277,8 +277,8 @@ class RTTicket(ticket.Ticket):
         # Attempt to attach file.
         try:
             r = self.s.post("{0}/ticket/{1}/comment".format(self.rest_url, self.ticket_id), data=params, files=files)
+            logging.debug("Add attachment: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Add attachment: Status Code: {0}".format(r.status_code))
             logging.info("Attached File {0}: {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error attaching file {0}".format(file_name))

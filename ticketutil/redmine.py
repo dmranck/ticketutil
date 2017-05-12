@@ -20,7 +20,7 @@ class RedmineTicket(ticket.Ticket):
         # Redmine URLs
         self.url = url
         self.rest_url = '{0}/issues'.format(self.url)
-        self.auth_url = '{0}/projects.json'.format(self.url)
+        self.auth_url = '{0}/login'.format(self.url)
 
         # Call our parent class's init method which creates our requests session.
         super(RedmineTicket, self).__init__(project, ticket_id)
@@ -49,7 +49,7 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/projects/{1}.json".format(self.url, project))
-            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            logging.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logging.debug("Project {0} is valid".format(project))
             return True
@@ -65,7 +65,7 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/{1}.json".format(self.rest_url, ticket_id))
-            logging.debug("Verify ticket_id: Status Code: {0}".format(r.status_code))
+            logging.debug("Verify ticket_id: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logging.debug("Ticket {0} is valid".format(ticket_id))
             return True
@@ -138,8 +138,8 @@ class RedmineTicket(ticket.Ticket):
         # Attempt to create ticket.
         try:
             r = self.s.post("{0}.json".format(self.rest_url), json=params)
+            logging.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
 
             # Retrieve key from new ticket.
             ticket_content = r.json()
@@ -178,8 +178,8 @@ class RedmineTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.put("{0}/{1}.json".format(self.rest_url, self.ticket_id), json=params)
+            logging.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Editing Ticket: Status Code: {0}".format(r.status_code))
             logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error editing ticket")
@@ -201,8 +201,8 @@ class RedmineTicket(ticket.Ticket):
         # Attempt to add comment to ticket.
         try:
             r = self.s.put('{0}/{1}.json'.format(self.rest_url, self.ticket_id), json=params)
+            logging.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Add comment: Status Code: {0}".format(r.status_code))
             logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error adding comment to ticket")
@@ -229,8 +229,8 @@ class RedmineTicket(ticket.Ticket):
         # Attempt to change status of ticket.
         try:
             r = self.s.put('{0}/{1}.json'.format(self.rest_url, self.ticket_id), json=params)
+            logging.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Changing status of ticket: Status Code: {0}".format(r.status_code))
             logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error changing status of ticket")
@@ -254,8 +254,8 @@ class RedmineTicket(ticket.Ticket):
 
         try:
             r = self.s.delete("{0}/{1}/watchers/{2}.json".format(self.rest_url, self.ticket_id, watcher_id))
+            logging.debug("Remove watcher {0}: status code: {1}".format(watcher, r.status_code))
             r.raise_for_status()
-            logging.debug("Remove watcher {0}: Status Code: {0}".format(watcher, r.status_code))
             logging.info("Removed watcher {0} from ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error removing watcher {0} from ticket".format(watcher))
@@ -281,8 +281,8 @@ class RedmineTicket(ticket.Ticket):
             params = {'user_id': watcher_id}
             try:
                 r = self.s.post("{0}/{1}/watchers.json".format(self.rest_url, self.ticket_id), json=params)
+                logging.debug("Add watcher {0}: status code: {1}".format(watcher, r.status_code))
                 r.raise_for_status()
-                logging.debug("Add watcher {0}: Status Code: {0}".format(r.status_code))
                 logging.info("Added watcher {0} to ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
             except requests.RequestException as e:
                 logging.error("Error adding {0} as a watcher to ticket".format(watcher))
@@ -307,8 +307,8 @@ class RedmineTicket(ticket.Ticket):
 
             try:
                 r = self.s.put('{0}/{1}.json'.format(self.rest_url, self.ticket_id), json=params)
+                logging.debug("Add attachment: status code: {0}".format(r.status_code))
                 r.raise_for_status()
-                logging.debug("Add attachment: Status Code: {0}".format(r.status_code))
                 logging.info("Attached file {0}: {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
             except requests.RequestException as e:
                 logging.error("Error attaching file {0}".format(file_name))
@@ -331,9 +331,9 @@ class RedmineTicket(ticket.Ticket):
             r = self.s.post("{0}/uploads.json".format(self.url),
                             data=params,
                             headers=headers)
+            logging.debug("Upload attachment: status code: {0}".format(r.status_code))
             r.raise_for_status()
             token = r.json()['upload']['token']
-            logging.debug("Upload attachment: Status Code: {0}".format(r.status_code))
             logging.info("Uploaded file {0} to Redmine".format(file_name))
         except requests.RequestException as e:
             logging.error("Error uploading file {0}".format(file_name))
@@ -351,19 +351,18 @@ class RedmineTicket(ticket.Ticket):
         :return:
         """
         try:
-            r = self.s.get(self.auth_url)
+            r = self.s.get('{0}/projects/{1}.json'.format(self.url, self.project))
+            logging.debug("Get project id: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Get Project ID: Status Code: {0}".format(r.status_code))
-
-            # Retrieve project id.
-            project_info = r.json()
-            project_id = project_info['project']['id']
-            logging.debug("Retrieved Project ID: {0}".format(project_id))
-            return project_id
         except requests.RequestException as e:
             logging.error("Error retrieving Project ID")
             logging.error(e.args[0])
-            return None
+            return
+
+        project_json = r.json()
+        project_id = project_json['project']['id']
+        logging.debug("Retrieved Project ID: {0}".format(project_id))
+        return project_id
 
     def _get_status_id(self, status_name):
         """
@@ -374,6 +373,7 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get('{0}/issue_statuses.json'.format(self.url))
+            logging.debug("Get status id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
             logging.error("Error retrieving Redmine status information")
@@ -394,6 +394,7 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get('{0}/enumerations/issue_priorities.json'.format(self.url))
+            logging.debug("Get priority id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
             logging.error("Error retrieving Redmine priority information")
@@ -414,6 +415,7 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get('{0}/users.json'.format(self.url))
+            logging.debug("Get user id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
             logging.error("Error retrieving Redmine user information")

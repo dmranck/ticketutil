@@ -68,8 +68,8 @@ class BugzillaTicket(ticket.Ticket):
         # Try to authenticate to auth_url.
         try:
             r = s.get(self.auth_url)
+            logging.debug("Create requests session: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Create requests session: Status Code: {0}".format(r.status_code))
             logging.info("Successfully authenticated to {0}.".format(self.ticketing_tool))
             return s
         # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
@@ -87,7 +87,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/rest/product/{1}".format(self.url, project.replace(" ", "%20")))
-            logging.debug("Verify project: Status Code: {0}".format(r.status_code))
+            logging.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
             # Bugzilla's API returns 200 even if the project is not valid. We need to parse the response.
             if r.json() == {"products": []}:
@@ -109,7 +109,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/{1}".format(self.rest_url, ticket_id))
-            logging.debug("Verify ticket_id: Status Code: {0}".format(r.status_code))
+            logging.debug("Verify ticket_id: status code: {0}".format(r.status_code))
             r.raise_for_status()
             error_responses = ["Bug #{0} does not exist.".format(ticket_id),
                                "\\\"{0}\\\" is out of range for type integer".format(ticket_id),
@@ -195,8 +195,8 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to create ticket.
         try:
             r = self.s.post(self.rest_url, json=params)
+            logging.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Create ticket: Status Code: {0}".format(r.status_code))
 
             # Try to grab the newly created ticket id from the request response.
             # If there's a KeyError, grab the error message from the request response.
@@ -242,6 +242,7 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            logging.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
             if 'bugs' in r.json():
                 if r.json()['bugs'][0]['changes'] == {}:
@@ -250,7 +251,6 @@ class BugzillaTicket(ticket.Ticket):
             if 'message' in r.json():
                 logging.error(r.json()['message'])
                 return
-            logging.debug("Editing Ticket: Status Code: {0}".format(r.status_code))
             logging.info("Edited ticket with the mentioned fields {0} - {1}".format(self.ticket_id, self.ticket_url))
 
         except requests.RequestException as e:
@@ -273,8 +273,8 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to add comment to ticket.
         try:
             r = self.s.post("{0}/{1}/comment".format(self.rest_url, self.ticket_id), json=params)
+            logging.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Add comment: Status Code: {0}".format(r.status_code))
             logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error adding comment to ticket")
@@ -309,11 +309,11 @@ class BugzillaTicket(ticket.Ticket):
         try:
             headers = {"Content-Type": "application/json"}
             r = self.s.post("{0}/{1}/attachment".format(self.rest_url, self.ticket_id), json=params, headers=headers)
+            logging.debug("Add attachment: status code: {0}".format(r.status_code))
             r.raise_for_status()
             if 'message' in r.json():
                 logging.error("Add attachment: {0}".format(r.json()['message']))
                 return
-            logging.debug("Adding attachment to ticket: Status Code: {0}".format(r.status_code))
             logging.info("Added a new attachment to: {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error adding attachment to ticket")
@@ -337,11 +337,11 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to change status of ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            logging.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
             if 'message' in r.json():
                 logging.error("Change status error message: {0}".format(r.json()['message']))
                 return
-            logging.debug("Changing status of ticket: Status Code: {0}".format(r.status_code))
             logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error changing status of ticket")
@@ -365,6 +365,7 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            logging.debug("Add cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
             if 'bugs' in r.json():
                 if r.json()['bugs'][0]['changes'] == {}:
@@ -373,7 +374,6 @@ class BugzillaTicket(ticket.Ticket):
             if 'message' in r.json():
                 logging.error(r.json()['message'])
                 return
-            logging.debug("Adding user(s) to cc list: Status Code: {0}".format(r.status_code))
             logging.info("Adding user(s) to cc list {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error adding user(s) to cc list")
@@ -397,6 +397,7 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
+            logging.debug("Remove cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
             if 'bugs' in r.json():
                 if r.json()['bugs'][0]['changes'] == {}:
@@ -405,7 +406,6 @@ class BugzillaTicket(ticket.Ticket):
             if 'message' in r.json():
                 logging.error(r.json()['message'])
                 return
-            logging.debug("Removing user(s) from cc list: Status Code: {0}".format(r.status_code))
             logging.info("Removing user(s) from cc list {0} - {1}".format(self.ticket_id, self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error removing user(s) from cc list")
