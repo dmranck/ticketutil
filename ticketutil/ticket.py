@@ -1,5 +1,6 @@
 import logging
 import os
+from collections import namedtuple
 
 import gssapi
 import requests
@@ -37,6 +38,10 @@ class Ticket(object):
         self.ticket_id = ticket_id
         self.ticket_url = None
 
+        # Create our default namedtuple for our request results.
+        Result = namedtuple('Result', ['status', 'error_message', 'url'])
+        self.request_result = Result('Success', None, None)
+
         # Create our requests session below. Raise an exception if a session object is not returned.
         self.s = self._create_requests_session()
         if not self.s:
@@ -57,14 +62,17 @@ class Ticket(object):
         """
         Sets the ticket_id and ticket_url instance vars for the current Ticket object.
         :param ticket_id: Ticket id you would like to set.
-        :return:
+        :return: self.request_result: Named tuple containing status, error_message, and url info.
         """
         if self._verify_ticket_id(ticket_id):
             self.ticket_id = ticket_id
             self.ticket_url = self._generate_ticket_url()
             logging.info("Current ticket: {0} - {1}".format(self.ticket_id, self.ticket_url))
+            return self.request_result
         else:
             logging.error("Unable to set ticket id to {0}.".format(ticket_id))
+            error_message = "Ticket ID not valid"
+            return self.request_result._replace(status='Failure', error_message=error_message)
 
     def get_ticket_id(self):
         """
@@ -105,11 +113,9 @@ class Ticket(object):
             r.raise_for_status()
             logging.info("Successfully authenticated to {0}".format(self.ticketing_tool))
             return s
-        # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
-        # Instead of using e.message, use e.args[0] instead to prevent DeprecationWarning for exception.message.
         except requests.RequestException as e:
             logging.error("Error authenticating to {0}.".format(self.auth_url))
-            logging.error(e.args[0])
+            logging.error(e)
             s.close()
 
     def close_requests_session(self):
@@ -119,6 +125,7 @@ class Ticket(object):
         """
         if self.s:
             self.s.close()
+            return self.request_result
 
 
 def _get_kerberos_principal():
