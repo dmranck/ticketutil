@@ -89,3 +89,24 @@ t.change_status('Done')
 # Close Requests session.
 t.close_requests_session()
 ```
+
+#### Create a Sub-Task inside existing JIRA tickets
+```python
+from ticketutil.jira import JiraTicket
+
+# Create a ticket object and pass the url and project key in as strings.
+t = JiraTicket(<jira_url>,
+               <project_key>,
+               auth=('username', 'password'))
+
+# Create a ticket and perform some common ticketing operations.
+t.create(summary='Sub Task summary',
+         description='Sub Task description',
+         type='Sub-task',
+         assignee='username',
+         parent='existing_ticket_id')
+t.change_status('In Progress')
+
+# Close Requests session.
+t.close_requests_session()
+```
