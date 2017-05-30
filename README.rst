@@ -55,7 +55,7 @@ The general usage workflow for creating new tickets is:
 * Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
   or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
   verifies that you are able to properly authenticate to the ticketing tool.
-  For tools that require HTTP Basic Authentication (Redmine, Bugzilla and
+  For tools that require HTTP Basic Authentication (JIRA, Redmine, Bugzilla and
   ServiceNow), the ``<auth>`` parameter should contain the username and
   password specified as a tuple. For tools that support kerberos authentication
   (JIRA and RT), the ``<auth>`` parameter should contain 'kerberos'.

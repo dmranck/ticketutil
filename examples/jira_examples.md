@@ -1,6 +1,14 @@
 # ticketutil.jira code examples
 
-Currently, ticketutil supports Kerberos authentication for JIRA. 
+Authenticate through Basic HTTP Authentication
+
+```python
+>>> from ticketutil.jira import JiraTicket
+>>> t = JiraTicket(<jira_url>,
+                   <project_key>,
+                   auth=('username', 'password'))
+```
+
 Authenticate through kerberos using `kinit` and then execute the 
 following in Python:
 

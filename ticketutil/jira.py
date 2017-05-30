@@ -14,13 +14,16 @@ class JiraTicket(ticket.Ticket):
     def __init__(self, url, project, auth=None, ticket_id=None):
         self.ticketing_tool = 'JIRA'
 
-        # Right now, hardcode auth as 'kerberos', which is the only supported auth for JIRA.
-        self.auth = 'kerberos'
 
         # JIRA URLs
         self.url = url
         self.rest_url = '{0}/rest/api/2/issue'.format(self.url)
-        self.auth_url = '{0}/step-auth-gss'.format(self.url)
+        if isinstance(auth, tuple):
+            self.auth = auth
+            self.auth_url = self.url
+        else:
+            self.auth = 'kerberos'
+            self.auth_url = '{0}/step-auth-gss'.format(self.url)
 
         # Call our parent class's init method which creates our requests session.
         super(JiraTicket, self).__init__(project, ticket_id)
