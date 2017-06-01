@@ -14,7 +14,6 @@ class JiraTicket(ticket.Ticket):
     def __init__(self, url, project, auth=None, ticket_id=None):
         self.ticketing_tool = 'JIRA'
 
-
         # JIRA URLs
         self.url = url
         self.rest_url = '{0}/rest/api/2/issue'.format(self.url)

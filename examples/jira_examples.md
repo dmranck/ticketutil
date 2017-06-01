@@ -1,6 +1,6 @@
 # ticketutil.jira code examples
 
-Authenticate through Basic HTTP Authentication
+Authenticate through HTTP Basic Authentication:
 
 ```python
 >>> from ticketutil.jira import JiraTicket
@@ -9,8 +9,7 @@ Authenticate through Basic HTTP Authentication
                    auth=('username', 'password'))
 ```
 
-Authenticate through kerberos using `kinit` and then execute the 
-following in Python:
+Authenticate through Kerberos after running `kinit`:
 
 ```python
 >>> from ticketutil.jira import JiraTicket

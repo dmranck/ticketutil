@@ -1,8 +1,15 @@
 # ticketutil.rt code examples
 
-Currently, ticketutil supports Kerberos authentication for RT. 
-Authenticate through kerberos using `kinit` and then execute the 
-following in Python:
+Authenticate through HTTP Basic Authentication:
+
+```python
+>>> from ticketutil.rt import RTTicket
+>>> t = RTTicket(<rt_url>,
+                 <project_queue>,
+                 auth=('username', 'password'))
+```
+
+Authenticate through Kerberos after running `kinit`:
 
 ```python
 >>> from ticketutil.rt import RTTicket

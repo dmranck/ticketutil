@@ -2,6 +2,7 @@ import logging
 import re
 
 import requests
+from requests_kerberos import HTTPKerberosAuth, DISABLED
 
 from . import ticket
 
@@ -15,8 +16,7 @@ class RTTicket(ticket.Ticket):
     def __init__(self, url, project, auth=None, ticket_id=None):
         self.ticketing_tool = 'RT'
 
-        # Right now, hardcode auth as 'kerberos', which is the only supported auth for RT.
-        self.auth = 'kerberos'
+        self.auth = auth
 
         # RT URLs
         self.url = url
@@ -38,6 +38,38 @@ class RTTicket(ticket.Ticket):
             ticket_url = "{0}/Ticket/Display.html?id={1}".format(self.url, self.ticket_id)
 
         return ticket_url
+
+    def _create_requests_session(self):
+        """
+        Creates a Requests Session and authenticates to base API URL with HTTP Basic Auth or Kerberos Auth.
+        We're using a Session to persist cookies across all requests made from the Session instance.
+        :return s: Requests Session.
+        """
+        s = requests.Session()
+        # Kerberos Auth
+        if self.auth == 'kerberos':
+            self.principal = ticket._get_kerberos_principal()
+            s.auth = HTTPKerberosAuth(mutual_authentication=DISABLED)
+            s.verify = False
+        # HTTP Basic Auth
+        if isinstance(self.auth, tuple):
+            username, password = self.auth
+            self.principal = username
+            s.params.update({'user': username, 'pass': password})
+
+        # Try to authenticate to auth_url.
+        try:
+            r = s.get(self.auth_url)
+            logging.debug("Create requests session: status code: {0}".format(r.status_code))
+            r.raise_for_status()
+            # Special case for RT. A 200 status code is still returned if authentication failed. Have to check r.text.
+            if '200' not in r.text:
+                raise requests.RequestException
+            logging.info("Successfully authenticated to {0}".format(self.ticketing_tool))
+            return s
+        except requests.RequestException as e:
+            logging.error("Error authenticating to {0}.".format(self.auth_url))
+            s.close()
 
     def _verify_project(self, project):
         """

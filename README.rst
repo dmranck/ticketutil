@@ -9,9 +9,9 @@ ticketutil
 
 ticketutil is a Python module that allows you to easily interact with
 various ticketing tools using their REST APIs. Currently, the supported
-tools are JIRA, RT, Redmine, Bugzilla and ServiceNow.
-Kerberos authentication is supported for JIRA and RT, while
-HTTP Basic authentication is supported for Redmine, Bugzilla and ServiceNow.
+tools are JIRA, RT, Redmine, Bugzilla, and ServiceNow. All tools support
+HTTP Basic authentication, while JIRA and RT also support Kerberos
+authentication.
 
 This module allows you to create tickets, add comments, edit ticket
 fields, and change the status of tickets in each tool. Additional
@@ -55,10 +55,10 @@ The general usage workflow for creating new tickets is:
 * Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
   or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
   verifies that you are able to properly authenticate to the ticketing tool.
-  For tools that require HTTP Basic Authentication (JIRA, Redmine, Bugzilla and
-  ServiceNow), the ``<auth>`` parameter should contain the username and
-  password specified as a tuple. For tools that support kerberos authentication
-  (JIRA and RT), the ``<auth>`` parameter should contain 'kerberos'.
+  To use HTTP Basic Authentication, the ``<auth>`` parameter should contain the
+  username and password specified as a tuple. For tools that support kerberos
+  authentication (JIRA and RT), the ``<auth>`` parameter should contain
+  'kerberos'.
 * Create a ticket with the ``create()`` method. This sets the ``ticket_id``
   instance variable, allowing you to perform more tasks on the ticket.
 * Add comments, edit ticket fields, add watchers, change the ticket
