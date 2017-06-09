@@ -422,7 +422,7 @@ def _prepare_ticket_fields(operation, fields):
         if "groups" in fields:
             if not isinstance(fields["groups"], list):
                 fields["groups"] = [fields["groups"]]
-        fields["groups"] = {"add": fields["groups"]}
+            fields["groups"] = {"add": fields["groups"]}
 
     for key, value in fields.items():
         if key == 'assignee':
