@@ -44,3 +44,15 @@ Simplify all of your ticketing operations with ticketutil:
    Usage
    Bugzilla
 
+*Comments? / Questions? / Coming Soon*
+----------------------------------------
+
+For questions / comments, email dranck@redhat.com.
+For anything specific to Bugzilla, email kshirsal@redhat.com.
+For ServiceNow related questions, email pzubaty@redhat.com.
+
+The plan for ticketutil is to support more ticketing tools in the near
+future and to support more ticketing operations for the currently
+supported tools. Please let us know if there are any suggestions /
+requests.
+Thanks!
