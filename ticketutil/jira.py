@@ -29,8 +29,8 @@ class JiraTicket(ticket.Ticket):
         super(JiraTicket, self).__init__(project, ticket_id)
 
         # Overwrite our request_result namedtuple from Ticket, adding watchers field for JiraTicket.
-        Result = namedtuple('Result', ['status', 'error_message', 'url', 'watchers'])
-        self.request_result = Result('Success', None, self.ticket_url, None)
+        Result = namedtuple('Result', ['status', 'error_message', 'url', 'ticket_content', 'watchers'])
+        self.request_result = Result('Success', None, self.ticket_url, None, None)
 
     def _generate_ticket_url(self):
         """
@@ -69,7 +69,7 @@ class JiraTicket(ticket.Ticket):
                 logging.error("Project {0} is not valid.".format(project))
             else:
                 logging.error("Unexpected error occurred when verifying project.")
-                logging.error(e.args[0])
+                logging.error(e)
             return False
 
     def _verify_ticket_id(self, ticket_id):
@@ -89,7 +89,7 @@ class JiraTicket(ticket.Ticket):
                 logging.error("Ticket {0} is not valid.".format(ticket_id))
             else:
                 logging.error("Unexpected error occurred when verifying ticket_id.")
-                logging.error(e.args[0])
+                logging.error(e)
             return False
 
     def create(self, summary, description, **kwargs):
@@ -423,7 +423,7 @@ class JiraTicket(ticket.Ticket):
             r.raise_for_status()
         except requests.RequestException as e:
             logging.error("Error retrieving JIRA status information")
-            logging.error(e.args[0])
+            logging.error(e)
             return
 
         status_json = r.json()

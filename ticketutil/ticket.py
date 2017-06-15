@@ -39,8 +39,8 @@ class Ticket(object):
         self.ticket_url = None
 
         # Create our default namedtuple for our request results.
-        Result = namedtuple('Result', ['status', 'error_message', 'url'])
-        self.request_result = Result('Success', None, None)
+        Result = namedtuple('Result', ['status', 'error_message', 'url', 'ticket_content'])
+        self.request_result = Result('Success', None, None, None)
 
         # Create our requests session below. Raise an exception if a session object is not returned.
         self.s = self._create_requests_session()
