@@ -45,7 +45,8 @@ Simplify all of your ticketing operations with ticketutil:
    Bugzilla
 
 
-:caption: Comments? / Questions? / Coming Soon:
+.. toctree::
+   :caption: Comments? / Questions? / Coming Soon:
 
 For questions / comments, email dranck@redhat.com.
 For anything specific to Bugzilla, email kshirsal@redhat.com.
