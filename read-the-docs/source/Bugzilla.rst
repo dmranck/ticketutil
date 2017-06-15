@@ -27,7 +27,7 @@ Methods
 create()
 --------
 
-``create(self, summary, description, \*\*kwargs)``
+``create(self, summary, description, **kwargs)``
 
 Creates a ticket. The required parameters for ticket creation are
 summary and description. Keyword arguments are used for other ticket
@@ -57,7 +57,7 @@ particular Bugzilla instance during ticket creation:
 edit()
 ------
 
-``edit(self, \*\*kwargs)``
+``edit(self, **kwargs)``
 
 Edits fields in a Bugzilla ticket. Keyword arguments are used to specify
 ticket fields.
@@ -84,7 +84,7 @@ particular Bugzilla instance during ticket editing:
 add_comment()
 -------------
 
-``add_comment(self, comment,\*\*kwargs )``
+``add_comment(self, comment, **kwargs )``
 
 Adds a comment to a Bugzilla ticket. Keyword arguments are used to
 specify comment options.
@@ -96,7 +96,7 @@ specify comment options.
 change_status()
 ---------------
 
-``change\_status(self, status, \*\*kwargs)``
+``change\_status(self, status, **kwargs)``
 
 Changes status of a Bugzilla ticket. Some status changes require a
 secondary field (i.e. resolution). Specify this as a keyword argument. A
@@ -137,7 +137,7 @@ users.
 add_attachment()
 ----------------
 
-``add_attachment(self, file\_name, data, summary, \*\*kwargs )``
+``add_attachment(self, file_name, data, summary, **kwargs )``
 
 Add attachment in a Bugzilla ticket. Keyword arguments are used to
 specify additional attachment options.
