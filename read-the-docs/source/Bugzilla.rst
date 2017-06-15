@@ -14,7 +14,7 @@ documentation for more information on custom fields:
 http://bugzilla.readthedocs.io/en/latest/api/index.html
 
 Methods
--------
+^^^^^^^
 
 -  `create() <#create>`__
 -  `edit() <#edit>`__
@@ -25,7 +25,7 @@ Methods
 -  `add_attachment() <#add_attachment>`__
 
 create()
-~~~~~~~~
+--------
 
 ``create(self, summary, description, \*\*kwargs)``
 
@@ -55,7 +55,7 @@ particular Bugzilla instance during ticket creation:
     groups='GroupName'
 
 edit()
-~~~~~~
+------
 
 ``edit(self, \*\*kwargs)``
 
@@ -82,7 +82,7 @@ particular Bugzilla instance during ticket editing:
     groups='Group Name'
 
 add_comment()
-~~~~~~~~~~~~~
+-------------
 
 ``add_comment(self, comment,\*\*kwargs )``
 
@@ -94,7 +94,7 @@ specify comment options.
     t.add_comment('Test comment')
 
 change_status()
-~~~~~~~~~~~~~~~
+---------------
 
 ``change\_status(self, status, \*\*kwargs)``
 
@@ -109,7 +109,7 @@ bug ID.
     t.change_status('CLOSED', resolution='DUPLICATE', dupe_of='<bug_id>')
 
 remove_cc()
-~~~~~~~~~~~
+-----------
 
 ``remove_cc(self, user)``
 
@@ -122,7 +122,7 @@ users.
     t.remove_cc('username@mail.com')
 
 add_cc()
-~~~~~~~~
+--------
 
 ``add_cc(self, user)``
 
@@ -135,7 +135,7 @@ users.
     t.add_cc(['username1@mail.com', 'username2@mail.com'])
 
 add_attachment()
-~~~~~~~~~~~~~~~~
+----------------
 
 ``add_attachment(self, file\_name, data, summary, \*\*kwargs )``
 
@@ -149,7 +149,7 @@ specify additional attachment options.
                      summary='A short string describing the attachment.')
 
 Examples
---------
+^^^^^^^^
 
 ticketutil.bugzilla code examples
 ---------------------------------
