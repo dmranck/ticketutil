@@ -1,0 +1,240 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Bugzilla &#8212; ticketutil 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Usage" href="Usage.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="Usage.html" title="Usage"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">ticketutil 0.0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="bugzilla">
+<h1>Bugzilla<a class="headerlink" href="#bugzilla" title="Permalink to this headline">¶</a></h1>
+<p>This document contains information on the methods available when working
+with a BugzillaTicket object. A list of the Bugzilla fields that have
+been tested when creating and editing tickets is included. Because each
+instance of Bugzilla can have custom fields and custom values, some of
+the tested fields may not be applicable to certain instances of
+Bugzilla. Additionally, your Bugzilla instance may contain ticket fields
+that we have not tested. Custom field names and values can be passed in
+as keyword arguments when creating and editing tickets, and the Bugzilla
+REST API should be able to process them. See Bugzilla’s REST API
+documentation for more information on custom fields:
+<a class="reference external" href="http://bugzilla.readthedocs.io/en/latest/api/index.html">http://bugzilla.readthedocs.io/en/latest/api/index.html</a></p>
+<div class="section" id="table-of-contents">
+<h2>Table of contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="#create">create()</a></li>
+<li><a class="reference external" href="#edit">edit()</a></li>
+<li><a class="reference external" href="#comment">add_comment()</a></li>
+<li><a class="reference external" href="#status">change_status()</a></li>
+<li><a class="reference external" href="#remove_cc">remove_cc()</a></li>
+<li><a class="reference external" href="#add_cc">add_cc()</a></li>
+<li><a class="reference external" href="#add_attachment">add_attachment()</a></li>
+</ul>
+<div class="section" id="create">
+<h3>create()<a class="headerlink" href="#create" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">create(self,</span> <span class="pre">summary,</span> <span class="pre">description,</span> <span class="pre">\*\*kwargs)</span></code></p>
+<p>Creates a ticket. The required parameters for ticket creation are
+summary and description. Keyword arguments are used for other ticket
+fields.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">summary</span><span class="o">=</span><span class="s1">&#39;Ticket summary&#39;</span><span class="p">,</span>
+         <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Ticket description&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The following keyword arguments were tested and accepted by our
+particular Bugzilla instance during ticket creation:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">summary</span><span class="o">=</span><span class="s1">&#39;Ticket summary&#39;</span>
+<span class="n">description</span><span class="o">=</span><span class="s1">&#39;Ticket description&#39;</span>
+<span class="n">assignee</span><span class="o">=</span><span class="s1">&#39;username@mail.com&#39;</span>
+<span class="n">qa_contact</span><span class="o">=</span><span class="s1">&#39;username@mail.com&#39;</span>
+<span class="n">component</span><span class="o">=</span><span class="s1">&#39;Test component&#39;</span>
+<span class="n">version</span><span class="o">=</span><span class="s1">&#39;version&#39;</span>
+<span class="n">priority</span><span class="o">=</span><span class="s1">&#39;high&#39;</span>
+<span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span>
+<span class="n">alias</span><span class="o">=</span><span class="s1">&#39;SomeAlias&#39;</span>
+<span class="n">groups</span><span class="o">=</span><span class="s1">&#39;GroupName&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="edit">
+<h3>edit()<a class="headerlink" href="#edit" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">edit(self,</span> <span class="pre">\*\*kwargs)</span></code></p>
+<p>Edits fields in a Bugzilla ticket. Keyword arguments are used to specify
+ticket fields.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">edit</span><span class="p">(</span><span class="n">summary</span><span class="o">=</span><span class="s1">&#39;Ticket summary&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The following keyword arguments were tested and accepted by our
+particular Bugzilla instance during ticket editing:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">summary</span><span class="o">=</span><span class="s1">&#39;Ticket summary&#39;</span>
+<span class="n">assignee</span><span class="o">=</span><span class="s1">&#39;username@mail.com&#39;</span>
+<span class="n">qa_contact</span><span class="o">=</span><span class="s1">&#39;username@mail.com&#39;</span>
+<span class="n">component</span><span class="o">=</span><span class="s1">&#39;Test component&#39;</span>
+<span class="n">version</span><span class="o">=</span><span class="s1">&#39;version&#39;</span>
+<span class="n">priority</span><span class="o">=</span><span class="s1">&#39;high&#39;</span>
+<span class="n">severity</span><span class="o">=</span><span class="s1">&#39;medium&#39;</span>
+<span class="n">alias</span><span class="o">=</span><span class="s1">&#39;SomeAlias&#39;</span>
+<span class="n">groups</span><span class="o">=</span><span class="s1">&#39;Group Name&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="add-comment">
+<h3>add_comment()<a class="headerlink" href="#add-comment" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">add_comment(self,</span> <span class="pre">comment,\*\*kwargs</span> <span class="pre">)</span></code></p>
+<p>Adds a comment to a Bugzilla ticket. Keyword arguments are used to
+specify comment options.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">add_comment</span><span class="p">(</span><span class="s1">&#39;Test comment&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="change-status">
+<h3>change_status()<a class="headerlink" href="#change-status" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">change\_status(self,</span> <span class="pre">status,</span> <span class="pre">\*\*kwargs)</span></code></p>
+<p>Changes status of a Bugzilla ticket. Some status changes require a
+secondary field (i.e. resolution). Specify this as a keyword argument. A
+resolution of Duplicate requires dupe_of keyword argument with a valid
+bug ID.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">change_status</span><span class="p">(</span><span class="s1">&#39;NEW&#39;</span><span class="p">)</span>
+<span class="n">t</span><span class="o">.</span><span class="n">change_status</span><span class="p">(</span><span class="s1">&#39;CLOSED&#39;</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s1">&#39;DUPLICATE&#39;</span><span class="p">,</span> <span class="n">dupe_of</span><span class="o">=</span><span class="s1">&#39;&lt;bug_id&gt;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="remove-cc">
+<h3>remove_cc()<a class="headerlink" href="#remove-cc" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">remove_cc(self,</span> <span class="pre">user)</span></code></p>
+<p>Removes user(s) from CC List of a Bugzilla ticket. Accepts a string
+representing one user’s email address, or a list of strings for multiple
+users.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">remove_cc</span><span class="p">(</span><span class="s1">&#39;username@mail.com&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="add-cc">
+<h3>add_cc()<a class="headerlink" href="#add-cc" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">add_cc(self,</span> <span class="pre">user)</span></code></p>
+<p>Adds user(s) to CC List of a Bugzilla ticket. Accepts a string
+representing one user’s email address, or a list of strings for multiple
+users.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">add_cc</span><span class="p">([</span><span class="s1">&#39;username1@mail.com&#39;</span><span class="p">,</span> <span class="s1">&#39;username2@mail.com&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="add-attachment">
+<h3>add_attachment()<a class="headerlink" href="#add-attachment" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">add_attachment(self,</span> <span class="pre">file\_name,</span> <span class="pre">data,</span> <span class="pre">summary,</span> <span class="pre">\*\*kwargs</span> <span class="pre">)</span></code></p>
+<p>Add attachment in a Bugzilla ticket. Keyword arguments are used to
+specify additional attachment options.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">add_attachment</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="s1">&#39;Name to be displayed on UI&#39;</span><span class="p">,</span>
+                 <span class="n">data</span><span class="o">=</span><span class="s1">&#39;Location(path) or contents of the attachment&#39;</span><span class="p">,</span>
+                 <span class="n">summary</span><span class="o">=</span><span class="s1">&#39;A short string describing the attachment.&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Bugzilla</a><ul>
+<li><a class="reference internal" href="#table-of-contents">Table of contents</a><ul>
+<li><a class="reference internal" href="#create">create()</a></li>
+<li><a class="reference internal" href="#edit">edit()</a></li>
+<li><a class="reference internal" href="#add-comment">add_comment()</a></li>
+<li><a class="reference internal" href="#change-status">change_status()</a></li>
+<li><a class="reference internal" href="#remove-cc">remove_cc()</a></li>
+<li><a class="reference internal" href="#add-cc">add_cc()</a></li>
+<li><a class="reference internal" href="#add-attachment">add_attachment()</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Usage.html"
+                        title="previous chapter">Usage</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Bugzilla.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="Usage.html" title="Usage"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">ticketutil 0.0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, kshirsal.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,154 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Usage &#8212; ticketutil 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Bugzilla" href="Bugzilla.html" />
+    <link rel="prev" title="Installation" href="Installation.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="Bugzilla.html" title="Bugzilla"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Installation.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">ticketutil 0.0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<p>The general usage workflow for creating new tickets is:</p>
+<ul class="simple">
+<li>Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
+or ServiceNowTicket object with <code class="docutils literal"><span class="pre">&lt;url&gt;</span></code>, <code class="docutils literal"><span class="pre">&lt;project&gt;</span></code> and <code class="docutils literal"><span class="pre">&lt;auth&gt;</span></code>. This
+verifies that you are able to properly authenticate to the ticketing tool.
+To use HTTP Basic Authentication, the <code class="docutils literal"><span class="pre">&lt;auth&gt;</span></code> parameter should contain the
+username and password specified as a tuple. For tools that support kerberos
+authentication (JIRA and RT), the <code class="docutils literal"><span class="pre">&lt;auth&gt;</span></code> parameter should contain
+‘kerberos’.</li>
+<li>Create a ticket with the <code class="docutils literal"><span class="pre">create()</span></code> method. This sets the <code class="docutils literal"><span class="pre">ticket_id</span></code>
+instance variable, allowing you to perform more tasks on the ticket.</li>
+<li>Add comments, edit ticket fields, add watchers, change the ticket
+status, etc on the ticket.</li>
+<li>Close ticket Requests session with <code class="docutils literal"><span class="pre">close_requests_session()</span></code>.</li>
+</ul>
+<p>To work on existing tickets, you can also pass in a fourth parameter
+when creating a Ticket object: <code class="docutils literal"><span class="pre">&lt;ticket_id&gt;</span></code>. The general workflow for
+working with existing tickets is as follows:</p>
+<ul class="simple">
+<li>Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
+or ServiceNowTicket object with <code class="docutils literal"><span class="pre">&lt;url&gt;</span></code>, <code class="docutils literal"><span class="pre">&lt;project_key&gt;</span></code>, <code class="docutils literal"><span class="pre">&lt;auth&gt;</span></code> and
+<code class="docutils literal"><span class="pre">&lt;ticket_id&gt;</span></code>.</li>
+<li>Add comments, edit ticket fields, add watchers, change the ticket
+status, etc on the ticket.</li>
+<li>Close ticket Requests session with <code class="docutils literal"><span class="pre">close_requests_session()</span></code>.</li>
+</ul>
+<p>There is also a <code class="docutils literal"><span class="pre">set_ticket_id()</span></code> method for a Ticket object. This is
+useful if you are working with a Ticket object that already has the
+<code class="docutils literal"><span class="pre">&lt;ticket_id&gt;</span></code> instance variable set, but would like to begin working
+on a separate ticket. Instead of creating a new Ticket object, you can
+simply pass an existing <code class="docutils literal"><span class="pre">&lt;ticket_id&gt;</span></code> in to the <code class="docutils literal"><span class="pre">set_ticket_id()</span></code>
+method to begin working on another ticket.</p>
+<p>To return the current Ticket object’s ticket_id or ticket_url, use the
+<code class="docutils literal"><span class="pre">get_ticket_id()</span></code> or <code class="docutils literal"><span class="pre">get_ticket_url()</span></code> methods.</p>
+<p>To run unit tests in Bash terminal use this command:
+<code class="docutils literal"><span class="pre">python3</span> <span class="pre">-m</span> <span class="pre">unittest</span> <span class="pre">discover</span> <span class="pre">./tests/</span></code></p>
+<p>See the docstrings in the code or the tool-specific files in the docs
+and examples directories for more information.</p>
+<p>Note on logging: To enable debug logging for ticketutil, set an environment
+variable named TICKETUTIL_LOG_LEVEL to ‘DEBUG’. You may specify the following
+log levels using this environment variable: DEBUG, INFO, WARNING, ERROR,
+CRITICAL. If this environment variable does not exist, the log level will be
+set to INFO by default.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Installation.html"
+                        title="previous chapter">Installation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Bugzilla.html"
+                        title="next chapter">Bugzilla</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Usage.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="Bugzilla.html" title="Bugzilla"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Installation.html" title="Installation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">ticketutil 0.0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, kshirsal.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.
+    </div>
+  </body>
+</html>
