@@ -152,7 +152,7 @@ Examples
 --------
 
 ticketutil.bugzilla code examples
-=================================
+---------------------------------
 
 Currently, ticketutil supports ``HTTP Basic authentication`` and
 ``API key authentication`` for Bugzilla.
@@ -205,7 +205,7 @@ non-intuitive format. See Bugzilla's REST API documentation for more
 information: http://bugzilla.readthedocs.io/en/latest/api/index.html
 
 Create and update Bugzilla ticket
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
 
@@ -236,7 +236,7 @@ Create and update Bugzilla ticket
     t.close_requests_session()
 
 Update existing Bugzilla tickets
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
 
