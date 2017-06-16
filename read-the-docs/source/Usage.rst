@@ -4,24 +4,19 @@ Usage
 **The general usage workflow for creating new tickets is:**
 
 * Create a *JiraTicket*, *RTTicket*, *RedmineTicket*, *BugzillaTicket*
-  or *ServiceNowTicket* object with ``<url>``, ``<project>`` and ``<auth>``. This
-  verifies that you are able to properly authenticate to the ticketing tool.
+  or *ServiceNowTicket* object with ``<url>``, ``<project>`` and ``<auth>``.
+  This verifies that you are able to properly authenticate to the ticketing tool.
   To use HTTP Basic Authentication, the ``<auth>`` parameter should contain the
   username and password specified as a tuple. For tools that support kerberos
-  authentication (JIRA and RT), the ``<auth>`` parameter should contain
-  'kerberos'.
-
+  authentication (JIRA and RT), the ``<auth>`` parameter should contain'kerberos'.
 
 * Create a ticket with the ``create()`` method. This sets the ``ticket_id``
   instance variable, allowing you to perform more tasks on the ticket.
 
-
 * Add comments, edit ticket fields, add watchers, change the ticket
   status, etc on the ticket.
 
-
 * Close ticket Requests session with ``close_requests_session()``.
-
 
 * To work on existing tickets, you can also pass in a fourth parameter
   when creating a Ticket object: ``<ticket_id>``. The general workflow for
@@ -52,11 +47,8 @@ Usage
 
     python3 -m unittest discover ./tests/
 
-
 .. role:: rubric
-
-    See the docstrings in the code or the tool-specific files in the docs
-    and examples directories for more information.
+    :rubric: See the docstrings in the code or the tool-specific files in the docs and examples directories for more information.
 
 .. note::
     To enable debug logging for ticketutil, set an environment
