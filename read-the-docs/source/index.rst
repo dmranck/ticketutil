@@ -42,6 +42,7 @@ Simplify all of your ticketing operations with ticketutil:
 
    Installation
    Usage
+   JIRA
    Bugzilla
 
 
