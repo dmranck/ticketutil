@@ -3,7 +3,7 @@ Usage
 
 **The general usage workflow for creating new tickets is:**
 
-.. highlight::
+.. glossary::
 
   Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
   or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
@@ -13,7 +13,7 @@ Usage
   authentication (JIRA and RT), the ``<auth>`` parameter should contain
   'kerberos'.
 
-.. hlist::
+.. glossary::
 
     - Create a ticket with the ``create()`` method. This sets the ``ticket_id``
       instance variable, allowing you to perform more tasks on the ticket.
