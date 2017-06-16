@@ -3,12 +3,13 @@ Usage
 
 **The general usage workflow for creating new tickets is:**
 
-* Create a *JiraTicket*, *RTTicket*, *RedmineTicket*, *BugzillaTicket*
-  or *ServiceNowTicket* object with ``<url>``, ``<project>`` and ``<auth>``.
-  This verifies that you are able to properly authenticate to the ticketing tool.
+* Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
+  or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
+  verifies that you are able to properly authenticate to the ticketing tool.
   To use HTTP Basic Authentication, the ``<auth>`` parameter should contain the
   username and password specified as a tuple. For tools that support kerberos
-  authentication (JIRA and RT), the ``<auth>`` parameter should contain'kerberos'.
+  authentication (JIRA and RT), the ``<auth>`` parameter should contain
+  'kerberos'.
 
 * Create a ticket with the ``create()`` method. This sets the ``ticket_id``
   instance variable, allowing you to perform more tasks on the ticket.
@@ -31,7 +32,6 @@ Usage
 
     * Close ticket Requests session with ``close_requests_session()``.
 
-
 * There is also a ``set_ticket_id()`` method for a Ticket object. This is
   useful if you are working with a Ticket object that already has the
   ``<ticket_id>`` instance variable set, but would like to begin working
@@ -43,15 +43,16 @@ Usage
   ``get_ticket_id()`` or ``get_ticket_url()`` methods.
 
 * To run unit tests in Bash terminal use this command:
+
 .. code-block:: python
 
     python3 -m unittest discover ./tests/
 
-.. role:: rubric
-    :rubric: See the docstrings in the code or the tool-specific files in the docs and examples directories for more information.
+See the docstrings in the code or the tool-specific files in the docs
+and examples directories for more information.
 
 .. note::
-    To enable debug logging for ticketutil, set an environment
+    Note on logging: To enable debug logging for ticketutil, set an environment
     variable named TICKETUTIL_LOG_LEVEL to 'DEBUG'. You may specify the following
     log levels using this environment variable: DEBUG, INFO, WARNING, ERROR,
     CRITICAL. If this environment variable does not exist, the log level will be
