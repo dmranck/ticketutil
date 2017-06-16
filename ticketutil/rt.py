@@ -72,7 +72,7 @@ class RTTicket(ticket.Ticket):
             logging.info("Successfully authenticated to {0}".format(self.ticketing_tool))
             return s
         except requests.RequestException as e:
-            logging.error("Error authenticating to {0}.".format(self.auth_url))
+            logging.error("Error authenticating to {0}".format(self.auth_url))
             s.close()
 
     def _verify_project(self, project):
@@ -86,14 +86,14 @@ class RTTicket(ticket.Ticket):
             logging.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Unexpected error occurred when verifying project.")
+            logging.error("Unexpected error occurred when verifying project")
             logging.error(e)
             return False
 
         # RT's API returns 200 even if the project is not valid. We need to parse the response.
-        error_response = "No queue named {0} exists.".format(project)
+        error_response = "No queue named {0} exists".format(project)
         if error_response in r.text:
-            logging.error("Project {0} is not valid.".format(project))
+            logging.error("Project {0} is not valid".format(project))
             return False
         else:
             logging.debug("Project {0} is valid".format(project))
@@ -110,7 +110,7 @@ class RTTicket(ticket.Ticket):
             logging.debug("Verify ticket_id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Unexpected error occurred when verifying ticket_id.")
+            logging.error("Unexpected error occurred when verifying ticket_id")
             logging.error(e)
             return False
 
@@ -118,7 +118,7 @@ class RTTicket(ticket.Ticket):
         error_responses = ["Ticket {0} does not exist.".format(ticket_id),
                            "Bad Request"]
         if any(error in r.text for error in error_responses):
-            logging.error("Ticket {0} is not valid.".format(ticket_id))
+            logging.error("Ticket {0} is not valid".format(ticket_id))
             return False
         else:
             logging.debug("Ticket {0} is valid".format(ticket_id))
@@ -135,9 +135,9 @@ class RTTicket(ticket.Ticket):
         """
         error_message = ""
         if subject is None:
-            error_message = "subject is a necessary parameter for ticket creation."
+            error_message = "subject is a necessary parameter for ticket creation"
         if text is None:
-            error_message = "text is a necessary parameter for ticket creation."
+            error_message = "text is a necessary parameter for ticket creation"
         if error_message:
             logging.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
@@ -370,7 +370,7 @@ class RTTicket(ticket.Ticket):
             error_message = r.text.replace('\n', ' ')
             logging.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Attached File {0}: {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+        logging.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
         return self.request_result
 
 

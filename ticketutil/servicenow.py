@@ -53,7 +53,7 @@ class ServiceNowTicket(Ticket):
             logging.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Unexpected error occurred when verifying project.")
+            logging.error("Unexpected error occurred when verifying project")
             logging.error(e)
             return False
 
@@ -101,7 +101,7 @@ class ServiceNowTicket(Ticket):
         """
         result = self.get_ticket_content(ticket_id)
         if 'Failure' in result.status:
-            logging.error("Ticket {0} is not valid.".format(ticket_id))
+            logging.error("Ticket {0} is not valid".format(ticket_id))
             return False
         logging.debug("Ticket {0} is valid".format(ticket_id))
         self.ticket_id = ticket_id
@@ -152,13 +152,13 @@ class ServiceNowTicket(Ticket):
         """
         error_message = ""
         if description is None:
-            error_message = "description is a necessary parameter for ticket creation."
+            error_message = "description is a necessary parameter for ticket creation"
         if short_description is None:
-            error_message = "short_description is a necessary parameter for ticket creation."
+            error_message = "short_description is a necessary parameter for ticket creation"
         if category is None:
-            error_message = "category is a necessary parameter for ticket creation."
+            error_message = "category is a necessary parameter for ticket creation"
         if item is None:
-            error_message = "item is a necessary parameter for ticket creation."
+            error_message = "item is a necessary parameter for ticket creation"
         if error_message:
             logging.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
@@ -190,7 +190,6 @@ class ServiceNowTicket(Ticket):
         """
         Tries to create the ticket through the ticketing tool's API.
         Retrieves the ticket_id and creates the ticket_url.
-
         :param params: The payload to send in the POST request.
         :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """

@@ -58,7 +58,7 @@ class RedmineTicket(ticket.Ticket):
             logging.debug("Project {0} is valid".format(project))
             return True
         except requests.RequestException as e:
-            logging.error("Project {0} is not valid.".format(project))
+            logging.error("Project {0} is not valid".format(project))
             return False
 
     def _verify_ticket_id(self, ticket_id):
@@ -74,7 +74,7 @@ class RedmineTicket(ticket.Ticket):
             logging.debug("Ticket {0} is valid".format(ticket_id))
             return True
         except requests.RequestException as e:
-            logging.error("Ticket {0} is not valid.".format(ticket_id))
+            logging.error("Ticket {0} is not valid".format(ticket_id))
             return False
 
     def create(self, subject, description, **kwargs):
@@ -88,9 +88,9 @@ class RedmineTicket(ticket.Ticket):
         """
         error_message = ""
         if subject is None:
-            error_message = "subject is a necessary parameter for ticket creation."
+            error_message = "subject is a necessary parameter for ticket creation"
         if description is None:
-            error_message = "description is a necessary parameter for ticket creation."
+            error_message = "description is a necessary parameter for ticket creation"
         if error_message:
             logging.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
@@ -235,7 +235,7 @@ class RedmineTicket(ticket.Ticket):
 
         status_id = self._get_status_id(status)
         if not status_id:
-            error_message = "Not a valid status: {0}.".format(status)
+            error_message = "Not a valid status: {0}".format(status)
             logging.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
@@ -340,7 +340,7 @@ class RedmineTicket(ticket.Ticket):
                 r = self.s.put('{0}/{1}.json'.format(self.rest_url, self.ticket_id), json=params)
                 logging.debug("Add attachment: status code: {0}".format(r.status_code))
                 r.raise_for_status()
-                logging.info("Attached file {0}: {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+                logging.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
                 return self.request_result
             except requests.RequestException as e:
                 logging.error("Error attaching file {0}".format(file_name))
@@ -396,7 +396,7 @@ class RedmineTicket(ticket.Ticket):
             r.raise_for_status()
         except requests.RequestException as e:
             logging.error("Error retrieving Project ID")
-            logging.error(e.args[0])
+            logging.error(e)
             return
 
         project_json = r.json()
@@ -417,7 +417,7 @@ class RedmineTicket(ticket.Ticket):
             r.raise_for_status()
         except requests.RequestException as e:
             logging.error("Error retrieving Redmine status information")
-            logging.error(e.args[0])
+            logging.error(e)
             return
 
         status_json = r.json()
@@ -438,7 +438,7 @@ class RedmineTicket(ticket.Ticket):
             r.raise_for_status()
         except requests.RequestException as e:
             logging.error("Error retrieving Redmine priority information")
-            logging.error(e.args[0])
+            logging.error(e)
             return
 
         priority_json = r.json()
@@ -459,7 +459,7 @@ class RedmineTicket(ticket.Ticket):
             r.raise_for_status()
         except requests.RequestException as e:
             logging.error("Error retrieving Redmine user information")
-            logging.error(e.args[0])
+            logging.error(e)
             return
 
         # If an email address was passed in for user_name param, extract the 'name' piece.

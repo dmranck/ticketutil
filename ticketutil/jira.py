@@ -66,9 +66,9 @@ class JiraTicket(ticket.Ticket):
             return True
         except requests.RequestException as e:
             if r.json()['errorMessages'][0] == "No project could be found with key \'{0}\'.".format(project):
-                logging.error("Project {0} is not valid.".format(project))
+                logging.error("Project {0} is not valid".format(project))
             else:
-                logging.error("Unexpected error occurred when verifying project.")
+                logging.error("Unexpected error occurred when verifying project")
                 logging.error(e)
             return False
 
@@ -86,9 +86,9 @@ class JiraTicket(ticket.Ticket):
             return True
         except requests.RequestException as e:
             if r.json()['errorMessages'][0] == "Issue Does Not Exist":
-                logging.error("Ticket {0} is not valid.".format(ticket_id))
+                logging.error("Ticket {0} is not valid".format(ticket_id))
             else:
-                logging.error("Unexpected error occurred when verifying ticket_id.")
+                logging.error("Unexpected error occurred when verifying ticket_id")
                 logging.error(e)
             return False
 
@@ -103,9 +103,9 @@ class JiraTicket(ticket.Ticket):
         """
         error_message = ""
         if summary is None:
-            error_message = "summary is a necessary parameter for ticket creation."
+            error_message = "summary is a necessary parameter for ticket creation"
         if description is None:
-            error_message = "description is a necessary parameter for ticket creation."
+            error_message = "description is a necessary parameter for ticket creation"
         if error_message:
             logging.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
@@ -263,7 +263,7 @@ class JiraTicket(ticket.Ticket):
 
         status_id = self._get_status_id(status)
         if not status_id:
-            error_message = "Not a valid status: {0}.".format(status)
+            error_message = "Not a valid status: {0}".format(status)
             logging.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
@@ -399,7 +399,7 @@ class JiraTicket(ticket.Ticket):
                             headers=headers)
             logging.debug("Add attachment: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.info("Attached File {0}: {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+            logging.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
             return self.request_result
         except requests.RequestException as e:
             error_message = "Error attaching file {0}".format(file_name)

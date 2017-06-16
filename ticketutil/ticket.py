@@ -45,16 +45,16 @@ class Ticket(object):
         # Create our requests session below. Raise an exception if a session object is not returned.
         self.s = self._create_requests_session()
         if not self.s:
-            raise TicketException("Error authenticating to {0}.".format(self.auth_url))
+            raise TicketException("Error authenticating to {0}".format(self.auth_url))
 
         # Verify that project is valid.
         if not self._verify_project(self.project):
-            raise TicketException("Project {0} is not valid.".format(self.project))
+            raise TicketException("Project {0} is not valid".format(self.project))
 
         # Verify that optional ticket_id parameter is valid. If valid, generate ticket_url.
         if self.ticket_id:
             if not self._verify_ticket_id(self.ticket_id):
-                raise TicketException("Ticket {0} is not valid.".format(self.ticket_id))
+                raise TicketException("Ticket {0} is not valid".format(self.ticket_id))
             else:
                 self.ticket_url = self._generate_ticket_url()
 
@@ -70,7 +70,7 @@ class Ticket(object):
             logging.info("Current ticket: {0} - {1}".format(self.ticket_id, self.ticket_url))
             return self.request_result
         else:
-            logging.error("Unable to set ticket id to {0}.".format(ticket_id))
+            logging.error("Unable to set ticket id to {0}".format(ticket_id))
             error_message = "Ticket ID not valid"
             return self.request_result._replace(status='Failure', error_message=error_message)
 
@@ -114,7 +114,7 @@ class Ticket(object):
             logging.info("Successfully authenticated to {0}".format(self.ticketing_tool))
             return s
         except requests.RequestException as e:
-            logging.error("Error authenticating to {0}.".format(self.auth_url))
+            logging.error("Error authenticating to {0}".format(self.auth_url))
             logging.error(e)
             s.close()
 
