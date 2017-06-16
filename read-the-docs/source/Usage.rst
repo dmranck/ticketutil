@@ -1,7 +1,7 @@
 Usage
 =====
 
-The general usage workflow for creating new tickets is:
+**The general usage workflow for creating new tickets is:**
 
 * Create a *JiraTicket*, *RTTicket*, *RedmineTicket*, *BugzillaTicket*
   or *ServiceNowTicket* object with ``<url>``, ``<project>`` and ``<auth>``. This
@@ -11,11 +11,14 @@ The general usage workflow for creating new tickets is:
   authentication (JIRA and RT), the ``<auth>`` parameter should contain
   'kerberos'.
 
+
 * Create a ticket with the ``create()`` method. This sets the ``ticket_id``
   instance variable, allowing you to perform more tasks on the ticket.
 
+
 * Add comments, edit ticket fields, add watchers, change the ticket
   status, etc on the ticket.
+
 
 * Close ticket Requests session with ``close_requests_session()``.
 
@@ -49,7 +52,9 @@ The general usage workflow for creating new tickets is:
 
     python3 -m unittest discover ./tests/
 
+
 .. role:: rubric
+
     See the docstrings in the code or the tool-specific files in the docs
     and examples directories for more information.
 
