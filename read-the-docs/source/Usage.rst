@@ -3,7 +3,8 @@ Usage
 
 **The general usage workflow for creating new tickets is:**
 
-* Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
+.. glossary::
+  Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
   or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
   verifies that you are able to properly authenticate to the ticketing tool.
   To use HTTP Basic Authentication, the ``<auth>`` parameter should contain the
@@ -11,26 +12,26 @@ Usage
   authentication (JIRA and RT), the ``<auth>`` parameter should contain
   'kerberos'.
 
-* Create a ticket with the ``create()`` method. This sets the ``ticket_id``
+  - Create a ticket with the ``create()`` method. This sets the ``ticket_id``
   instance variable, allowing you to perform more tasks on the ticket.
 
-* Add comments, edit ticket fields, add watchers, change the ticket
+  - Add comments, edit ticket fields, add watchers, change the ticket
   status, etc on the ticket.
 
-* Close ticket Requests session with ``close_requests_session()``.
+  - Close ticket Requests session with ``close_requests_session()``.
 
-* To work on existing tickets, you can also pass in a fourth parameter
+  - To work on existing tickets, you can also pass in a fourth parameter
   when creating a Ticket object: ``<ticket_id>``. The general workflow for
   working with existing tickets is as follows:
 
-    * Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
+    -  Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
       or ServiceNowTicket object with ``<url>``, ``<project_key>``, ``<auth>`` and
       ``<ticket_id>``.
 
-    * Add comments, edit ticket fields, add watchers, change the ticket
+    -  Add comments, edit ticket fields, add watchers, change the ticket
       status, etc on the ticket.
 
-    * Close ticket Requests session with ``close_requests_session()``.
+    -  Close ticket Requests session with ``close_requests_session()``.
 
 * There is also a ``set_ticket_id()`` method for a Ticket object. This is
   useful if you are working with a Ticket object that already has the
@@ -59,5 +60,4 @@ Usage
     log levels using this environment variable: DEBUG, INFO, WARNING, ERROR,
     CRITICAL. If this environment variable does not exist, the log level will be
     set to INFO by default.
-
 
