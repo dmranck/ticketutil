@@ -96,7 +96,7 @@ specify comment options.
 change_status()
 ---------------
 
-``change\_status(self, status, **kwargs)``
+``change_status(self, status, **kwargs)``
 
 Changes status of a Bugzilla ticket. Some status changes require a
 secondary field (i.e. resolution). Specify this as a keyword argument. A
