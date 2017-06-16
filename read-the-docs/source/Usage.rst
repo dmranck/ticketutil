@@ -48,8 +48,10 @@ Usage
 
     python3 -m unittest discover ./tests/
 
-See the docstrings in the code or the tool-specific files in the docs
-and examples directories for more information.
+.. seealso::
+
+    See the docstrings in the code or the tool-specific files in the docs
+    and examples directories for more information.
 
 .. note::
     Note on logging: To enable debug logging for ticketutil, set an environment
