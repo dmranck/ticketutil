@@ -1,7 +1,7 @@
 Installation
 ============
 
-* Install ticketutil with
+* Install ticketutil with,
 .. code:: python
     pip install ticketutil
 
@@ -11,6 +11,6 @@ Installation
 
 * If not installing with pip, a short list of packages defined in the
 requirements.txt file need to be installed. To install the required
-packages, with
+packages with,
 .. code:: python
     pip install -r requirements.txt
