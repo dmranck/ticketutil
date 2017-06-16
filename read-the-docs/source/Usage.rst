@@ -11,13 +11,13 @@ The general usage workflow for creating new tickets is:
   authentication (JIRA and RT), the ``<auth>`` parameter should contain
   'kerberos'.
 
-    * Create a ticket with the ``create()`` method. This sets the ``ticket_id``
-      instance variable, allowing you to perform more tasks on the ticket.
+* Create a ticket with the ``create()`` method. This sets the ``ticket_id``
+  instance variable, allowing you to perform more tasks on the ticket.
 
-    * Add comments, edit ticket fields, add watchers, change the ticket
-      status, etc on the ticket.
+* Add comments, edit ticket fields, add watchers, change the ticket
+  status, etc on the ticket.
 
-    * Close ticket Requests session with ``close_requests_session()``.
+* Close ticket Requests session with ``close_requests_session()``.
 
 
 * To work on existing tickets, you can also pass in a fourth parameter
@@ -41,11 +41,13 @@ The general usage workflow for creating new tickets is:
   simply pass an existing ``<ticket_id>`` in to the ``set_ticket_id()``
   method to begin working on another ticket.
 
-    * To return the current Ticket object's ticket_id or ticket_url, use the
-      ``get_ticket_id()`` or ``get_ticket_url()`` methods.
+* To return the current Ticket object's ticket_id or ticket_url, use the
+  ``get_ticket_id()`` or ``get_ticket_url()`` methods.
 
-    * To run unit tests in Bash terminal use this command:
-     ``python3 -m unittest discover ./tests/``
+* To run unit tests in Bash terminal use this command:
+.. code-block:: python
+
+    python3 -m unittest discover ./tests/
 
 .. role:: rubric
     See the docstrings in the code or the tool-specific files in the docs
