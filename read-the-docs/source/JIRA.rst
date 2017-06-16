@@ -25,8 +25,10 @@ Methods
 -  `add\_watcher() <#add_watcher>`__
 -  `add\_attachment() <#add_attachment>`__
 
-create(self, summary, description, **kwargs)
---------------------------------------------
+create()
+--------
+
+``create(self, summary, description, **kwargs)``
 
 Creates a ticket. The required parameters for ticket creation are
 summary and description. Keyword arguments are used for other ticket
@@ -53,8 +55,10 @@ particular JIRA instance during ticket creation:
     parent='KEY-XX'
     customfield_XXXXX='Custom field text'
 
-edit(self, **kwargs)
---------------------
+edit()
+------
+
+``edit(self, **kwargs)``
 
 Edits fields in a JIRA ticket. Keyword arguments are used to specify
 ticket fields.
@@ -79,8 +83,10 @@ particular JIRA instance during ticket editing:
     parent='KEY-XX'
     customfield_XXXXX='Custom field text'
 
-add_comment(self, comment)
---------------------------
+add_comment()
+-------------
+
+``add_comment(self, comment)``
 
 Adds a comment to a JIRA ticket.
 
@@ -88,8 +94,10 @@ Adds a comment to a JIRA ticket.
 
     t.add_comment('Test comment')
 
-change_status(self, status)
----------------------------
+change_status()
+---------------
+
+``change_status(self, status)``
 
 Changes status of a JIRA ticket.
 
@@ -97,8 +105,10 @@ Changes status of a JIRA ticket.
 
     t.change_status('In Progress')
 
-remove_all_watchers(self)
--------------------------
+remove_all_watchers()
+---------------------
+
+``remove_all_watchers(self)``
 
 Removes all watchers from a JIRA ticket.
 
@@ -106,8 +116,10 @@ Removes all watchers from a JIRA ticket.
 
     t.remove_all_watchers()
 
-remove_watcher(self, watcher)
------------------------------
+remove_watcher()
+----------------
+
+``remove_watcher(self, watcher)``
 
 Removes watcher from a JIRA ticket. Accepts an email or username.
 
@@ -115,8 +127,10 @@ Removes watcher from a JIRA ticket. Accepts an email or username.
 
     t.remove_watcher('username')
 
-add_watcher(self, watcher)
---------------------------
+add_watcher()
+-------------
+
+``add_watcher(self, watcher)``
 
 Adds watcher to a JIRA ticket. Accepts an email or username.
 
@@ -124,8 +138,10 @@ Adds watcher to a JIRA ticket. Accepts an email or username.
 
     t.add_watcher('username')
 
-add_attachment(self, file_name)
--------------------------------
+add_attachment()
+----------------
+
+``add_attachment(self, file_name)``
 
 Attaches a file to a JIRA ticket.
 
