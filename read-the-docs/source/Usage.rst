@@ -47,8 +47,9 @@ method to begin working on another ticket.
     * To run unit tests in Bash terminal use this command:
      ``python3 -m unittest discover ./tests/``
 
-See the docstrings in the code or the tool-specific files in the docs
-and examples directories for more information.
+.. role:: rubric
+    See the docstrings in the code or the tool-specific files in the docs
+    and examples directories for more information.
 
 .. note::
     To enable debug logging for ticketutil, set an environment
