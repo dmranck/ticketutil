@@ -21,8 +21,8 @@ The general usage workflow for creating new tickets is:
 
 
 * To work on existing tickets, you can also pass in a fourth parameter
-when creating a Ticket object: ``<ticket_id>``. The general workflow for
-working with existing tickets is as follows:
+  when creating a Ticket object: ``<ticket_id>``. The general workflow for
+  working with existing tickets is as follows:
 
     * Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
       or ServiceNowTicket object with ``<url>``, ``<project_key>``, ``<auth>`` and
@@ -35,11 +35,11 @@ working with existing tickets is as follows:
 
 
 * There is also a ``set_ticket_id()`` method for a Ticket object. This is
-useful if you are working with a Ticket object that already has the
-``<ticket_id>`` instance variable set, but would like to begin working
-on a separate ticket. Instead of creating a new Ticket object, you can
-simply pass an existing ``<ticket_id>`` in to the ``set_ticket_id()``
-method to begin working on another ticket.
+  useful if you are working with a Ticket object that already has the
+  ``<ticket_id>`` instance variable set, but would like to begin working
+  on a separate ticket. Instead of creating a new Ticket object, you can
+  simply pass an existing ``<ticket_id>`` in to the ``set_ticket_id()``
+  method to begin working on another ticket.
 
     * To return the current Ticket object's ticket_id or ticket_url, use the
       ``get_ticket_id()`` or ``get_ticket_url()`` methods.
