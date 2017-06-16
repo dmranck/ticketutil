@@ -3,7 +3,7 @@ Installation
 
 * Install ticketutil with
 .. code:: python
-pip install ticketutil
+    pip install ticketutil
 
 * ticketutil is compatible with Python 2.7, 3.3, 3.4, 3.5, and 3.6.
 .. note::
@@ -13,4 +13,4 @@ pip install ticketutil
 requirements.txt file need to be installed. To install the required
 packages, with
 .. code:: python
-pip install -r requirements.txt
+    pip install -r requirements.txt
