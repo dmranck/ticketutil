@@ -10,7 +10,7 @@ Welcome to ticketutil's documentation!
 
 ticketutil is a Python module that allows you to easily interact with
 various ticketing tools using their REST APIs. Currently, the supported
-tools are ``JIRA``, ``RT``, ``Redmine``, ``Bugzilla``, and ``ServiceNow``. All tools support
+tools are ``**JIRA**``, ``**RT**``, ``**Redmine**``, ``**Bugzilla**``, and ``**ServiceNow**``. All tools support
 HTTP Basic authentication, while JIRA and RT also support Kerberos
 authentication.
 
