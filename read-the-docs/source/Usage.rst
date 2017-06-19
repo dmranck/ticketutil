@@ -4,6 +4,7 @@ Usage
 **The general usage workflow for creating new tickets is:**
 
 .. highlight::
+
     Introduction
 
     Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
