@@ -1,7 +1,7 @@
 Usage
 =====
 
-.. rst:role:: The general usage workflow for creating new tickets
+.. rst:role:: The general usage for creating new tickets
 
 Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
 or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
@@ -12,7 +12,7 @@ authentication (JIRA and RT), the ``<auth>`` parameter should contain
 'kerberos'.
 
 
-.. rst:role:: General workflow for ticketutil
+.. rst:role:: Workflow for ticketutil
 
 - Create a ticket with the ``create()`` method. This sets the ``ticket_id``
   instance variable, allowing you to perform more tasks on the ticket.
