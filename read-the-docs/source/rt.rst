@@ -1,5 +1,5 @@
-ticketutil.rt
-=============
+rt
+====
 
 This document contains information on the methods available when working
 with a RTTicket object. A list of the RT fields that have been tested
@@ -13,8 +13,8 @@ RT's REST API documentation for more information on custom fields:
 https://rt-wiki.bestpractical.com/wiki/REST
 
 
-Table of contents
-^^^^^^^^^^^^^^^^^
+Methods
+^^^^^^^
 
 -  `create() <#create>`__
 -  `edit() <#edit>`__
