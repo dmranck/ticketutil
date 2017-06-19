@@ -3,8 +3,8 @@ Usage
 
 **The general usage workflow for creating new tickets is:**
 
-Introduction
-------------
+**Introduction**
+
 Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
 or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
 verifies that you are able to properly authenticate to the ticketing tool.
@@ -14,8 +14,7 @@ authentication (JIRA and RT), the ``<auth>`` parameter should contain
 'kerberos'.
 
 
-How to:
--------
+**How to**
 
 - Create a ticket with the ``create()`` method. This sets the ``ticket_id``
   instance variable, allowing you to perform more tasks on the ticket.
@@ -38,8 +37,8 @@ How to:
 
 - Close ticket Requests session with ``close_requests_session()``.
 
-Contd..
--------
+**Contd..**
+
 There is also a ``set_ticket_id()`` method for a Ticket object. This is
 useful if you are working with a Ticket object that already has the
 ``<ticket_id>`` instance variable set, but would like to begin working
@@ -47,8 +46,7 @@ on a separate ticket. Instead of creating a new Ticket object, you can
 simply pass an existing ``<ticket_id>`` in to the ``set_ticket_id()``
 method to begin working on another ticket.
 
-How to:
--------
+**How to:**
 
 - To return the current Ticket object's ticket_id or ticket_url, use the ``get_ticket_id()`` or ``get_ticket_url()`` methods.
 
