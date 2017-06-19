@@ -3,7 +3,7 @@ Usage
 
 **The general usage workflow for creating new tickets is:**
 
-.. centered:: Introduction
+.. rubric:: Introduction
 
 Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
 or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
