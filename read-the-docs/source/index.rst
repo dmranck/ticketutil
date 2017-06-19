@@ -44,8 +44,9 @@ Simplify all of your ticketing operations with ticketutil:
    Usage
    JIRA
    rt
+   Redmine
    Bugzilla
-
+   ServiceNow
 
 Comments? / Questions? / Coming Soon
 ------------------------------------
