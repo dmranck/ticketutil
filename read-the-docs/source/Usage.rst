@@ -3,17 +3,16 @@ Usage
 
 **The general usage workflow for creating new tickets is:**
 
-.. highlight::
+Introduction
+""""""""""""""
 
-    Introduction
-
-    Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
-    or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
-    verifies that you are able to properly authenticate to the ticketing tool.
-    To use HTTP Basic Authentication, the ``<auth>`` parameter should contain the
-    username and password specified as a tuple. For tools that support kerberos
-    authentication (JIRA and RT), the ``<auth>`` parameter should contain
-    'kerberos'.
+Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
+or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
+verifies that you are able to properly authenticate to the ticketing tool.
+To use HTTP Basic Authentication, the ``<auth>`` parameter should contain the
+username and password specified as a tuple. For tools that support kerberos
+authentication (JIRA and RT), the ``<auth>`` parameter should contain
+'kerberos'.
 
 
 **How to**
