@@ -140,7 +140,7 @@ particular ServiceNow instance during ticket editing:
     comments = 'New comment to be added'
 
 add_comment()
-~~~~~~~~~~~~~
+-------------
 
 ``add_comment(self, comment)``
 
@@ -153,7 +153,7 @@ modified or deleted in the current implementation.
 
 
 change_status(self, status)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 Changes status of a ServiceNow ticket.
 
