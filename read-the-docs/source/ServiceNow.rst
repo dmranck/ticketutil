@@ -140,7 +140,7 @@ particular ServiceNow instance during ticket editing:
     comments = 'New comment to be added'
 
 add_comment()
--------------
+~~~~~~~~~~~~~
 
 ``add_comment(self, comment)``
 
