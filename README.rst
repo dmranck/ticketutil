@@ -98,6 +98,40 @@ log levels using this environment variable: DEBUG, INFO, WARNING, ERROR,
 CRITICAL. If this environment variable does not exist, the log level will be
 set to INFO by default.
 
+Return Statements
+-----------------
+
+The main user-accessible methods in ticketutil return the status of the method
+(Success or Failure), the error message if the status is a Failure, and the
+URL of the ticket. An example is below.
+
+.. code-block:: python
+
+    # Create Ticket object and create a ticket.
+    ticket = JiraTicket(. . . .)
+    t = ticket.create(. . . .)
+
+    # View status of create(). Will either return 'Success' or 'Failure'.
+    print(t.status)
+
+    # View error message if status of create() is 'Failure'.
+    print(t.error_message)
+
+    # View URL of ticket.
+    print(t.url)
+
+    # Close Requests session.
+    ticket.close_requests_session()
+
+Note: For JIRA, the ``remove_all_watchers()`` method returns a list of the
+watchers that were removed from the ticket. Access this data with
+``t.watchers``.
+
+Note: For ServiceNow, the user-accessible methods return a ``ticket_content``
+field, which contains a json representation of the current ticket's content.
+This will be expanded to the other ticketutil tools in the future. Access this
+data with ``t.ticket_content``.
+
 Comments? / Questions? / Coming Soon
 ------------------------------------
 
