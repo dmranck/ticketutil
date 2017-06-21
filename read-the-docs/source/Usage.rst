@@ -1,7 +1,8 @@
 Usage
 =====
 
-.. rst:role:: The general usage for creating new tickets
+Create a Ticket object
+----------------------
 
 Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
 or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
@@ -12,7 +13,8 @@ authentication (JIRA and RT), the ``<auth>`` parameter should contain
 'kerberos'.
 
 
-.. rst:role:: Workflow for ticketutil
+Work with a new ticket
+----------------------
 
 - Create a ticket with the ``create()`` method. This sets the ``ticket_id``
   instance variable, allowing you to perform more tasks on the ticket.
@@ -35,7 +37,8 @@ authentication (JIRA and RT), the ``<auth>`` parameter should contain
 
 - Close ticket Requests session with ``close_requests_session()``.
 
-.. rst:role:: Check set_ticket_id() for working with a Ticket object
+Work with an existing ticket
+----------------------------
 
 There is also a ``set_ticket_id()`` method for a Ticket object. This is
 useful if you are working with a Ticket object that already has the
@@ -44,9 +47,11 @@ on a separate ticket. Instead of creating a new Ticket object, you can
 simply pass an existing ``<ticket_id>`` in to the ``set_ticket_id()``
 method to begin working on another ticket.
 
-.. rst:role:: Workflow for the same
-
 - To return the current Ticket object's ticket_id or ticket_url, use the ``get_ticket_id()`` or ``get_ticket_url()`` methods.
+
+
+Running unit tests
+------------------
 
 - To run unit tests in Bash terminal use this command:
 
