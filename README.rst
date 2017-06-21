@@ -23,16 +23,20 @@ Simplify all of your ticketing operations with ticketutil:
 .. code-block:: python
 
     from ticketutil.jira import JiraTicket
-    t = JiraTicket(<jira_url>, <project_key>, auth='kerberos')
+    ticket = JiraTicket(<jira_url>, <project_key>, auth='kerberos')
 
     # Create a ticket and perform some common ticketing operations.
-    t.create(summary='Ticket summary',
-             description='Ticket description')
-    t.add_comment('Test Comment')
-    t.change_status('Done')
+    t = ticket.create(summary='Ticket summary',
+                      description='Ticket description')
+    t = ticket.add_comment('Test Comment')
+    t = ticket.change_status('Done')
+
+    # Check status of previous ticketing operation and print URL of ticket.
+    print(t.status)
+    print(t.url)
 
     # Close Requests session.
-    t.close_requests_session()
+    ticket.close_requests_session()
 
 Installation
 ------------
