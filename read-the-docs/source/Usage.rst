@@ -47,13 +47,14 @@ on a separate ticket. Instead of creating a new Ticket object, you can
 simply pass an existing ``<ticket_id>`` in to the ``set_ticket_id()``
 method to begin working on another ticket.
 
-- To return the current Ticket object's ticket_id or ticket_url, use the ``get_ticket_id()`` or ``get_ticket_url()`` methods.
+To return the current Ticket object's ticket_id or ticket_url, use the
+``get_ticket_id()`` or ``get_ticket_url()`` methods.
 
 
 Running unit tests
 ------------------
 
-- To run unit tests in Bash terminal use this command:
+To run unit tests in Bash terminal use this command:
 
 .. code-block:: python
 
