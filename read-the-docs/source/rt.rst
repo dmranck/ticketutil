@@ -18,9 +18,9 @@ Methods
 
 -  `create() <#create>`__
 -  `edit() <#edit>`__
--  `add\_comment() <#comment>`__
--  `change\_status() <#status>`__
--  `add\_attachment() <#add_attachment>`__
+-  `add_comment() <#comment>`__
+-  `change_status() <#status>`__
+-  `add_attachment() <#add_attachment>`__
 
 
 create()

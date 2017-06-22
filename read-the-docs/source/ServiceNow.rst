@@ -19,26 +19,25 @@ API right afterwards. You can also use
 `get\_ticket\_content <#content>`__ to get ticket content including
 preset field names.
 
-For more information about REST API and fields see ServiceNow's Wiki: -
-`REST API <http://wiki.servicenow.com/index.php?title=REST_API>`__ -
-`Introduction to
-Fields <http://wiki.servicenow.com/index.php?title=Introduction_to_Fields>`__
--
-`Dot-Walking <http://wiki.servicenow.com/index.php?title=Dot-Walking>`__
+For more information about REST API and fields see ServiceNow's Wiki:
+
+- `REST API <http://wiki.servicenow.com/index.php?title=REST_API>`__
+- `Introduction to Fields <http://wiki.servicenow.com/index.php?title=Introduction_to_Fields>`__
+- `Dot-Walking <http://wiki.servicenow.com/index.php?title=Dot-Walking>`__
 
 
 Methods
 ^^^^^^^
 
--  `set\_ticket\_id() <#set_ticket>`__
+-  `set_ticket_id() <#set_ticket>`__
 -  `create() <#create>`__
--  `get\_ticket\_content() <#content>`__
+-  `get_ticket_content() <#content>`__
 -  `edit() <#edit>`__
--  `add\_comment() <#comment>`__
--  `change\_status() <#status>`__
--  `add\_cc() <#add_cc>`__
--  `rewrite\_cc() <#rewrite_cc>`__
--  `remove\_cc() <#remove_cc>`__
+-  `add_comment() <#comment>`__
+-  `change_status() <#status>`__
+-  `add_cc() <#add_cc>`__
+-  `rewrite_cc() <#rewrite_cc>`__
+-  `remove_cc() <#remove_cc>`__
 
 set_ticket_id()
 ---------------

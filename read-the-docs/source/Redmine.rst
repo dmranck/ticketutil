@@ -23,11 +23,11 @@ Methods
 
 -  `create() <#create>`__
 -  `edit() <#edit>`__
--  `add\_comment() <#comment>`__
--  `change\_status() <#status>`__
--  `remove\_watcher() <#remove_watcher>`__
--  `add\_watcher() <#add_watcher>`__
--  `add\_attachment() <#add_attachment>`__
+-  `add_comment() <#comment>`__
+-  `change_status() <#status>`__
+-  `remove_watcher() <#remove_watcher>`__
+-  `add_watcher() <#add_watcher>`__
+-  `add_attachment() <#add_attachment>`__
 
 
 create()
