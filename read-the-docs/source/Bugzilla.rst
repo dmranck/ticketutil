@@ -35,7 +35,7 @@ fields.
 
 .. code:: python
 
-    t.create(summary='Ticket summary',
+    t = ticket.create(summary='Ticket summary',
              description='Ticket description')
 
 The following keyword arguments were tested and accepted by our
@@ -64,7 +64,7 @@ ticket fields.
 
 .. code:: python
 
-    t.edit(summary='Ticket summary')
+    t = ticket.edit(summary='Ticket summary')
 
 The following keyword arguments were tested and accepted by our
 particular Bugzilla instance during ticket editing:
@@ -91,7 +91,7 @@ specify comment options.
 
 .. code:: python
 
-    t.add_comment('Test comment')
+    t = ticket.add_comment('Test comment')
 
 change_status()
 ---------------
@@ -105,8 +105,8 @@ bug ID.
 
 .. code:: python
 
-    t.change_status('NEW')
-    t.change_status('CLOSED', resolution='DUPLICATE', dupe_of='<bug_id>')
+    t = ticket.change_status('NEW')
+    t = ticket.change_status('CLOSED', resolution='DUPLICATE', dupe_of='<bug_id>')
 
 remove_cc()
 -----------
@@ -119,7 +119,7 @@ users.
 
 .. code:: python
 
-    t.remove_cc('username@mail.com')
+    t = ticket.remove_cc('username@mail.com')
 
 add_cc()
 --------
@@ -132,7 +132,7 @@ users.
 
 .. code:: python
 
-    t.add_cc(['username1@mail.com', 'username2@mail.com'])
+    t = ticket.add_cc(['username1@mail.com', 'username2@mail.com'])
 
 add_attachment()
 ----------------
@@ -144,7 +144,7 @@ specify additional attachment options.
 
 .. code:: python
 
-    t.add_attachment(file_name='Name to be displayed on UI',
+    t = ticket.add_attachment(file_name='Name to be displayed on UI',
                      data='Location(path) or contents of the attachment',
                      summary='A short string describing the attachment.')
 
@@ -165,7 +165,7 @@ http://bugzilla.readthedocs.io/en/latest/api/index.html.
 .. code:: python
 
     >>> from ticketutil.bugzilla import BugzillaTicket
-    >>> t = BugzillaTicket(<bugzilla_url>,
+    >>> ticket = BugzillaTicket(<bugzilla_url>,
                            <product_name>,
                            auth=(<username>, <password>))
 
@@ -180,7 +180,7 @@ http://bugzilla.readthedocs.io/en/latest/api/core/v1/general.html#authentication
 .. code:: python
 
     >>> from ticketutil.bugzilla import BugzillaTicket
-    >>> t = BugzillaTicket(<bugzilla_url>,
+    >>> ticket = BugzillaTicket(<bugzilla_url>,
                            <product_name>,
                            auth=({'api_key': '<your-api-key>'})
 
@@ -212,12 +212,12 @@ Create and update Bugzilla ticket
     from ticketutil.bugzilla import BugzillaTicket
 
     # Create a ticket object and pass the url and product name in as strings.
-    t = BugzillaTicket(<bugzilla_url>,
+    ticket = BugzillaTicket(<bugzilla_url>,
                        <product_name>,
                        auth=(<username>, <password>))
 
     # Create a ticket and perform some common ticketing operations.
-    t.create(summary='Ticket summary',
+    t = ticket.create(summary='Ticket summary',
              description='Ticket description',
              component='Test component',
              priority='high',
@@ -225,15 +225,15 @@ Create and update Bugzilla ticket
              assignee='username@mail.com',
              qa_contact='username@mail.com',
              groups='beta')
-    t.add_comment('Test Comment')
-    t.edit(priority='medium',
+    t = ticket.add_comment('Test Comment')
+    t = ticket.edit(priority='medium',
            qa_contact='username@mail.com')
-    t.add_cc(['username1@mail.com', 'username2@mail.com'])
-    t.remove_cc('username1@mail.com')
-    t.change_status('Modified')
+    t = ticket.add_cc(['username1@mail.com', 'username2@mail.com'])
+    t = ticket.remove_cc('username1@mail.com')
+    t = ticket.change_status('Modified')
 
     # Close Requests session.
-    t.close_requests_session()
+    ticket.close_requests_session()
 
 Update existing Bugzilla tickets
 --------------------------------
@@ -243,26 +243,26 @@ Update existing Bugzilla tickets
     from ticketutil.bugzilla import BugzillaTicket
 
     # Create a ticket object and pass the url, product name, and ticket id in as strings.
-    t = BugzillaTicket(<bugzilla_url>,
+    ticket = BugzillaTicket(<bugzilla_url>,
                        <product_name>,
                        auth=(<username>, <password>)
                        ticket_id=<ticket_id>)
 
     # Perform some common ticketing operations.
-    t.add_comment('Test Comment')
-    t.edit(priority='low',
+    t = ticket.add_comment('Test Comment')
+    t = ticket.edit(priority='low',
            severity='low',
            groups='beta')
 
-    t.add_attchment(file_name='test_attachment.patch',
+    t = ticket.add_attchment(file_name='test_attachment.patch',
                     data=<contents/file-location>,
                     summary=<summary describing attachment>)
 
     # Work with a different ticket.
-    t.set_ticket_id(<new_ticket_id>)
-    t.change_status(status='CLOSED', resolution='NOTABUG')
+    t = ticket.set_ticket_id(<new_ticket_id>)
+    t = ticket.change_status(status='CLOSED', resolution='NOTABUG')
 
     # Close Requests session.
-    t.close_requests_session()
+    ticket.close_requests_session()
 
 

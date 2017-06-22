@@ -41,7 +41,7 @@ fields.
 
 .. code:: python
 
-    t.create(subject='Ticket subject',
+    t = ticket.create(subject='Ticket subject',
              description='Ticket description')
 
 The following keyword arguments were tested and accepted by our
@@ -68,7 +68,7 @@ ticket fields.
 
 .. code:: python
 
-    t.edit(subject='Ticket subject')
+    t = ticket.edit(subject='Ticket subject')
 
 The following keyword arguments were tested and accepted by our
 particular Redmine instance during ticket editing:
@@ -93,7 +93,7 @@ Adds a comment to a Redmine ticket.
 
 .. code:: python
 
-    t.add_comment('Test comment')
+    t = ticket.add_comment('Test comment')
 
 
 change_status()
@@ -105,7 +105,7 @@ Changes status of a Redmine ticket.
 
 .. code:: python
 
-    t.change_status('Resolved')
+    t = ticket.change_status('Resolved')
 
 
 remove_watcher()
@@ -118,7 +118,7 @@ Removes watcher from a Redmine ticket. Accepts an email or username.
 
 .. code:: python
 
-    t.remove_watcher('username')
+    t = ticket.remove_watcher('username')
 
 
 add_watcher()
@@ -131,7 +131,7 @@ Adds watcher to a Redmine ticket. Accepts an email or username.
 
 .. code:: python
 
-    t.add_watcher('username')
+    t = ticket.add_watcher('username')
 
 
 add_attachment()
@@ -144,7 +144,7 @@ Attaches a file to a Redmine ticket.
 
 .. code:: python
 
-    t.add_attachment('filename.txt')
+    t = ticket.add_attachment('filename.txt')
 
 
 Examples
@@ -163,7 +163,7 @@ http://www.redmine.org/projects/redmine/wiki/Rest\_api#Authentication.
 .. code:: python
 
     >>> from ticketutil.redmine import RedmineTicket
-    >>> t = RedmineTicket(<redmine_url>,
+    >>> ticket = RedmineTicket(<redmine_url>,
                           <project_name>,
                           auth=(<username>, <password>))
 
@@ -201,28 +201,28 @@ Create and update Redmine ticket
     from ticketutil.redmine import RedmineTicket
 
     # Create a ticket object and pass the url and project name in as strings.
-    t = RedmineTicket(<redmine_url>,
+    ticket = RedmineTicket(<redmine_url>,
                       <project_name>,
                       auth=(<username>, <password>))
 
     # Create a ticket and perform some common ticketing operations.
-    t.create(subject='Ticket subject',
+    t = ticket.create(subject='Ticket subject',
              description='Ticket description',
              priority='Urgent',
              start_date='2017-01-20',
              due_date='2017-01-25',
              done_ratio='70',
              assignee='username@mail.com')
-    t.add_comment('Test Comment')
-    t.edit(priority='Normal',
+    t = ticket.add_comment('Test Comment')
+    t = ticket.edit(priority='Normal',
            due_date='2017-02-25')
-    t.add_attachment('file_to_attach.txt')
-    t.add_watcher('username1')
-    t.remove_watcher('username2')
-    t.change_status('Closed')
+    t = ticket.add_attachment('file_to_attach.txt')
+    t = ticket.add_watcher('username1')
+    t = ticket.remove_watcher('username2')
+    t = ticket.change_status('Closed')
 
     # Close Requests session.
-    t.close_requests_session()
+    ticket.close_requests_session()
 
 Update existing Redmine tickets
 -------------------------------
@@ -232,19 +232,19 @@ Update existing Redmine tickets
     from ticketutil.redmine import RedmineTicket
 
     # Create a ticket object and pass the url, project name, and ticket id in as strings.
-    t = RedmineTicket(<redmine_url>,
+    ticket = RedmineTicket(<redmine_url>,
                       <project_name>,
                       auth=(<username>, <password>),
                       ticket_id=<ticket_id>)
 
     # Perform some common ticketing operations.
-    t.add_comment('Test Comment')
-    t.edit(priority='High',
+    t = ticket.add_comment('Test Comment')
+    t = ticket.edit(priority='High',
            done_ratio='90')
 
     # Work with a different ticket.
-    t.set_ticket_id(<new_ticket_id>)
-    t.change_status('Resolved')
+    t = ticket.set_ticket_id(<new_ticket_id>)
+    t = ticket.change_status('Resolved')
 
     # Close Requests session.
-    t.close_requests_session()
+    ticket.close_requests_session()

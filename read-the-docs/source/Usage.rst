@@ -73,3 +73,41 @@ To run unit tests in Bash terminal use this command:
     CRITICAL. If this environment variable does not exist, the log level will be
     set to INFO by default.
 
+
+Return Statements
+-----------------
+
+The main user-accessible methods in ticketutil return the status of the method
+(Success or Failure), the error message if the status is a Failure, and the
+URL of the ticket. An example is below.
+
+.. code-block:: python
+
+    # Create Ticket object and create a ticket.
+    ticket = JiraTicket(. . . .)
+    t = ticket.create(. . . .)
+
+    # View status of create(). Will either return 'Success' or 'Failure'.
+    print(t.status)
+
+    # View error message if status of create() is 'Failure'.
+    print(t.error_message)
+
+    # View URL of ticket.
+    print(t.url)
+
+    # Close Requests session.
+    ticket.close_requests_session()
+
+.. note::
+
+    For JIRA, the ``remove_all_watchers()`` method returns a list of the
+    watchers that were removed from the ticket. Access this data with
+    ``t.watchers``.
+
+.. note::
+
+    For ServiceNow, the user-accessible methods return a ``ticket_content``
+    field, which contains a json representation of the current ticket's content.
+    This will be expanded to the other ticketutil tools in the future. Access this
+    data with ``t.ticket_content``.

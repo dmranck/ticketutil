@@ -51,7 +51,7 @@ is assigned using ``ticket_id`` which is a string.
 .. code:: python
 
     # switch to ticket 'ID0123456'
-    t.set_ticket_id('ID0123456')
+    t = ticket.set_ticket_id('ID0123456')
 
 create()
 --------
@@ -64,7 +64,7 @@ other ticket fields.
 
 .. code:: python
 
-    t.create(short_description='Ticket summary',
+    t = ticket.create(short_description='Ticket summary',
              description='Ticket description',
              category='Category',
              item='ServiceNow')
@@ -101,9 +101,9 @@ method).
 .. code:: python
 
     # ticket content of the object t
-    t.get_ticket_content()
+    t = ticket.get_ticket_content()
     # ticket content of the ticket <ticket_id>
-    t.get_ticket_content(ticket_id=<ticket_id>)
+    t = ticket.get_ticket_content(ticket_id=<ticket_id>)
 
 edit()
 ------
@@ -117,7 +117,7 @@ specified.
 
 .. code:: python
 
-    t.edit(short_description='Ticket summary')
+    t = ticket.edit(short_description='Ticket summary')
 
 The following keyword arguments were tested and accepted by our
 particular ServiceNow instance during ticket editing:
@@ -148,7 +148,7 @@ modified or deleted in the current implementation.
 
 .. code:: python
 
-    t.add_comment('Test comment')
+    t = ticket.add_comment('Test comment')
 
 
 change_status(self, status)
@@ -158,7 +158,7 @@ Changes status of a ServiceNow ticket.
 
 .. code:: python
 
-    t.change_status('Work in Progress')
+    t = ticket.change_status('Work in Progress')
 
 add_cc()
 --------
@@ -170,7 +170,7 @@ form of list of strings or one string representing one email address.
 
 .. code:: python
 
-    t.add_cc('username@domain.com')
+    t = ticket.add_cc('username@domain.com')
 
 rewrite_cc()
 ------------
@@ -183,7 +183,7 @@ email address.
 
 .. code:: python
 
-    t.rewrite_cc(['username@domain.com', 'user2@domain.com', 'user3@domain.com'])
+    t = ticket.rewrite_cc(['username@domain.com', 'user2@domain.com', 'user3@domain.com'])
 
 remove_cc()
 -----------
@@ -196,7 +196,7 @@ representing one email address.
 
 .. code:: python
 
-    t.remove_cc(['username@domain.com', 'user3@domain.com'])
+    t = ticket.remove_cc(['username@domain.com', 'user3@domain.com'])
 
 
 Examples
@@ -214,7 +214,7 @@ more details see `documentation <../docs/servicenow.md>`__.
 .. code:: python
 
     >>> from ticketutil.servicenow import ServiceNowTicket
-    >>> t = ServiceNowTicket(<servicenow_url>,
+    >>> ticket = ServiceNowTicket(<servicenow_url>,
                              <table_name>,
                              auth=(<username>, <password>))
 
@@ -247,26 +247,26 @@ Create new ServiceNow ticket
     from ticketutil.servicenow import ServiceNowTicket
 
     # Create a ticket object and pass the url and table name in as strings
-    t = ServiceNowTicket(<servicenow_url>,
+    ticket = ServiceNowTicket(<servicenow_url>,
                          <table_name>,
                          auth=(<username>, <password>))
 
     # Create a ticket and perform some common ticketing operations
-    t.create(short_description='TEST adding SNow API into ticketutil',
+    t = ticket.create(short_description='TEST adding SNow API into ticketutil',
              description='Ticket description',
              category='Communication',
              item='ServiceNow')
-    t.edit(assigned_to='pzubaty',
+    t = ticket.edit(assigned_to='pzubaty',
            priority='3')
-    t.add_cc(['username1@mail.com', 'username2@mail.com'])
-    t.remove_cc('username1@mail.com')
-    t.change_status('Work in Progress')
+    t = ticket.add_cc(['username1@mail.com', 'username2@mail.com'])
+    t = ticket.remove_cc('username1@mail.com')
+    t = ticket.change_status('Work in Progress')
 
     # Retrieve ticket content
-    t.get_ticket_content()
+    t = ticket.get_ticket_content()
 
     # Close Requests session
-    t.close_requests_session()
+    ticket.close_requests_session()
 
 
 Update existing ServiceNow tickets
@@ -276,18 +276,18 @@ Update existing ServiceNow tickets
 
     from ticketutil.servicenow import ServiceNowTicket
 
-    t = ServiceNowTicket(<servicenow_url>,
+    ticket = ServiceNowTicket(<servicenow_url>,
                          <table_name>,
                          auth=(<username>, <password>),
                          ticket_id=<ticket_id>)
-    t.add_comment('Test Comment')
-    t.edit(priority='4',
+    t = ticket.add_comment('Test Comment')
+    t = ticket.edit(priority='4',
            impact='4')
 
     # Work with a different ticket
-    t.set_ticket_id(<new_ticket_id>)
-    t.change_status('Pending')
+    t = ticket.set_ticket_id(<new_ticket_id>)
+    t = ticket.change_status('Pending')
 
     # Close Requests session
-    t.close_requests_session()
+    ticket.close_requests_session()
 

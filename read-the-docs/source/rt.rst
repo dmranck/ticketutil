@@ -33,7 +33,7 @@ subject and text. Keyword arguments are used for other ticket fields.
 
 .. code:: python
 
-    t.create(subject='Ticket subject',
+    t = ticket.create(subject='Ticket subject',
              text='Ticket text')
 
 The following keyword arguments were tested and accepted by our
@@ -62,7 +62,7 @@ ticket fields.
 
 .. code:: python
 
-    t.edit(owner='username@mail.com')
+    t = ticket.edit(owner='username@mail.com')
 
 The following keyword arguments were tested and accepted by our
 particular RT instance during ticket editing:
@@ -87,7 +87,7 @@ Adds a comment to a RT ticket.
 
 .. code:: python
 
-    t.add_comment('Test comment')
+    t = ticket.add_comment('Test comment')
 
 
 change_status
@@ -99,7 +99,7 @@ Changes status of a RT ticket.
 
 .. code:: python
 
-    t.change_status('Resolved')
+    t = ticket.change_status('Resolved')
 
 
 add_attachment()
@@ -111,7 +111,7 @@ Attaches a file to a RT ticket.
 
 .. code:: python
 
-    t.add_attachment('filename.txt')
+    t = ticket.add_attachment('filename.txt')
 
 
 Examples
@@ -125,7 +125,7 @@ Authenticate through HTTP Basic Authentication:
 .. code:: python
 
     >>> from ticketutil.rt import RTTicket
-    >>> t = RTTicket(<rt_url>,
+    >>> ticket = RTTicket(<rt_url>,
                      <project_queue>,
                      auth=('username', 'password'))
 
@@ -134,7 +134,7 @@ Authenticate through Kerberos after running ``kinit``:
 .. code:: python
 
     >>> from ticketutil.rt import RTTicket
-    >>> t = RTTicket(<rt_url>,
+    >>> ticket = RTTicket(<rt_url>,
                      <project_queue>,
                      auth='kerberos')
 
@@ -172,25 +172,25 @@ Create and update RT ticket
     from ticketutil.rt import RTTicket
 
     # Create a ticket object and pass the url and project queue in as strings.
-    t = RTTicket(<rt_url>,
+    ticket = RTTicket(<rt_url>,
                  <project_queue>,
                  auth='kerberos')
 
     # Create a ticket and perform some common ticketing operations.
-    t.create(subject='Ticket subject',
+    t = ticket.create(subject='Ticket subject',
              text='Ticket text',
              priority='5',
              owner='username@mail.com',
              cc='username@mail.com,
              admincc=['username@mail.com', 'username2@mail.com'])
-    t.add_comment('Test Comment')
-    t.edit(priority='4',
+    t = ticket.add_comment('Test Comment')
+    t = ticket.edit(priority='4',
            cc='username1@mail.com')
-    t.add_attachment('file_to_attach.txt')
-    t.change_status('Resolved')
+    t = ticket.add_attachment('file_to_attach.txt')
+    t = ticket.change_status('Resolved')
 
     # Close Requests session.
-    t.close_requests_session()
+    t = ticket.close_requests_session()
 
 
 Update existing RT tickets
@@ -201,20 +201,20 @@ Update existing RT tickets
     from ticketutil.rt import RTTicket
 
     # Create a ticket object and pass the url, project queue, and ticket id in as strings.
-    t = RTTicket(<rt_url>,
+    ticket = RTTicket(<rt_url>,
                  <project_queue>,
                  auth='kerberos',
                  ticket_id=<ticket_id>)
 
     # Perform some common ticketing operations.
-    t.add_comment('Test Comment')
-    t.edit(priority='4',
+    t = ticket.add_comment('Test Comment')
+    t = ticket.edit(priority='4',
            cc='username@mail.com')
 
     # Work with a different ticket.
-    t.set_ticket_id(<new_ticket_id>)
-    t.change_status('Resolved')
+    t = ticket.set_ticket_id(<new_ticket_id>)
+    t = ticket.change_status('Resolved')
 
     # Close Requests session.
-    t.close_requests_session()
+    ticket.close_requests_session()
 

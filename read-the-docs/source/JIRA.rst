@@ -18,12 +18,12 @@ Methods
 
 -  `create() <#create>`__
 -  `edit() <#edit>`__
--  `add\_comment() <#comment>`__
--  `change\_status() <#status>`__
--  `remove\_all\_watchers() <#remove_all_watchers>`__
--  `remove\_watcher() <#remove_watcher>`__
--  `add\_watcher() <#add_watcher>`__
--  `add\_attachment() <#add_attachment>`__
+-  `add_comment() <#comment>`__
+-  `change_status() <#status>`__
+-  `remove_all_watchers() <#remove_all_watchers>`__
+-  `remove_watcher() <#remove_watcher>`__
+-  `add_watcher() <#add_watcher>`__
+-  `add_attachment() <#add_attachment>`__
 
 create()
 --------
@@ -36,7 +36,7 @@ fields.
 
 .. code:: python
 
-    t.create(summary='Ticket summary',
+    t = ticket.create(summary='Ticket summary',
              description='Ticket description')
 
 The following keyword arguments were tested and accepted by our
@@ -65,7 +65,7 @@ ticket fields.
 
 .. code:: python
 
-    t.edit(summary='Ticket summary')
+    t = ticket.edit(summary='Ticket summary')
 
 The following keyword arguments were tested and accepted by our
 particular JIRA instance during ticket editing:
@@ -92,7 +92,7 @@ Adds a comment to a JIRA ticket.
 
 .. code:: python
 
-    t.add_comment('Test comment')
+    t = ticket.add_comment('Test comment')
 
 change_status()
 ---------------
@@ -103,7 +103,7 @@ Changes status of a JIRA ticket.
 
 .. code:: python
 
-    t.change_status('In Progress')
+    t = ticket.change_status('In Progress')
 
 remove_all_watchers()
 ---------------------
@@ -114,7 +114,7 @@ Removes all watchers from a JIRA ticket.
 
 .. code:: python
 
-    t.remove_all_watchers()
+    t = ticket.remove_all_watchers()
 
 remove_watcher()
 ----------------
@@ -125,7 +125,7 @@ Removes watcher from a JIRA ticket. Accepts an email or username.
 
 .. code:: python
 
-    t.remove_watcher('username')
+    t = ticket.remove_watcher('username')
 
 add_watcher()
 -------------
@@ -136,7 +136,7 @@ Adds watcher to a JIRA ticket. Accepts an email or username.
 
 .. code:: python
 
-    t.add_watcher('username')
+    t = ticket.add_watcher('username')
 
 add_attachment()
 ----------------
@@ -147,7 +147,7 @@ Attaches a file to a JIRA ticket.
 
 .. code:: python
 
-    t.add_attachment('filename.txt')
+    t = ticket.add_attachment('filename.txt')
 
 
 Examples
@@ -161,7 +161,7 @@ Authenticate through HTTP Basic Authentication:
 .. code:: python
 
     >>> from ticketutil.jira import JiraTicket
-    >>> t = JiraTicket(<jira_url>,
+    >>> ticket = JiraTicket(<jira_url>,
                        <project_key>,
                        auth=('username', 'password'))
 
@@ -170,7 +170,7 @@ Authenticate through Kerberos after running ``kinit``:
 .. code:: python
 
     >>> from ticketutil.jira import JiraTicket
-    >>> t = JiraTicket(<jira_url>,
+    >>> ticket = JiraTicket(<jira_url>,
                        <project_key>,
                        auth='kerberos')
 
@@ -208,26 +208,26 @@ Create and update JIRA ticket
     from ticketutil.jira import JiraTicket
 
     # Create a ticket object and pass the url and project key in as strings.
-    t = JiraTicket(<jira_url>,
+    ticket = JiraTicket(<jira_url>,
                    <project_key>,
                    auth='kerberos')
 
     # Create a ticket and perform some common ticketing operations.
-    t.create(summary='Ticket summary',
+    t = ticket.create(summary='Ticket summary',
              description='Ticket description',
              type='Task',
              priority='Major',
              assignee='username')
-    t.add_comment('Test Comment')
-    t.edit(priority='Critical',
+    t = ticket.add_comment('Test Comment')
+    t = ticket.edit(priority='Critical',
            type='Bug')
-    t.remove_all_watchers()
-    t.add_watcher('username')
-    t.add_attachment('file_to_attach.txt')
-    t.change_status('In Progress')
+    t = ticket.remove_all_watchers()
+    t = ticket.add_watcher('username')
+    t = ticket.add_attachment('file_to_attach.txt')
+    t = ticket.change_status('In Progress')
 
     # Close Requests session.
-    t.close_requests_session()
+    ticket.close_requests_session()
 
 Update existing JIRA tickets
 ----------------------------
@@ -237,22 +237,22 @@ Update existing JIRA tickets
     from ticketutil.jira import JiraTicket
 
     # Create a ticket object and pass the url, project key, and ticket id in as strings.
-    t = JiraTicket(<jira_url>,
+    ticket = JiraTicket(<jira_url>,
                    <project_key>,
                    auth='kerberos',
                    ticket_id=<ticket_id>)
 
     # Perform some common ticketing operations.
-    t.add_comment('Test Comment')
-    t.edit(priority='Critical',
+    t = ticket.add_comment('Test Comment')
+    t = ticket.edit(priority='Critical',
            type='Bug')
 
     # Work with a different ticket.
-    t.set_ticket_id(<new_ticket_id>)
-    t.remove_watcher('username')
-    t.add_watcher('username')
-    t.change_status('Done')
+    t = ticket.set_ticket_id(<new_ticket_id>)
+    t = ticket.remove_watcher('username')
+    t = ticket.add_watcher('username')
+    t = ticket.change_status('Done')
 
     # Close Requests session.
-    t.close_requests_session()
+    ticket.close_requests_session()
 
