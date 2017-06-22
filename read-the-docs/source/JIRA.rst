@@ -37,7 +37,7 @@ fields.
 .. code:: python
 
     t = ticket.create(summary='Ticket summary',
-             description='Ticket description')
+                      description='Ticket description')
 
 The following keyword arguments were tested and accepted by our
 particular JIRA instance during ticket creation:
@@ -162,8 +162,8 @@ Authenticate through HTTP Basic Authentication:
 
     >>> from ticketutil.jira import JiraTicket
     >>> ticket = JiraTicket(<jira_url>,
-                       <project_key>,
-                       auth=('username', 'password'))
+                            <project_key>,
+                            auth=('username', 'password'))
 
 Authenticate through Kerberos after running ``kinit``:
 
@@ -171,8 +171,8 @@ Authenticate through Kerberos after running ``kinit``:
 
     >>> from ticketutil.jira import JiraTicket
     >>> ticket = JiraTicket(<jira_url>,
-                       <project_key>,
-                       auth='kerberos')
+                            <project_key>,
+                            auth='kerberos')
 
 You should see the following response:
 
@@ -209,18 +209,18 @@ Create and update JIRA ticket
 
     # Create a ticket object and pass the url and project key in as strings.
     ticket = JiraTicket(<jira_url>,
-                   <project_key>,
-                   auth='kerberos')
+                        <project_key>,
+                        auth='kerberos')
 
     # Create a ticket and perform some common ticketing operations.
     t = ticket.create(summary='Ticket summary',
-             description='Ticket description',
-             type='Task',
-             priority='Major',
-             assignee='username')
+                      description='Ticket description',
+                      type='Task',
+                      priority='Major',
+                      assignee='username')
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='Critical',
-           type='Bug')
+                    type='Bug')
     t = ticket.remove_all_watchers()
     t = ticket.add_watcher('username')
     t = ticket.add_attachment('file_to_attach.txt')
@@ -238,14 +238,14 @@ Update existing JIRA tickets
 
     # Create a ticket object and pass the url, project key, and ticket id in as strings.
     ticket = JiraTicket(<jira_url>,
-                   <project_key>,
-                   auth='kerberos',
-                   ticket_id=<ticket_id>)
+                        <project_key>,
+                        auth='kerberos',
+                        ticket_id=<ticket_id>)
 
     # Perform some common ticketing operations.
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='Critical',
-           type='Bug')
+                    type='Bug')
 
     # Work with a different ticket.
     t = ticket.set_ticket_id(<new_ticket_id>)

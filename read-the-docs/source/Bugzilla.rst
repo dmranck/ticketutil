@@ -36,7 +36,7 @@ fields.
 .. code:: python
 
     t = ticket.create(summary='Ticket summary',
-             description='Ticket description')
+                      description='Ticket description')
 
 The following keyword arguments were tested and accepted by our
 particular Bugzilla instance during ticket creation:
@@ -145,8 +145,8 @@ specify additional attachment options.
 .. code:: python
 
     t = ticket.add_attachment(file_name='Name to be displayed on UI',
-                     data='Location(path) or contents of the attachment',
-                     summary='A short string describing the attachment.')
+                              data='Location(path) or contents of the attachment',
+                              summary='A short string describing the attachment.')
 
 Examples
 ^^^^^^^^
@@ -166,8 +166,8 @@ http://bugzilla.readthedocs.io/en/latest/api/index.html.
 
     >>> from ticketutil.bugzilla import BugzillaTicket
     >>> ticket = BugzillaTicket(<bugzilla_url>,
-                           <product_name>,
-                           auth=(<username>, <password>))
+                                <product_name>,
+                                auth=(<username>, <password>))
 
 OR, you can use API key authentication. Before you use API key
 authentication, you need to generate the API key for your account by
@@ -181,8 +181,8 @@ http://bugzilla.readthedocs.io/en/latest/api/core/v1/general.html#authentication
 
     >>> from ticketutil.bugzilla import BugzillaTicket
     >>> ticket = BugzillaTicket(<bugzilla_url>,
-                           <product_name>,
-                           auth=({'api_key': '<your-api-key>'})
+                                <product_name>,
+                                auth=({'api_key': '<your-api-key>'})
 
 You now have a ``BugzillaTicket`` object that is associated with the
 ``<product_name>`` product.
@@ -213,21 +213,21 @@ Create and update Bugzilla ticket
 
     # Create a ticket object and pass the url and product name in as strings.
     ticket = BugzillaTicket(<bugzilla_url>,
-                       <product_name>,
-                       auth=(<username>, <password>))
+                            <product_name>,
+                            auth=(<username>, <password>))
 
     # Create a ticket and perform some common ticketing operations.
     t = ticket.create(summary='Ticket summary',
-             description='Ticket description',
-             component='Test component',
-             priority='high',
-             severity='medium',
-             assignee='username@mail.com',
-             qa_contact='username@mail.com',
-             groups='beta')
+                      description='Ticket description',
+                      component='Test component',
+                      priority='high',
+                      severity='medium',
+                      assignee='username@mail.com',
+                      qa_contact='username@mail.com',
+                      groups='beta')
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='medium',
-           qa_contact='username@mail.com')
+                    qa_contact='username@mail.com')
     t = ticket.add_cc(['username1@mail.com', 'username2@mail.com'])
     t = ticket.remove_cc('username1@mail.com')
     t = ticket.change_status('Modified')
@@ -244,19 +244,19 @@ Update existing Bugzilla tickets
 
     # Create a ticket object and pass the url, product name, and ticket id in as strings.
     ticket = BugzillaTicket(<bugzilla_url>,
-                       <product_name>,
-                       auth=(<username>, <password>)
-                       ticket_id=<ticket_id>)
+                            <product_name>,
+                            auth=(<username>, <password>)
+                            ticket_id=<ticket_id>)
 
     # Perform some common ticketing operations.
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='low',
-           severity='low',
-           groups='beta')
+                    severity='low',
+                    groups='beta')
 
     t = ticket.add_attchment(file_name='test_attachment.patch',
-                    data=<contents/file-location>,
-                    summary=<summary describing attachment>)
+                             data=<contents/file-location>,
+                             summary=<summary describing attachment>)
 
     # Work with a different ticket.
     t = ticket.set_ticket_id(<new_ticket_id>)

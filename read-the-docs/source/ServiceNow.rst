@@ -65,9 +65,9 @@ other ticket fields.
 .. code:: python
 
     t = ticket.create(short_description='Ticket summary',
-             description='Ticket description',
-             category='Category',
-             item='ServiceNow')
+                      description='Ticket description',
+                      category='Category',
+                      item='ServiceNow')
 
 The following keyword arguments were tested and accepted by our
 particular ServiceNow instance during ticket creation:
@@ -215,8 +215,8 @@ more details see `documentation <../docs/servicenow.md>`__.
 
     >>> from ticketutil.servicenow import ServiceNowTicket
     >>> ticket = ServiceNowTicket(<servicenow_url>,
-                             <table_name>,
-                             auth=(<username>, <password>))
+                                  <table_name>,
+                                  auth=(<username>, <password>))
 
 You should see the following response:
 
@@ -248,16 +248,16 @@ Create new ServiceNow ticket
 
     # Create a ticket object and pass the url and table name in as strings
     ticket = ServiceNowTicket(<servicenow_url>,
-                         <table_name>,
-                         auth=(<username>, <password>))
+                              <table_name>,
+                              auth=(<username>, <password>))
 
     # Create a ticket and perform some common ticketing operations
     t = ticket.create(short_description='TEST adding SNow API into ticketutil',
-             description='Ticket description',
-             category='Communication',
-             item='ServiceNow')
+                      description='Ticket description',
+                      category='Communication',
+                      item='ServiceNow')
     t = ticket.edit(assigned_to='pzubaty',
-           priority='3')
+                    priority='3')
     t = ticket.add_cc(['username1@mail.com', 'username2@mail.com'])
     t = ticket.remove_cc('username1@mail.com')
     t = ticket.change_status('Work in Progress')
@@ -277,12 +277,12 @@ Update existing ServiceNow tickets
     from ticketutil.servicenow import ServiceNowTicket
 
     ticket = ServiceNowTicket(<servicenow_url>,
-                         <table_name>,
-                         auth=(<username>, <password>),
-                         ticket_id=<ticket_id>)
+                              <table_name>,
+                              auth=(<username>, <password>),
+                              ticket_id=<ticket_id>)
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='4',
-           impact='4')
+                    impact='4')
 
     # Work with a different ticket
     t = ticket.set_ticket_id(<new_ticket_id>)

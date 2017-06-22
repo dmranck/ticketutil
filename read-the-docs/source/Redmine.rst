@@ -42,7 +42,7 @@ fields.
 .. code:: python
 
     t = ticket.create(subject='Ticket subject',
-             description='Ticket description')
+                      description='Ticket description')
 
 The following keyword arguments were tested and accepted by our
 particular Redmine instance during ticket creation:
@@ -164,8 +164,8 @@ http://www.redmine.org/projects/redmine/wiki/Rest\_api#Authentication.
 
     >>> from ticketutil.redmine import RedmineTicket
     >>> ticket = RedmineTicket(<redmine_url>,
-                          <project_name>,
-                          auth=(<username>, <password>))
+                               <project_name>,
+                               auth=(<username>, <password>))
 
 You should see the following response:
 
@@ -202,20 +202,20 @@ Create and update Redmine ticket
 
     # Create a ticket object and pass the url and project name in as strings.
     ticket = RedmineTicket(<redmine_url>,
-                      <project_name>,
-                      auth=(<username>, <password>))
+                           <project_name>,
+                           auth=(<username>, <password>))
 
     # Create a ticket and perform some common ticketing operations.
     t = ticket.create(subject='Ticket subject',
-             description='Ticket description',
-             priority='Urgent',
-             start_date='2017-01-20',
-             due_date='2017-01-25',
-             done_ratio='70',
-             assignee='username@mail.com')
+                      description='Ticket description',
+                      priority='Urgent',
+                      start_date='2017-01-20',
+                      due_date='2017-01-25',
+                      done_ratio='70',
+                      assignee='username@mail.com')
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='Normal',
-           due_date='2017-02-25')
+                    due_date='2017-02-25')
     t = ticket.add_attachment('file_to_attach.txt')
     t = ticket.add_watcher('username1')
     t = ticket.remove_watcher('username2')
@@ -233,14 +233,14 @@ Update existing Redmine tickets
 
     # Create a ticket object and pass the url, project name, and ticket id in as strings.
     ticket = RedmineTicket(<redmine_url>,
-                      <project_name>,
-                      auth=(<username>, <password>),
-                      ticket_id=<ticket_id>)
+                           <project_name>,
+                           auth=(<username>, <password>),
+                           ticket_id=<ticket_id>)
 
     # Perform some common ticketing operations.
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='High',
-           done_ratio='90')
+                    done_ratio='90')
 
     # Work with a different ticket.
     t = ticket.set_ticket_id(<new_ticket_id>)
