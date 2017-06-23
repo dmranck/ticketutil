@@ -12,6 +12,14 @@ username and password specified as a tuple. For tools that support kerberos
 authentication (JIRA and RT), the ``<auth>`` parameter should contain
 'kerberos'.
 
+.. note::
+
+    Logging: To enable debug logging for ticketutil, set an environment
+    variable named TICKETUTIL_LOG_LEVEL to 'DEBUG'. You may specify the following
+    log levels using this environment variable: DEBUG, INFO, WARNING, ERROR,
+    CRITICAL. If this environment variable does not exist, the log level will be
+    set to INFO by default.
+
 
 Work with a new ticket
 ----------------------
@@ -51,6 +59,11 @@ method to begin working on another ticket.
 + To return the current Ticket object's ticket_id or ticket_url, use the
   ``get_ticket_id()`` or ``get_ticket_url()`` methods.
 
+.. seealso::
+
+    See the docstrings in the code or the tool-specific sections in the documentation for more information on
+    supported methods and examples.
+
 
 Running unit tests
 ------------------
@@ -60,18 +73,6 @@ To run unit tests in Bash terminal use this command:
 .. code-block:: python
 
     python3 -m unittest discover ./tests/
-
-.. seealso::
-
-    See the docstrings in the code or the tool-specific sections in the documentation for more information on
-    supported methods and examples.
-
-.. note::
-    Note on logging: To enable debug logging for ticketutil, set an environment
-    variable named TICKETUTIL_LOG_LEVEL to 'DEBUG'. You may specify the following
-    log levels using this environment variable: DEBUG, INFO, WARNING, ERROR,
-    CRITICAL. If this environment variable does not exist, the log level will be
-    set to INFO by default.
 
 
 Return Statements
