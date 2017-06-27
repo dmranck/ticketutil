@@ -1,4 +1,4 @@
-Servicenow
+ServiceNow
 ==========
 
 This document contains information on the methods available when working
