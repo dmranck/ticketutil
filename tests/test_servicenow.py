@@ -1,10 +1,11 @@
+import logging
 import os
 import sys
-import logging
-import requests
-
+from collections import namedtuple
 from unittest import main, TestCase
 from unittest.mock import patch
+
+import requests
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../ticketutil/'))
 
@@ -34,14 +35,18 @@ CATEGORY = 'category'
 ITEM = 'item'
 
 MOCK_RESULT = {'number': TICKET_ID,
-               'state': MOCK_STATE['new'],
+               'state': MOCK_STATE['pending'],
                'watch_list': 'pzubaty@redhat.com',
-               'comments': '',
+               'comments': 'New comment',
                'sys_id': '#34346',
                'description': DESCRIPTION,
                'short_description': SHORT_DESCRIPTION,
                'u_category': CATEGORY,
                'u_item': ITEM}
+
+RETURN_RESULT = namedtuple('Result', ['status', 'error_message', 'url', 'ticket_content'])
+MOCK_RETURN_SUCCESS = RETURN_RESULT('Success', None, None, MOCK_RESULT)
+MOCK_RETURN_FAILURE = RETURN_RESULT('Failure', 'Generic error message', None, None)
 
 
 class FakeResponse(object):
@@ -109,8 +114,8 @@ class FakeSession(object):
         return FakeResponse(status_code=self.status_code)
 
 
-def mock_get_ticket_content(self, ticket_id):
-    return MOCK_RESULT
+def mock_get_ticket_content(self, ticket_id=None):
+    return MOCK_RETURN_SUCCESS
 
 
 def mock_verify_project(self, project):
@@ -130,31 +135,31 @@ class TestServiceNowTicket(TestCase):
     def test_get_ticket_content(self, mock_session):
         mock_session.return_value = FakeSession()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
-        result = ticket.get_ticket_content(ticket_id=TICKET_ID)
-        self.assertEqual(result, MOCK_RESULT)
+        t = ticket.get_ticket_content(ticket_id=TICKET_ID)
+        self.assertDictEqual(t.ticket_content, MOCK_RESULT)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     def test_get_ticket_content_unexpected_response(self, mock_session):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
-        result = ticket.get_ticket_content(ticket_id=TICKET_ID)
-        self.assertEqual(result, False)
+        t = ticket.get_ticket_content(ticket_id=TICKET_ID)
+        self.assertEqual(t.status, MOCK_RETURN_FAILURE.status)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     def test_create(self, mock_session):
         mock_session.return_value = FakeSession()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
-        ticket.create(DESCRIPTION, SHORT_DESCRIPTION, CATEGORY, ITEM)
-        self.assertEqual(ticket.ticket_content, MOCK_RESULT)
+        t = ticket.create(DESCRIPTION, SHORT_DESCRIPTION, CATEGORY, ITEM)
+        self.assertDictEqual(t.ticket_content, MOCK_RESULT)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
     def test_create_unexpected_response(self, mock_session):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
-        ticket.create(DESCRIPTION, SHORT_DESCRIPTION, CATEGORY, ITEM)
-        self.assertEqual(ticket.ticket_content, None)
+        t = ticket.create(DESCRIPTION, SHORT_DESCRIPTION, CATEGORY, ITEM)
+        self.assertEqual(t.status, MOCK_RETURN_FAILURE.status)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
@@ -163,10 +168,20 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        ticket.change_status('Pending')
-        expected_result = MOCK_RESULT
-        expected_result.update({'state': MOCK_STATE['pending']})
-        self.assertEqual(ticket.ticket_content, expected_result)
+        t = ticket.change_status('Pending')
+        expected_result = MOCK_RESULT.copy()
+        expected_result['state'] = MOCK_STATE['pending']
+        self.assertDictEqual(t.ticket_content, expected_result)
+
+    @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket.get_ticket_content',
+           mock_get_ticket_content)
+    def test_change_status_invalid_state(self, mock_session):
+        mock_session.return_value = FakeSession()
+        ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
+                                             ticket_id=TICKET_ID)
+        t = ticket.change_status('Fake')
+        self.assertEqual(t.error_message, "Invalid state 'fake'")
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
@@ -177,8 +192,8 @@ class TestServiceNowTicket(TestCase):
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
         servicenow.ServiceNowTicket.available_states = MOCK_STATE
-        result = ticket.change_status('Pending')
-        self.assertEqual(result, False)
+        t = ticket.change_status('Pending')
+        self.assertEqual(t.status, MOCK_RETURN_FAILURE.status)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket.get_ticket_content',
@@ -187,10 +202,11 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        ticket.edit(priority='2', impact='2')
-        expected_result = MOCK_RESULT
+        t = ticket.edit(priority='2', impact='2')
+        expected_result = MOCK_RESULT.copy()
         expected_result.update({'priority': '2', 'impact': '2'})
-        self.assertEqual(ticket.ticket_content, expected_result)
+        MOCK_RESULT.update({'priority': '2', 'impact': '2'})
+        self.assertDictEqual(t.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
@@ -200,8 +216,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        result = ticket.edit(priority='2', impact='2')
-        self.assertEqual(result, False)
+        t = ticket.edit(priority='2', impact='2')
+        self.assertEqual(t.status, MOCK_RETURN_FAILURE.status)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
@@ -211,10 +227,10 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        ticket.add_comment('New comment')
-        expected_result = MOCK_RESULT
-        expected_result.update({'comments': 'New comment'})
-        self.assertEqual(ticket.ticket_content, expected_result)
+        t = ticket.add_comment('New comment')
+        expected_result = MOCK_RESULT.copy()
+        expected_result['comments'] = 'New comment'
+        self.assertDictEqual(t.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
@@ -224,8 +240,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        result = ticket.add_comment('New comment')
-        self.assertEqual(result, False)
+        t = ticket.add_comment('New comment')
+        self.assertEqual(t.status, MOCK_RETURN_FAILURE.status)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
@@ -235,10 +251,10 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        ticket.add_cc('pzubaty@redhat.com')
-        expected_result = MOCK_RESULT
-        expected_result.update({'watch_list': 'pzubaty@redhat.com'})
-        self.assertEqual(ticket.ticket_content, expected_result)
+        t = ticket.add_cc('pzubaty@redhat.com')
+        expected_result = MOCK_RESULT.copy()
+        expected_result['watch_list'] = 'pzubaty@redhat.com'
+        self.assertDictEqual(t.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
@@ -248,8 +264,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        result = ticket.add_cc('pzubaty@redhat.com')
-        self.assertEqual(result, False)
+        t = ticket.add_cc('pzubaty@redhat.com')
+        self.assertEqual(t.status, MOCK_RETURN_FAILURE.status)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
@@ -259,11 +275,11 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        ticket.rewrite_cc(['pzubaty@redhat.com', 'dranck@redhat.com'])
-        expected_result = MOCK_RESULT
-        expected_result.update({'watch_list':
-                                'pzubaty@redhat.com, dranck@redhat.com'})
-        self.assertEqual(ticket.ticket_content, expected_result)
+        t = ticket.rewrite_cc(['pzubaty@redhat.com', 'dranck@redhat.com'])
+        expected_result = MOCK_RESULT.copy()
+        expected_result['watch_list'] = 'pzubaty@redhat.com, dranck@redhat.com'
+        MOCK_RESULT['watch_list'] = 'pzubaty@redhat.com, dranck@redhat.com'
+        self.assertDictEqual(t.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
@@ -273,8 +289,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        result = ticket.rewrite_cc(['pzubaty@redhat.com', 'dranck@redhat.com'])
-        self.assertEqual(result, False)
+        t = ticket.rewrite_cc(['pzubaty@redhat.com', 'dranck@redhat.com'])
+        self.assertEqual(t.status, MOCK_RETURN_FAILURE.status)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
@@ -284,10 +300,10 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        ticket.remove_cc(['dranck@redhat.com', 'mail@redhat.com'])
-        expected_result = MOCK_RESULT
-        expected_result.update({'watch_list': 'pzubaty@redhat.com'})
-        self.assertEqual(ticket.ticket_content, expected_result)
+        t = ticket.remove_cc(['dranck@redhat.com', 'mail@redhat.com'])
+        expected_result = MOCK_RESULT.copy()
+        expected_result['watch_list'] = 'pzubaty@redhat.com'
+        self.assertDictEqual(t.ticket_content, expected_result)
 
     @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
     @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
@@ -297,8 +313,8 @@ class TestServiceNowTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=404)
         ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE,
                                              ticket_id=TICKET_ID)
-        result = ticket.remove_cc(['dranck@redhat.com', 'mail@redhat.com'])
-        self.assertEqual(result, False)
+        t = ticket.remove_cc(['dranck@redhat.com', 'mail@redhat.com'])
+        self.assertEqual(t.status, MOCK_RETURN_FAILURE.status)
 
 if __name__ == '__main__':
     main()

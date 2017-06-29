@@ -1,6 +1,7 @@
-import logging
-import requests
 import json
+import logging
+
+import requests
 
 from ticketutil.ticket import Ticket
 
@@ -30,11 +31,14 @@ class ServiceNowTicket(Ticket):
         self.rest_url = '{0}/api/now/v1/table/{1}'.format(
                         self.url, self.project)
         self.auth_url = self.rest_url
-        self.headers_post_ = {'Content-Type': 'application/json',
-                              'Accept': 'application/json'}
+
         # Call our parent class's init method which creates our requests
         # session.
         super(ServiceNowTicket, self).__init__(project, ticket_id)
+
+        # For ServiceNow tickets, specify headers.
+        self.s.headers.update({'Content-Type': 'application/json',
+                               'Accept': 'application/json'})
 
     def _verify_project(self, project):
         """
@@ -45,69 +49,67 @@ class ServiceNowTicket(Ticket):
         :return: True or False depending on if project is valid.
         """
         try:
-            url = self.url
-            url += '/api/now/table/sys_choice?sysparm_query=name='
-            url += project + '^element=state^inactive=false'
-            r = self.s.get(url)
+            r = self.s.get("{0}/api/now/table/sys_choice?sysparm_query=name={1}^element=state^inactive=false".format(
+                self.url, project))
             logging.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
-
-            self.available_states = {}
-            for state in r.json()['result']:
-                label = state['label'].lower()
-                self.available_states[label] = state['value']
-            logging.debug("Project {0} is valid".format(project))
-            return True
         except requests.RequestException as e:
-            logging.error("Unexpected error occurred when verifying project.")
-            logging.error(e.args)
+            logging.error("Unexpected error occurred when verifying project")
+            logging.error(e)
             return False
+
+        # After verifying project, determine possible states using request response.
+        self.available_states = {}
+        for state in r.json()['result']:
+            label = state['label'].lower()
+            self.available_states[label] = state['value']
+        logging.debug("Project {0} is valid".format(project))
+        return True
 
     def get_ticket_content(self, ticket_id=None):
         """
         Get ticket_content using ticket_id
 
         :param ticket_id: ticket number, if not set self.ticket_id is used
-        :return: ticket content
+        :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
         if ticket_id is None:
             ticket_id = self.ticket_id
+            if not self.ticket_id:
+                error_message = "No ticket ID associated with ticket object. " \
+                                "Set ticket ID with set_ticket_id(<ticket_id>)"
+                logging.error(error_message)
+                return self.request_result._replace(status='Failure', error_message=error_message)
+
         try:
-            self.s.headers.update({'Content-Type': 'application/json'})
-            url = self.rest_url + '?sysparm_query=GOTOnumber%3D'
-            url += ticket_id
-            r = self.s.get(url)
+            r = self.s.get("{0}?sysparm_query=GOTOnumber%3D{1}".format(self.rest_url, ticket_id))
             logging.debug("Get ticket content: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            ticket_content = r.json()
-            return ticket_content['result'][0]
         except requests.RequestException as e:
-            logging.error("Error while getting ticket content")
-            logging.error(e.args)
-            return False
+            error_message = "Error getting ticket content"
+            logging.error(error_message)
+            logging.error(e)
+            return self.request_result._replace(status='Failure', error_message=error_message)
+
+        ticket_content = r.json()
+        return self.request_result._replace(ticket_content=ticket_content['result'][0])
 
     def _verify_ticket_id(self, ticket_id):
         """
-        Queries the ServiceNow API to see if ticket_id is a valid ticket for
-        the given ServiceNow instance.
+        Calls get_ticket_content to make sure ticket if valid.
         :param ticket_id: The ticket you're verifying.
         :return: True or False depending on if ticket is valid.
         """
-        try:
-            result = self.get_ticket_content(ticket_id)
-            if not result:
-                raise requests.RequestException
-            else:
-                logging.debug("Ticket {0} is valid".format(ticket_id))
-                self.ticket_id = ticket_id
-                self.ticket_content = result
-                self.sys_id = self.ticket_content['sys_id']
-                self.ticket_rest_url = self.rest_url + '/' + self.sys_id
-                return True
-        except requests.RequestException as e:
-            logging.error("Ticket {0} is not valid.".format(ticket_id))
-            logging.error(e.args)
+        result = self.get_ticket_content(ticket_id)
+        if 'Failure' in result.status:
+            logging.error("Ticket {0} is not valid".format(ticket_id))
             return False
+        logging.debug("Ticket {0} is valid".format(ticket_id))
+        self.ticket_id = ticket_id
+        self.ticket_content = result.ticket_content
+        self.sys_id = self.ticket_content['sys_id']
+        self.ticket_rest_url = self.rest_url + '/' + self.sys_id
+        return True
 
     def _generate_ticket_url(self):
         """
@@ -121,6 +123,12 @@ class ServiceNowTicket(Ticket):
         if self.sys_id:
             ticket_url = '{0}/{1}.do?sys_id={2}'.format(self.url, self.project,
                                                         self.sys_id)
+
+        # This method is called from set_ticket_id(), _create_ticket_request(), or Ticket.__init__().
+        # If this method is being called, we want to update the url field in our Result namedtuple.
+        content = self.get_ticket_content()
+        self.request_result = self.request_result._replace(url=ticket_url, ticket_content=content.ticket_content)
+
         return ticket_url
 
     def create(self, short_description, description, category, item, **kwargs):
@@ -131,7 +139,6 @@ class ServiceNowTicket(Ticket):
         :param description: full description of the issue
         :param category: ticket category (Category in WebUI)
         :param item: ticket category item (Item in WebUI)
-
         :param kwargs: optional fields
 
         Fields example:
@@ -141,20 +148,21 @@ class ServiceNowTicket(Ticket):
         impact = '2',
         urgency = '2',
         priority = '2'
+
+        :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
-        msg = 'is a mandatory parameter for ticket creation.'
+        error_message = ""
         if description is None:
-            logging.error('description {}'.format(msg))
-            return
+            error_message = "description is a necessary parameter for ticket creation"
         if short_description is None:
-            logging.error('short_description {}'.format(msg))
-            return
+            error_message = "short_description is a necessary parameter for ticket creation"
         if category is None:
-            logging.error('category {}'.format(msg))
-            return
+            error_message = "category is a necessary parameter for ticket creation"
         if item is None:
-            logging.error('item {}'.format(msg))
-            return
+            error_message = "item is a necessary parameter for ticket creation"
+        if error_message:
+            logging.error(error_message)
+            return self.request_result._replace(status='Failure', error_message=error_message)
 
         self.ticket_content = None
         fields = {'description': description,
@@ -163,7 +171,7 @@ class ServiceNowTicket(Ticket):
                   'u_item': item}
         kwargs.update(fields)
         params = self._create_ticket_parameters(kwargs)
-        self._create_ticket_request(params)
+        return self._create_ticket_request(params)
 
     def _create_ticket_parameters(self, fields):
         """
@@ -171,7 +179,7 @@ class ServiceNowTicket(Ticket):
 
         :param fields: optional fields
         """
-        fields = self._prepare_ticket_fields(fields)
+        fields = _prepare_ticket_fields(fields)
 
         params = ''
         for key, value in fields.items():
@@ -183,54 +191,67 @@ class ServiceNowTicket(Ticket):
         """
         Tries to create the ticket through the ticketing tool's API.
         Retrieves the ticket_id and creates the ticket_url.
-
         :param params: The payload to send in the POST request.
+        :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
         try:
-            self.s.headers.update(self.headers_post_)
             r = self.s.post(self.rest_url, data=params)
             logging.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            ticket_content = r.json()
-            self.ticket_content = ticket_content['result']
-
-            self.ticket_id = self.ticket_content['number']
-            self.sys_id = self.ticket_content['sys_id']
-            self.ticket_url = self._generate_ticket_url()
-            self.ticket_rest_url = self.rest_url + '/' + self.sys_id
-            logging.info('Create ticket {0} - {1}'.format(self.ticket_id,
-                                                          self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error creating ticket")
-            logging.error(e.args)
+            logging.error(e)
+            return self.request_result._replace(status='Failure', error_message=str(e))
+
+        ticket_content = r.json()
+        self.ticket_content = ticket_content['result']
+
+        self.ticket_id = self.ticket_content['number']
+        self.sys_id = self.ticket_content['sys_id']
+        self.ticket_url = self._generate_ticket_url()
+        self.ticket_rest_url = self.rest_url + '/' + self.sys_id
+        logging.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        # Update our ticket_content field and return the result
+        self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
+        return self.request_result
 
     def change_status(self, status):
         """
         Change ServiceNow ticket status
 
         :param status: State to change to
+        :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
-        if not self.sys_id:
-            logging.error('No ticket ID associated with ticket object. Set '
-                          'ticket ID with set_ticket_id(ticket_id)')
-            return
+        if not self.ticket_id:
+            error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
+            logging.error(error_message)
+            return self.request_result._replace(status='Failure', error_message=error_message)
 
         try:
             fields = {'state': self.available_states[status.lower()]}
-            params = self._create_ticket_parameters(fields)
-            self.s.headers.update(self.headers_post_)
+        except KeyError as e:
+            error_message = 'Invalid state {}'.format(e)
+            logging.error(error_message)
+            return self.request_result._replace(status='Failure', error_message=error_message)
+
+        params = self._create_ticket_parameters(fields)
+
+        try:
             r = self.s.put(self.ticket_rest_url, data=params)
             logging.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            self.ticket_content = r.json()['result']
-            logging.info('Ticket {0} status changed successfully'
-                         .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to change ticket status')
-            return False
-        except KeyError as e:
-            logging.error('Invalid state {}'.format(e))
-            return False
+            logging.error(e)
+            return self.request_result._replace(status='Failure', error_message=str(e))
+
+        self.ticket_content = r.json()['result']
+        logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        # Update our ticket_content field and return the result
+        self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
+        return self.request_result
 
     def edit(self, **kwargs):
         """
@@ -248,149 +269,188 @@ class ServiceNowTicket(Ticket):
         impact = '2',
         urgency = '2',
         priority = '2'
+        :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
         if not self.ticket_id:
-            logging.error("No ticket ID associated with ticket object. Set "
-                          "ticket ID with set_ticket_id(ticket_id)")
-            return
+            error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
+            logging.error(error_message)
+            return self.request_result._replace(status='Failure', error_message=error_message)
+
         params = self._create_ticket_parameters(kwargs)
 
         try:
-            self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             logging.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            self.ticket_content = r.json()['result']
-            logging.info("Edited ticket {0} - {1}".format(self.ticket_id,
-                                                          self.ticket_url))
         except requests.RequestException as e:
             logging.error("Error editing ticket")
-            logging.error(e.args)
-            return False
+            logging.error(e)
+            return self.request_result._replace(status='Failure', error_message=str(e))
+
+        self.ticket_content = r.json()['result']
+        logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        # Update our ticket_content field and return the result
+        self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
+        return self.request_result
 
     def add_comment(self, comment):
         """
         Adds comment
 
         :param comment: new ticket comment
+        :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
+        if not self.ticket_id:
+            error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
+            logging.error(error_message)
+            return self.request_result._replace(status='Failure', error_message=error_message)
+
+        params = self._create_ticket_parameters({'comments': comment})
+
         try:
-            logging.info('Adding comment to {0}'.format(self.ticket_id))
-            params = self._create_ticket_parameters({'comments': comment})
-            self.s.headers.update(self.headers_post_)
             r = self.s.put(self.ticket_rest_url, data=params)
             logging.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            self.ticket_content = r.json()['result']
-            logging.info('Comment created successfully')
         except requests.RequestException as e:
             logging.error('Failed to add the comment')
-            return False
+            logging.error(e)
+            return self.request_result._replace(status='Failure', error_message=str(e))
+
+        self.ticket_content = r.json()['result']
+        logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        # Update our ticket_content field and return the result
+        self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
+        return self.request_result
 
     def add_cc(self, user):
         """
         Adds user(s) to cc list.
-        :param user: A string representing one user's email address, or a list
-        of strings for multiple users.
-        :return:
+        :param user: A string representing one user's email address, or a list of strings for multiple users.
+        :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
-        try:
-            logging.info('Adding user(s) to CC list')
-            watch_list = self.ticket_content['watch_list'].split(',')
-            watch_list = [item.strip() for item in watch_list]
-            if isinstance(user, str):
-                user = [user]
-            for item in user:
-                if item not in watch_list:
-                    watch_list.append(item)
+        if not self.ticket_id:
+            error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
+            logging.error(error_message)
+            return self.request_result._replace(status='Failure', error_message=error_message)
 
-            fields = {'watch_list': ', '.join(watch_list)}
-            params = self._create_ticket_parameters(fields)
-            self.s.headers.update(self.headers_post_)
+        watch_list = self.ticket_content['watch_list'].split(',')
+        watch_list = [item.strip() for item in watch_list]
+        if isinstance(user, str):
+            user = [user]
+        for item in user:
+            if item not in watch_list:
+                watch_list.append(item)
+
+        fields = {'watch_list': ', '.join(watch_list)}
+        params = self._create_ticket_parameters(fields)
+
+        try:
             r = self.s.put(self.ticket_rest_url, data=params)
             logging.debug("Add cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            self.ticket_content = r.json()['result']
-            logging.info('Users added to CC list of {0}'
-                         .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to add user(s) to CC list')
-            return False
+            logging.error(e)
+            return self.request_result._replace(status='Failure', error_message=str(e))
+
+        self.ticket_content = r.json()['result']
+        logging.info("Added user(s) to cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        # Update our ticket_content field and return the result
+        self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
+        return self.request_result
 
     def rewrite_cc(self, user):
         """
         Rewrites user(s) in cc list.
-        :param user: A string representing one user's email address, or a list
-        of strings for multiple users.
-        :return:
+        :param user: A string representing one user's email address, or a list of strings for multiple users.
+        :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
-        try:
-            logging.info('Rewriting CC list')
-            if isinstance(user, str):
-                user = [user]
+        if not self.ticket_id:
+            error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
+            logging.error(error_message)
+            return self.request_result._replace(status='Failure', error_message=error_message)
 
-            fields = {'watch_list': ', '.join(user)}
-            params = self._create_ticket_parameters(fields)
-            self.s.headers.update(self.headers_post_)
+        if isinstance(user, str):
+            user = [user]
+        fields = {'watch_list': ', '.join(user)}
+        params = self._create_ticket_parameters(fields)
+
+        try:
             r = self.s.put(self.ticket_rest_url, data=params)
             logging.debug("Rewrite cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            self.ticket_content = r.json()['result']
-            logging.info('CC list rewritten for {0}'
-                         .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to rewrite CC list')
-            return False
+            logging.error(e)
+            return self.request_result._replace(status='Failure', error_message=str(e))
+
+        self.ticket_content = r.json()['result']
+        logging.info("Rewrote cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        # Update our ticket_content field and return the result
+        self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
+        return self.request_result
 
     def remove_cc(self, user):
         """
         Removes user(s) from cc list.
-        :param user: A string representing one user's email address, or a list
-        of strings for multiple users.
-        :return:
+        :param user: A string representing one user's email address, or a list of strings for multiple users.
+        :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
-        try:
-            logging.info('Removing user(s) from CC list')
-            watch_list = self.ticket_content['watch_list'].split(',')
-            watch_list = [item.strip() for item in watch_list]
-            if isinstance(user, str):
-                user = [user]
-            for item in user:
-                if item in watch_list:
-                    watch_list.remove(item)
+        if not self.ticket_id:
+            error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
+            logging.error(error_message)
+            return self.request_result._replace(status='Failure', error_message=error_message)
 
-            fields = {'watch_list': ', '.join(watch_list)}
-            params = self._create_ticket_parameters(fields)
-            self.s.headers.update(self.headers_post_)
+        watch_list = self.ticket_content['watch_list'].split(',')
+        watch_list = [item.strip() for item in watch_list]
+        if isinstance(user, str):
+            user = [user]
+        for item in user:
+            if item in watch_list:
+                watch_list.remove(item)
+        fields = {'watch_list': ', '.join(watch_list)}
+        params = self._create_ticket_parameters(fields)
+
+        try:
             r = self.s.put(self.ticket_rest_url, data=params)
             logging.debug("Remove cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            self.ticket_content = r.json()['result']
-            logging.info('User(s) removed from CC list of {0}'
-                         .format(self.ticket_id))
         except requests.RequestException as e:
             logging.error('Failed to remove user(s) from CC list')
-            return False
+            logging.error(e)
+            return self.request_result._replace(status='Failure', error_message=str(e))
 
-    def _prepare_ticket_fields(self, fields):
-        """
-        Makes sure each key value pair in the fields dictionary is in
-        the correct form.
-        :param fields: Ticket fields.
-        :return: fields: Ticket fields for the ticketing tool.
-        """
-        for key, value in fields.items():
-            if key in ['opened_for', 'operating_system', 'category', 'item',
-                       'severity', 'hostname_affected', 'opened_by_dept']:
-                fields['u_{}'.format(key)] = value
-                fields.pop(key)
-            if key == 'topic':
-                fields['u_topic_reportable'] = value
-                fields.pop(key)
-            if key == 'email_from':
-                fields['u_email_from_address'] = value
-                fields.pop(key)
-        return fields
+        self.ticket_content = r.json()['result']
+        logging.info("Removed user(s) from cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+
+        # Update our ticket_content field and return the result
+        self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
+        return self.request_result
+
+
+def _prepare_ticket_fields(fields):
+    """
+    Makes sure each key value pair in the fields dictionary is in
+    the correct form.
+    :param fields: Ticket fields.
+    :return: fields: Ticket fields for the ticketing tool.
+    """
+    for key, value in fields.items():
+        if key in ['opened_for', 'operating_system', 'category', 'item',
+                   'severity', 'hostname_affected', 'opened_by_dept']:
+            fields['u_{}'.format(key)] = value
+            fields.pop(key)
+        if key == 'topic':
+            fields['u_topic_reportable'] = value
+            fields.pop(key)
+        if key == 'email_from':
+            fields['u_email_from_address'] = value
+            fields.pop(key)
+    return fields
 
 
 def main():
