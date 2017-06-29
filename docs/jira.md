@@ -49,6 +49,10 @@ parent='KEY-XX'
 customfield_XXXXX='Custom field text'
 ```
 
+Type allows these values : 'Task', 'Sub-task'
+While creating a Sub task parent ticket id is required, otherwise create
+method fails with KeyError - "Parent field is required while creating a Sub Task"
+
 ### edit(self, \*\*kwargs) <a name="edit"></a>
 
 Edits fields in a JIRA ticket. Keyword arguments are used to 

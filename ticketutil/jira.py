@@ -392,13 +392,21 @@ def _prepare_ticket_fields(fields):
         Makes sure each key value pair in the fields dictionary is in the correct form.
         :param fields: Ticket fields.
         :return: fields: Ticket fields in the correct form for the ticketing tool.
+        :raises: KeyError: While creating Sub Task, if parent is not provided.
         """
+        if fields['type'] == 'Sub-task' and 'parent' not in fields:
+            raise KeyError("Parent field is required while creating a Sub Task")
+
         for key, value in fields.items():
             if key in ['priority', 'assignee', 'reporter', 'parent']:
                 fields[key] = {'name': value}
             if key == 'type':
                 fields['issuetype'] = {'name': value}
                 fields.pop('type')
+
+        # Following key is required while create a Sub Task for existing ticket
+        if fields['issuetype']['name'] == 'Sub-task':
+            fields['parent'].update(key=fields['parent']['name'])
         return fields
 
 
