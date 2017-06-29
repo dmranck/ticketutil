@@ -1,5 +1,6 @@
-ticketutil
-==========
+
+Welcome to ticketutil's documentation!
+======================================
 
 .. image:: https://img.shields.io/badge/python-2.7%2C%203.3%2C%203.4%2C%203.5%2C%203.6-blue.svg
     :target: https://pypi.python.org/pypi/ticketutil/1.2.0
@@ -9,8 +10,8 @@ ticketutil
 
 ticketutil is a Python module that allows you to easily interact with
 various ticketing tools using their REST APIs. Currently, the supported
-tools are JIRA, RT, Redmine, Bugzilla, and ServiceNow. All tools support
-HTTP Basic authentication, while JIRA and RT also support Kerberos
+tools are ``JIRA``, ``RT``, ``Redmine``, ``Bugzilla`` and ``ServiceNow``.
+All tools support HTTP Basic authentication, while JIRA and RT also support Kerberos
 authentication.
 
 This module allows you to create tickets, add comments, edit ticket
@@ -31,31 +32,21 @@ Simplify all of your ticketing operations with ticketutil:
     t = ticket.add_comment('Test Comment')
     t = ticket.change_status('Done')
 
-    # Check status of previous ticketing operation and print URL of ticket.
-    print(t.status)
-    print(t.url)
-
     # Close Requests session.
     ticket.close_requests_session()
 
-Installation
-------------
 
-Install ticketutil with ``pip install ticketutil``.
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
 
-ticketutil is compatible with Python 2.7, 3.3, 3.4, 3.5, and 3.6.
-Note: For Python 2.6 and lower, an additional package, importlib, may
-need to be installed.
-
-If not installing with pip, a short list of packages defined in the
-requirements.txt file need to be installed. To install the required
-packages, type ``pip install -r requirements.txt``.
-
-Documentation
--------------
-
-Documentation for ticketutil is available at:
-http://ticketutil.readthedocs.io.
+   Installation
+   Usage
+   JIRA
+   rt
+   Redmine
+   Bugzilla
+   ServiceNow
 
 Comments? / Questions? / Coming Soon
 ------------------------------------
