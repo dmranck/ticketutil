@@ -1,6 +1,17 @@
 Release History
 ---------------
 
+1.3.0 (06-29-2017)
+++++++++++++++++++
+
+* New documentation has been created at http://ticketutil.readthedocs.io.
+* All main user-accessible ticketutil methods now have useful return
+  statements containing the request status (Success or Failure), the error
+  message if the status is a Failure, and the URL of the ticket. See
+  http://ticketutil.readthedocs.io/en/latest/Usage.html#return-statements
+  for more details.
+* HTTP Basic Auth support has been added to JIRA.
+
 1.2.0 (04-28-2017)
 ++++++++++++++++++
 
