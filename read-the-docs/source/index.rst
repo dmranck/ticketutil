@@ -32,6 +32,10 @@ Simplify all of your ticketing operations with ticketutil:
     t = ticket.add_comment('Test Comment')
     t = ticket.change_status('Done')
 
+    # Check status of previous ticketing operation and print URL of ticket.
+    print(t.status)
+    print(t.url)
+
     # Close Requests session.
     ticket.close_requests_session()
 
