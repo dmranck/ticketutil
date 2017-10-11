@@ -13,5 +13,5 @@ setup(
     url='https://github.com/dmranck/ticketutil',
     download_url='https://github.com/dmranck/ticketutil/tarball/1.3.0',
     keywords=['jira', 'bugzilla', 'rt', 'redmine', 'servicenow', 'ticket', 'rest'],
-    install_requires=['gssapi>=1.2.0', 'requests>=2.9.1', 'requests-kerberos>=0.8.0']
+    install_requires=['gssapi>=1.2.0', 'requests>=2.6.0', 'requests-kerberos>=0.8.0']
 )
