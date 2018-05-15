@@ -260,8 +260,8 @@ Update existing JIRA tickets
     # Close Requests session.
     ticket.close_requests_session()
 
-Create a Sub-Task inside existing JIRA tickets
-----------------------------------------------
+Create a Sub-Task inside existing JIRA ticket
+---------------------------------------------
 
 .. code:: python
 

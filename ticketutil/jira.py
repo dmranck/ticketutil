@@ -473,9 +473,6 @@ def _prepare_ticket_fields(fields):
                 fields['issuetype'] = {'name': value}
                 fields.pop('type')
 
-        # Following key is required while create a Sub Task for existing ticket
-        if fields['issuetype']['name'] == 'Sub-task':
-            fields['parent'].update(key=fields['parent']['name'])
         return fields
 
 
