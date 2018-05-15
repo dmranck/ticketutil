@@ -55,6 +55,10 @@ particular JIRA instance during ticket creation:
     parent='KEY-XX'
     customfield_XXXXX='Custom field text'
 
+While creating a Sub task, parent ticket id is required, otherwise create()
+method fails with KeyError - "Parent field is required while creating a Sub
+Task"
+
 edit()
 ------
 
@@ -256,3 +260,25 @@ Update existing JIRA tickets
     # Close Requests session.
     ticket.close_requests_session()
 
+Create a Sub-Task inside existing JIRA ticket
+---------------------------------------------
+
+.. code:: python
+
+    from ticketutil.jira import JiraTicket
+
+    # Create a ticket object and pass the url and project key in as strings.
+    t = JiraTicket(<jira_url>,
+                   <project_key>,
+                   auth=('username', 'password'))
+
+    # Create a ticket and perform some common ticketing operations.
+    t.create(summary='Sub Task summary',
+             description='Sub Task description',
+             assignee='username',
+             type='Sub-task',
+             parent='existing_ticket_id')
+    t.change_status('In Progress')
+
+    # Close Requests session.
+    t.close_requests_session()
