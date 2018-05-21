@@ -461,7 +461,7 @@ def _prepare_ticket_fields(fields):
         :return: fields: Ticket fields in the correct form for the ticketing tool.
         :raises: KeyError: While creating Sub Task, if parent is not provided.
         """
-        if fields['type'] == 'Sub-task' and 'parent' not in fields:
+        if 'type' in fields and fields['type'] == 'Sub-task' and 'parent' not in fields:
             raise KeyError("Parent field is required while creating a Sub Task")
 
         for key, value in fields.items():
