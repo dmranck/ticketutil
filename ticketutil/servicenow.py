@@ -7,6 +7,8 @@ from ticketutil.ticket import Ticket
 
 __author__ = 'dranck, rnester, kshirsal, pzubaty'
 
+logger = logging.getLogger(__name__)
+
 
 class ServiceNowTicket(Ticket):
     """
@@ -51,11 +53,11 @@ class ServiceNowTicket(Ticket):
         try:
             r = self.s.get("{0}/api/now/table/sys_choice?sysparm_query=name={1}^element=state^inactive=false".format(
                 self.url, project))
-            logging.debug("Verify project: status code: {0}".format(r.status_code))
+            logger.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Unexpected error occurred when verifying project")
-            logging.error(e)
+            logger.error("Unexpected error occurred when verifying project")
+            logger.error(e)
             return False
 
         # After verifying project, determine possible states using request response.
@@ -63,7 +65,7 @@ class ServiceNowTicket(Ticket):
         for state in r.json()['result']:
             label = state['label'].lower()
             self.available_states[label] = state['value']
-        logging.debug("Project {0} is valid".format(project))
+        logger.debug("Project {0} is valid".format(project))
         return True
 
     def get_ticket_content(self, ticket_id=None):
@@ -78,17 +80,17 @@ class ServiceNowTicket(Ticket):
             if not self.ticket_id:
                 error_message = "No ticket ID associated with ticket object. " \
                                 "Set ticket ID with set_ticket_id(<ticket_id>)"
-                logging.error(error_message)
+                logger.error(error_message)
                 return self.request_result._replace(status='Failure', error_message=error_message)
 
         try:
             r = self.s.get("{0}?sysparm_query=GOTOnumber%3D{1}".format(self.rest_url, ticket_id))
-            logging.debug("Get ticket content: status code: {0}".format(r.status_code))
+            logger.debug("Get ticket content: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
             error_message = "Error getting ticket content"
-            logging.error(error_message)
-            logging.error(e)
+            logger.error(error_message)
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         ticket_content = r.json()
@@ -102,9 +104,9 @@ class ServiceNowTicket(Ticket):
         """
         result = self.get_ticket_content(ticket_id)
         if 'Failure' in result.status:
-            logging.error("Ticket {0} is not valid".format(ticket_id))
+            logger.error("Ticket {0} is not valid".format(ticket_id))
             return False
-        logging.debug("Ticket {0} is valid".format(ticket_id))
+        logger.debug("Ticket {0} is valid".format(ticket_id))
         self.ticket_id = ticket_id
         self.ticket_content = result.ticket_content
         self.sys_id = self.ticket_content['sys_id']
@@ -161,7 +163,7 @@ class ServiceNowTicket(Ticket):
         if item is None:
             error_message = "item is a necessary parameter for ticket creation"
         if error_message:
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         self.ticket_content = None
@@ -196,11 +198,11 @@ class ServiceNowTicket(Ticket):
         """
         try:
             r = self.s.post(self.rest_url, data=params)
-            logging.debug("Create ticket: status code: {0}".format(r.status_code))
+            logger.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error creating ticket")
-            logging.error(e)
+            logger.error("Error creating ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         ticket_content = r.json()
@@ -210,7 +212,7 @@ class ServiceNowTicket(Ticket):
         self.sys_id = self.ticket_content['sys_id']
         self.ticket_url = self._generate_ticket_url()
         self.ticket_rest_url = self.rest_url + '/' + self.sys_id
-        logging.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
 
         # Update our ticket_content field and return the result
         self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
@@ -225,29 +227,29 @@ class ServiceNowTicket(Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         try:
             fields = {'state': self.available_states[status.lower()]}
         except KeyError as e:
             error_message = 'Invalid state {}'.format(e)
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         params = self._create_ticket_parameters(fields)
 
         try:
             r = self.s.put(self.ticket_rest_url, data=params)
-            logging.debug("Change status: status code: {0}".format(r.status_code))
+            logger.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error('Failed to change ticket status')
-            logging.error(e)
+            logger.error('Failed to change ticket status')
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         self.ticket_content = r.json()['result']
-        logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
 
         # Update our ticket_content field and return the result
         self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
@@ -273,22 +275,22 @@ class ServiceNowTicket(Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         params = self._create_ticket_parameters(kwargs)
 
         try:
             r = self.s.put(self.ticket_rest_url, data=params)
-            logging.debug("Edit ticket: status code: {0}".format(r.status_code))
+            logger.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error editing ticket")
-            logging.error(e)
+            logger.error("Error editing ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         self.ticket_content = r.json()['result']
-        logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
 
         # Update our ticket_content field and return the result
         self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
@@ -303,22 +305,22 @@ class ServiceNowTicket(Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         params = self._create_ticket_parameters({'comments': comment})
 
         try:
             r = self.s.put(self.ticket_rest_url, data=params)
-            logging.debug("Add comment: status code: {0}".format(r.status_code))
+            logger.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error('Failed to add the comment')
-            logging.error(e)
+            logger.error('Failed to add the comment')
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         self.ticket_content = r.json()['result']
-        logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
 
         # Update our ticket_content field and return the result
         self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
@@ -332,7 +334,7 @@ class ServiceNowTicket(Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         watch_list = self.ticket_content['watch_list'].split(',')
@@ -348,15 +350,15 @@ class ServiceNowTicket(Ticket):
 
         try:
             r = self.s.put(self.ticket_rest_url, data=params)
-            logging.debug("Add cc: status code: {0}".format(r.status_code))
+            logger.debug("Add cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error('Failed to add user(s) to CC list')
-            logging.error(e)
+            logger.error('Failed to add user(s) to CC list')
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         self.ticket_content = r.json()['result']
-        logging.info("Added user(s) to cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Added user(s) to cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
 
         # Update our ticket_content field and return the result
         self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
@@ -370,7 +372,7 @@ class ServiceNowTicket(Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         if isinstance(user, str):
@@ -380,15 +382,15 @@ class ServiceNowTicket(Ticket):
 
         try:
             r = self.s.put(self.ticket_rest_url, data=params)
-            logging.debug("Rewrite cc: status code: {0}".format(r.status_code))
+            logger.debug("Rewrite cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error('Failed to rewrite CC list')
-            logging.error(e)
+            logger.error('Failed to rewrite CC list')
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         self.ticket_content = r.json()['result']
-        logging.info("Rewrote cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Rewrote cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
 
         # Update our ticket_content field and return the result
         self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
@@ -402,7 +404,7 @@ class ServiceNowTicket(Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         watch_list = self.ticket_content['watch_list'].split(',')
@@ -417,15 +419,15 @@ class ServiceNowTicket(Ticket):
 
         try:
             r = self.s.put(self.ticket_rest_url, data=params)
-            logging.debug("Remove cc: status code: {0}".format(r.status_code))
+            logger.debug("Remove cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error('Failed to remove user(s) from CC list')
-            logging.error(e)
+            logger.error('Failed to remove user(s) from CC list')
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         self.ticket_content = r.json()['result']
-        logging.info("Removed user(s) from cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Removed user(s) from cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
 
         # Update our ticket_content field and return the result
         self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
