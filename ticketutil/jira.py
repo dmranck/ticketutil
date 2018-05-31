@@ -43,9 +43,6 @@ class JiraTicket(ticket.Ticket):
 
         # If we are receiving a ticket_id, it indicates we'll be doing an update or resolve, so set ticket_url.
         if self.ticket_id:
-            if '-' not in self.ticket_id:
-                # Adding the project to the beginning of the ticket_id, so that the ticket_id is of the form KEY-XX.
-                self.ticket_id = "{0}-{1}".format(self.project, self.ticket_id)
             ticket_url = "{0}/browse/{1}".format(self.url, self.ticket_id)
 
         # This method is called from set_ticket_id(), _create_ticket_request(), or Ticket.__init__().
