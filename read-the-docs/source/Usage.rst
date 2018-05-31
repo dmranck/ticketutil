@@ -12,14 +12,6 @@ username and password specified as a tuple. For tools that support kerberos
 authentication (JIRA and RT), the ``<auth>`` parameter should contain
 'kerberos'.
 
-.. note::
-
-    Logging: To enable debug logging for ticketutil, set an environment
-    variable named TICKETUTIL_LOG_LEVEL to 'DEBUG'. You may specify the following
-    log levels using this environment variable: DEBUG, INFO, WARNING, ERROR,
-    CRITICAL. If this environment variable does not exist, the log level will be
-    set to INFO by default.
-
 
 Work with a new ticket
 ----------------------

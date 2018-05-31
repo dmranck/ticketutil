@@ -8,6 +8,8 @@ from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
 
+logger = logging.getLogger(__name__)
+
 
 class RTTicket(ticket.Ticket):
     """
@@ -64,15 +66,15 @@ class RTTicket(ticket.Ticket):
         # Try to authenticate to auth_url.
         try:
             r = s.get(self.auth_url)
-            logging.debug("Create requests session: status code: {0}".format(r.status_code))
+            logger.debug("Create requests session: status code: {0}".format(r.status_code))
             r.raise_for_status()
             # Special case for RT. A 200 status code is still returned if authentication failed. Have to check r.text.
             if '200' not in r.text:
                 raise requests.RequestException
-            logging.info("Successfully authenticated to {0}".format(self.ticketing_tool))
+            logger.info("Successfully authenticated to {0}".format(self.ticketing_tool))
             return s
         except requests.RequestException as e:
-            logging.error("Error authenticating to {0}".format(self.auth_url))
+            logger.error("Error authenticating to {0}".format(self.auth_url))
             s.close()
 
     def _verify_project(self, project):
@@ -83,20 +85,20 @@ class RTTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/queue/{1}".format(self.rest_url, project))
-            logging.debug("Verify project: status code: {0}".format(r.status_code))
+            logger.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Unexpected error occurred when verifying project")
-            logging.error(e)
+            logger.error("Unexpected error occurred when verifying project")
+            logger.error(e)
             return False
 
         # RT's API returns 200 even if the project is not valid. We need to parse the response.
         error_response = "No queue named {0} exists".format(project)
         if error_response in r.text:
-            logging.error("Project {0} is not valid".format(project))
+            logger.error("Project {0} is not valid".format(project))
             return False
         else:
-            logging.debug("Project {0} is valid".format(project))
+            logger.debug("Project {0} is valid".format(project))
             return True
 
     def _verify_ticket_id(self, ticket_id):
@@ -107,21 +109,21 @@ class RTTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/ticket/{1}/show".format(self.rest_url, ticket_id))
-            logging.debug("Verify ticket_id: status code: {0}".format(r.status_code))
+            logger.debug("Verify ticket_id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Unexpected error occurred when verifying ticket_id")
-            logging.error(e)
+            logger.error("Unexpected error occurred when verifying ticket_id")
+            logger.error(e)
             return False
 
         # RT's API returns 200 even if the ticket is not valid. We need to parse the response.
         error_responses = ["Ticket {0} does not exist.".format(ticket_id),
                            "Bad Request"]
         if any(error in r.text for error in error_responses):
-            logging.error("Ticket {0} is not valid".format(ticket_id))
+            logger.error("Ticket {0} is not valid".format(ticket_id))
             return False
         else:
-            logging.debug("Ticket {0} is valid".format(ticket_id))
+            logger.debug("Ticket {0} is valid".format(ticket_id))
             return True
 
     def create(self, subject, text, **kwargs):
@@ -139,7 +141,7 @@ class RTTicket(ticket.Ticket):
         if text is None:
             error_message = "text is a necessary parameter for ticket creation"
         if error_message:
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Create our parameters used in ticket creation.
@@ -197,23 +199,23 @@ class RTTicket(ticket.Ticket):
         # Attempt to create ticket.
         try:
             r = self.s.post('{0}/ticket/new'.format(self.rest_url), data=params)
-            logging.debug("Create ticket: status code: {0}".format(r.status_code))
+            logger.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error creating ticket")
-            logging.error(e)
+            logger.error("Error creating ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         # RT's API returns 200 even if the ticket is not valid. We need to parse the response.
         if 'Could not create ticket' in r.text:
             error_message = r.text.replace('\n', ' ')
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         # Retrieve key from new ticket.
         ticket_content = r.text
         self.ticket_id = re.search('Ticket (\d+) created', ticket_content).groups()[0]
         self.ticket_url = self._generate_ticket_url()
-        logging.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
     def edit(self, **kwargs):
@@ -231,7 +233,7 @@ class RTTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Some of the ticket fields need to be in a specific form for the tool.
@@ -248,19 +250,19 @@ class RTTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.post("{0}/ticket/{1}/edit".format(self.rest_url, self.ticket_id), data=params)
-            logging.debug("Edit ticket: status code: {0}".format(r.status_code))
+            logger.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error editing ticket")
-            logging.error(e)
+            logger.error("Error editing ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         # RT's API returns 200 even if the ticket is not valid. We need to parse the response.
         if '409 Syntax Error' in r.text:
             error_message = r.text.replace('\n', ' ')
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
     def add_comment(self, comment):
@@ -271,7 +273,7 @@ class RTTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # RT requires a special encoding on the comment parameter.
@@ -285,19 +287,19 @@ class RTTicket(ticket.Ticket):
         # Attempt to add comment to ticket.
         try:
             r = self.s.post('{0}/ticket/{1}/comment'.format(self.rest_url, self.ticket_id), data=params)
-            logging.debug("Add comment: status code: {0}".format(r.status_code))
+            logger.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error adding comment to ticket")
-            logging.error(e)
+            logger.error("Error adding comment to ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         # RT's API returns 200 even if the ticket is not valid. We need to parse the response.
         if '400 Bad Request' in r.text:
             error_message = r.text.replace('\n', ' ')
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
     def change_status(self, status):
@@ -308,7 +310,7 @@ class RTTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         content = 'Status: {0}\n'.format(status.lower())
@@ -318,19 +320,19 @@ class RTTicket(ticket.Ticket):
         # Attempt to change status of ticket.
         try:
             r = self.s.post('{0}/ticket/{1}/edit'.format(self.rest_url, self.ticket_id), data=params)
-            logging.debug("Change status: status code: {0}".format(r.status_code))
+            logger.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error changing status of ticket")
-            logging.error(e)
+            logger.error("Error changing status of ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         # RT's API returns 200 even if the ticket is not valid. We need to parse the response.
         if '409 Syntax Error' in r.text:
             error_message = r.text.replace('\n', ' ')
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
     def add_attachment(self, file_name):
@@ -341,7 +343,7 @@ class RTTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         content = 'Action: correspond\n'
@@ -352,25 +354,25 @@ class RTTicket(ticket.Ticket):
             files = {'attachment_1': open(file_name, 'rb')}
         except IOError:
             error_message = "File {0} not found".format(file_name)
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Attempt to attach file.
         try:
             r = self.s.post("{0}/ticket/{1}/comment".format(self.rest_url, self.ticket_id), data=params, files=files)
-            logging.debug("Add attachment: status code: {0}".format(r.status_code))
+            logger.debug("Add attachment: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error attaching file {0}".format(file_name))
-            logging.error(e)
+            logger.error("Error attaching file {0}".format(file_name))
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         # RT's API returns 200 even if the ticket is not valid. We need to parse the response.
         if '200' not in r.text:
             error_message = r.text.replace('\n', ' ')
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+        logger.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
         return self.request_result
 
 

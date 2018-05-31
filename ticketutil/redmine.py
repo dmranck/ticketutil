@@ -6,6 +6,8 @@ from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
 
+logger = logging.getLogger(__name__)
+
 
 class RedmineTicket(ticket.Ticket):
     """
@@ -53,12 +55,12 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/projects/{1}.json".format(self.url, project))
-            logging.debug("Verify project: status code: {0}".format(r.status_code))
+            logger.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Project {0} is valid".format(project))
+            logger.debug("Project {0} is valid".format(project))
             return True
         except requests.RequestException as e:
-            logging.error("Project {0} is not valid".format(project))
+            logger.error("Project {0} is not valid".format(project))
             return False
 
     def _verify_ticket_id(self, ticket_id):
@@ -69,12 +71,12 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/{1}.json".format(self.rest_url, ticket_id))
-            logging.debug("Verify ticket_id: status code: {0}".format(r.status_code))
+            logger.debug("Verify ticket_id: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.debug("Ticket {0} is valid".format(ticket_id))
+            logger.debug("Ticket {0} is valid".format(ticket_id))
             return True
         except requests.RequestException as e:
-            logging.error("Ticket {0} is not valid".format(ticket_id))
+            logger.error("Ticket {0} is not valid".format(ticket_id))
             return False
 
     def create(self, subject, description, **kwargs):
@@ -92,7 +94,7 @@ class RedmineTicket(ticket.Ticket):
         if description is None:
             error_message = "description is a necessary parameter for ticket creation"
         if error_message:
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Create our parameters used in ticket creation.
@@ -144,18 +146,18 @@ class RedmineTicket(ticket.Ticket):
         # Attempt to create ticket.
         try:
             r = self.s.post("{0}.json".format(self.rest_url), json=params)
-            logging.debug("Create ticket: status code: {0}".format(r.status_code))
+            logger.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error creating ticket")
-            logging.error(e)
+            logger.error("Error creating ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         # Retrieve key from new ticket.
         ticket_content = r.json()
         self.ticket_id = ticket_content['issue']['id']
         self.ticket_url = self._generate_ticket_url()
-        logging.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
     def edit(self, **kwargs):
@@ -176,7 +178,7 @@ class RedmineTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Some of the ticket fields need to be in a specific form for the tool.
@@ -187,13 +189,13 @@ class RedmineTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.put("{0}/{1}.json".format(self.rest_url, self.ticket_id), json=params)
-            logging.debug("Edit ticket: status code: {0}".format(r.status_code))
+            logger.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            logger.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
             return self.request_result
         except requests.RequestException as e:
-            logging.error("Error editing ticket")
-            logging.error(e)
+            logger.error("Error editing ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
     def add_comment(self, comment):
@@ -204,7 +206,7 @@ class RedmineTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         params = {'issue': {}}
@@ -213,13 +215,13 @@ class RedmineTicket(ticket.Ticket):
         # Attempt to add comment to ticket.
         try:
             r = self.s.put('{0}/{1}.json'.format(self.rest_url, self.ticket_id), json=params)
-            logging.debug("Add comment: status code: {0}".format(r.status_code))
+            logger.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            logger.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
             return self.request_result
         except requests.RequestException as e:
-            logging.error("Error adding comment to ticket")
-            logging.error(e)
+            logger.error("Error adding comment to ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
     def change_status(self, status):
@@ -230,13 +232,13 @@ class RedmineTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         status_id = self._get_status_id(status)
         if not status_id:
             error_message = "Not a valid status: {0}".format(status)
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         params = {'issue': {}}
@@ -245,13 +247,13 @@ class RedmineTicket(ticket.Ticket):
         # Attempt to change status of ticket.
         try:
             r = self.s.put('{0}/{1}.json'.format(self.rest_url, self.ticket_id), json=params)
-            logging.debug("Change status: status code: {0}".format(r.status_code))
+            logger.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            logger.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
             return self.request_result
         except requests.RequestException as e:
-            logging.error("Error changing status of ticket")
-            logging.error(e)
+            logger.error("Error changing status of ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
     def remove_watcher(self, watcher):
@@ -263,7 +265,7 @@ class RedmineTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # If an email address was passed in for watcher param, extract the 'name' piece.
@@ -274,13 +276,13 @@ class RedmineTicket(ticket.Ticket):
 
         try:
             r = self.s.delete("{0}/{1}/watchers/{2}.json".format(self.rest_url, self.ticket_id, watcher_id))
-            logging.debug("Remove watcher {0}: status code: {1}".format(watcher, r.status_code))
+            logger.debug("Remove watcher {0}: status code: {1}".format(watcher, r.status_code))
             r.raise_for_status()
-            logging.info("Removed watcher {0} from ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
+            logger.info("Removed watcher {0} from ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
             return self.request_result
         except requests.RequestException as e:
-            logging.error("Error removing watcher {0} from ticket".format(watcher))
-            logging.error(e)
+            logger.error("Error removing watcher {0} from ticket".format(watcher))
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
     def add_watcher(self, watcher):
@@ -292,7 +294,7 @@ class RedmineTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # If an email address was passed in for watcher param, extract the 'name' piece.
@@ -305,17 +307,17 @@ class RedmineTicket(ticket.Ticket):
             params = {'user_id': watcher_id}
             try:
                 r = self.s.post("{0}/{1}/watchers.json".format(self.rest_url, self.ticket_id), json=params)
-                logging.debug("Add watcher {0}: status code: {1}".format(watcher, r.status_code))
+                logger.debug("Add watcher {0}: status code: {1}".format(watcher, r.status_code))
                 r.raise_for_status()
-                logging.info("Added watcher {0} to ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
+                logger.info("Added watcher {0} to ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
                 return self.request_result
             except requests.RequestException as e:
-                logging.error("Error adding {0} as a watcher to ticket".format(watcher))
-                logging.error(e)
+                logger.error("Error adding {0} as a watcher to ticket".format(watcher))
+                logger.error(e)
                 return self.request_result._replace(status='Failure', error_message=str(e))
         else:
             error_message = "Error adding {0} as a watcher to ticket".format(watcher)
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
     def add_attachment(self, file_name):
@@ -326,7 +328,7 @@ class RedmineTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # First, upload the file to Redmine and retrieve a token to be used in subsequent request.
@@ -338,21 +340,21 @@ class RedmineTicket(ticket.Ticket):
 
             try:
                 r = self.s.put('{0}/{1}.json'.format(self.rest_url, self.ticket_id), json=params)
-                logging.debug("Add attachment: status code: {0}".format(r.status_code))
+                logger.debug("Add attachment: status code: {0}".format(r.status_code))
                 r.raise_for_status()
-                logging.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+                logger.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
                 return self.request_result
             except requests.RequestException as e:
-                logging.error("Error attaching file {0}".format(file_name))
-                logging.error(e)
+                logger.error("Error attaching file {0}".format(file_name))
+                logger.error(e)
                 return self.request_result._replace(status='Failure', error_message=str(e))
             except IOError:
                 error_message = "File {0} not found".format(file_name)
-                logging.error(error_message)
+                logger.error(error_message)
                 return self.request_result._replace(status='Failure', error_message=error_message)
         else:
             error_message = "Error attaching file {0}".format(file_name)
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
     def _upload_file(self, file_name):
@@ -369,18 +371,18 @@ class RedmineTicket(ticket.Ticket):
             r = self.s.post("{0}/uploads.json".format(self.url),
                             data=params,
                             headers=headers)
-            logging.debug("Upload attachment: status code: {0}".format(r.status_code))
+            logger.debug("Upload attachment: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error uploading file {0}".format(file_name))
-            logging.error(e)
+            logger.error("Error uploading file {0}".format(file_name))
+            logger.error(e)
             return
         except IOError:
-            logging.error("{0} not found".format(file_name))
+            logger.error("{0} not found".format(file_name))
             return
 
         token = r.json()['upload']['token']
-        logging.info("Uploaded file {0} to Redmine".format(file_name))
+        logger.info("Uploaded file {0} to Redmine".format(file_name))
         return token
 
     def _get_project_id(self):
@@ -392,16 +394,16 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get('{0}/projects/{1}.json'.format(self.url, self.project))
-            logging.debug("Get project id: status code: {0}".format(r.status_code))
+            logger.debug("Get project id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error retrieving Project ID")
-            logging.error(e)
+            logger.error("Error retrieving Project ID")
+            logger.error(e)
             return
 
         project_json = r.json()
         project_id = project_json['project']['id']
-        logging.debug("Retrieved Project ID: {0}".format(project_id))
+        logger.debug("Retrieved Project ID: {0}".format(project_id))
         return project_id
 
     def _get_status_id(self, status_name):
@@ -413,11 +415,11 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get('{0}/issue_statuses.json'.format(self.url))
-            logging.debug("Get status id: status code: {0}".format(r.status_code))
+            logger.debug("Get status id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error retrieving Redmine status information")
-            logging.error(e)
+            logger.error("Error retrieving Redmine status information")
+            logger.error(e)
             return
 
         status_json = r.json()
@@ -434,11 +436,11 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get('{0}/enumerations/issue_priorities.json'.format(self.url))
-            logging.debug("Get priority id: status code: {0}".format(r.status_code))
+            logger.debug("Get priority id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error retrieving Redmine priority information")
-            logging.error(e)
+            logger.error("Error retrieving Redmine priority information")
+            logger.error(e)
             return
 
         priority_json = r.json()
@@ -455,11 +457,11 @@ class RedmineTicket(ticket.Ticket):
         """
         try:
             r = self.s.get('{0}/users.json'.format(self.url))
-            logging.debug("Get user id: status code: {0}".format(r.status_code))
+            logger.debug("Get user id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error retrieving Redmine user information")
-            logging.error(e)
+            logger.error("Error retrieving Redmine user information")
+            logger.error(e)
             return
 
         # If an email address was passed in for user_name param, extract the 'name' piece.
