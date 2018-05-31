@@ -91,13 +91,14 @@ class JiraTicket(ticket.Ticket):
                 logger.error(e)
             return False
 
-    def create(self, summary, description, **kwargs):
+    def create(self, summary, description, type, **kwargs):
         """
         Creates a ticket.
-        The required parameters for ticket creation are summary and description.
+        The required parameters for ticket creation are summary, description and issue type.
         Keyword arguments are used for other ticket fields.
         :param summary: The ticket summary.
         :param description: The ticket description.
+        :param type: The ticket issue type.
         :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
         error_message = ""
@@ -105,21 +106,23 @@ class JiraTicket(ticket.Ticket):
             error_message = "summary is a necessary parameter for ticket creation"
         if description is None:
             error_message = "description is a necessary parameter for ticket creation"
+        if type is None:
+            error_message = "issue type is a necessary parameter for ticket creation"
         if error_message:
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Create our parameters used in ticket creation.
-        params = self._create_ticket_parameters(summary, description, kwargs)
+        params = self._create_ticket_parameters(summary, description, type, kwargs)
 
         # Create our ticket.
         return self._create_ticket_request(params)
 
-    def _create_ticket_parameters(self, summary, description, fields):
+    def _create_ticket_parameters(self, summary, description, type, fields):
         """
         Creates the payload for the POST request when creating a JIRA ticket.
 
-        The required parameters for ticket creation are summary and description.
+        The required parameters for ticket creation are summary, description and issue type.
         Keyword arguments are used for other ticket fields.
 
         Fields examples:
@@ -356,11 +359,11 @@ class JiraTicket(ticket.Ticket):
         # Add double quotes around the name, which is needed for JIRA API.
         if '@' in watcher:
             watcher = "{0}".format(watcher.split('@')[0].strip())
-        watcher = "\"{0}\"".format(watcher)
 
         # For some reason, if you try to add an empty string as a watcher, it adds the requestor.
         # So, only execute this code if the watcher is not an empty string.
         if watcher:
+            watcher = "\"{0}\"".format(watcher)
             try:
                 r = self.s.post("{0}/{1}/watchers".format(self.rest_url, self.ticket_id), data=watcher)
                 logger.debug("Add watcher {0}: status code: {1}".format(watcher, r.status_code))

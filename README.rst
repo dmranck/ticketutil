@@ -27,7 +27,8 @@ Simplify all of your ticketing operations with ticketutil:
 
     # Create a ticket and perform some common ticketing operations.
     t = ticket.create(summary='Ticket summary',
-                      description='Ticket description')
+                      description='Ticket description',
+                      type='Task')
     t = ticket.add_comment('Test Comment')
     t = ticket.change_status('Done')
 
