@@ -44,6 +44,7 @@ particular JIRA instance during ticket creation:
 
 .. code:: python
 
+    project='KEY'
     summary='Ticket summary'
     description='Ticket description'
     priority='Major'

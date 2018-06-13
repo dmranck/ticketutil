@@ -466,7 +466,7 @@ def _prepare_ticket_fields(fields):
         for key, value in fields.items():
             if key in ['priority', 'assignee', 'reporter']:
                 fields[key] = {'name': value}
-            if key in ['parent']:
+            if key in ['project', 'parent']:
                 fields[key] = {'key': value}
             if key == 'type':
                 fields['issuetype'] = {'name': value}
