@@ -13,7 +13,7 @@ class BugzillaTicket(ticket.Ticket):
     """
     A BZ Ticket object. Contains BZ-specific methods for working with tickets.
     """
-    def __init__(self, url, project, auth=None, ticket_id=None):
+    def __init__(self, url, project, auth='kerberos', ticket_id=None):
         self.ticketing_tool = 'Bugzilla'
 
         self.auth = auth
@@ -475,6 +475,7 @@ class BugzillaTicket(ticket.Ticket):
 def _prepare_ticket_fields(operation, fields):
     """
     Makes sure each key value pair in the fields dictionary is in the correct form.
+    :param operation: Key for identification of operation type.
     :param fields: Ticket fields.
     :return: fields: Ticket fields in the correct form for the ticketing tool.
     """
