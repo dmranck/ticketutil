@@ -14,6 +14,7 @@ logging.disable(logging.CRITICAL)
 URL = 'bugzilla.com'
 PROJECT = 'PROJECT'
 TICKET_ID = 'PROJECT-007'
+TICKET_ID2 = 'PROJECT-008'
 TEXT = "There is no bug."
 SUMMARY = 'The ticket summary'
 DESCRIPTION = 'The ticket description'
@@ -36,9 +37,17 @@ class FakeSession(object):
     def get(self, url):
         if '/rest/product/' in url:
             return FakeResponseProject(status_code=self.status_code, text=self.text)
-        elif TICKET_ID in url:
-            return FakeResponseTicketID(status_code=self.status_code, text=self.text)
-        elif url.endswith('/rest/login'):
+        else:
+            return FakeResponse(status_code=self.status_code, text=self.text)
+
+    def post(self, url, json):
+        if '/comment' in url:
+            pass
+        elif '/attachment' in url:
+            pass
+        elif self.status_code == 204:
+            return FakeResponseID(status_code=self.status_code, text=self.text)
+        else:
             return FakeResponse(status_code=self.status_code, text=self.text)
 
     def close(self):
@@ -73,11 +82,11 @@ class FakeResponseProject(FakeResponse):
         elif self.status_code == 200:
             return {}
 
-
-class FakeResponseTicketID(FakeResponse):
+class FakeResponseID(FakeResponse):
 
     def json(self):
-        return {'message': 'There is some error.'}
+        if self.status_code == 204:
+            return {'id': TICKET_ID2}
 
 
 class TestBugzillaTicket(TestCase):
@@ -215,3 +224,39 @@ class TestBugzillaTicket(TestCase):
                            "description": DESCRIPTION,
                            'assignee': 'me'}
         self.assertDictEqual(t, expected_params)
+
+    @patch.object(bugzilla.BugzillaTicket, '_verify_project')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_create_ticket_request_id(self, mock_session, mock_project):
+        mock_session.return_value = FakeSession(status_code=204)
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT)
+        with patch.object(bugzilla.BugzillaTicket, '_generate_ticket_url') as mock_url:
+            t = ticket._create_ticket_request({})
+        self.assertEqual(ticket.ticket_id, TICKET_ID2)
+        self.assertEqual(ticket.ticket_url, mock_url.return_value)
+        self.assertEqual(t, SUCCESS_RESULT)
+
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_create_ticket_request_error(self, mock_session):
+        mock_session.return_value = FakeSession(status_code=401)
+        error_message = 'There is some error.'
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT)
+        t = ticket._create_ticket_request({})
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_create_ticket_request_else(self, mock_session):
+        mock_session.return_value = FakeSession()
+        error_message = 'Error creating ticket'
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT)
+        t = ticket._create_ticket_request({})
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+
+    @patch.object(bugzilla.BugzillaTicket, '_verify_project')
+    @patch.object(bugzilla.BugzillaTicket, '_verify_ticket_id')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_create_ticket_request_unexpected_response(self, mock_session, mock_id, mock_project):
+        mock_session.return_value = FakeSession(status_code=400)
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT)
+        t = ticket._create_ticket_request({})
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=''))
