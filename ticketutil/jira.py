@@ -94,7 +94,7 @@ class JiraTicket(ticket.Ticket):
     def create(self, summary, description, type, **kwargs):
         """
         Creates a ticket.
-        The required parameters for ticket creation are summary, description and issue type.
+        The required parameters for ticket creation are summary, description and type.
         Keyword arguments are used for other ticket fields.
         :param summary: The ticket summary.
         :param description: The ticket description.
@@ -107,7 +107,7 @@ class JiraTicket(ticket.Ticket):
         if description is None:
             error_message = "description is a necessary parameter for ticket creation"
         if type is None:
-            error_message = "issue type is a necessary parameter for ticket creation"
+            error_message = "type is a necessary parameter for ticket creation"
         if error_message:
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
@@ -122,7 +122,7 @@ class JiraTicket(ticket.Ticket):
         """
         Creates the payload for the POST request when creating a JIRA ticket.
 
-        The required parameters for ticket creation are summary, description and issue type.
+        The required parameters for ticket creation are summary, description and type.
         Keyword arguments are used for other ticket fields.
 
         Fields examples:
@@ -139,6 +139,7 @@ class JiraTicket(ticket.Ticket):
 
         :param summary: The ticket summary.
         :param description: The ticket description.
+        :param type: The ticket issue type.
         :param fields: Other ticket fields.
         :return: params: A dictionary to pass in to the POST request containing ticket details.
         """
@@ -146,7 +147,8 @@ class JiraTicket(ticket.Ticket):
         params = {'fields': {}}
         params['fields'] = {'project': {'key': self.project},
                             'summary': summary,
-                            'description': description}
+                            'description': description,
+                            'issuetype': {'name': type}}
 
         # Some of the ticket fields need to be in a specific form for the tool.
         fields = _prepare_ticket_fields(fields)

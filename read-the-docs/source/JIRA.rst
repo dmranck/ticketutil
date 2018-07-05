@@ -31,7 +31,7 @@ create()
 ``create(self, summary, description, type, **kwargs)``
 
 Creates a ticket. The required parameters for ticket creation are
-summary and description. Keyword arguments are used for other ticket
+summary, description and type. Keyword arguments are used for other ticket
 fields.
 
 .. code:: python
