@@ -28,16 +28,17 @@ Methods
 create()
 --------
 
-``create(self, summary, description, **kwargs)``
+``create(self, summary, description, type, **kwargs)``
 
 Creates a ticket. The required parameters for ticket creation are
-summary and description. Keyword arguments are used for other ticket
+summary, description and type. Keyword arguments are used for other ticket
 fields.
 
 .. code:: python
 
     t = ticket.create(summary='Ticket summary',
-                      description='Ticket description')
+                      description='Ticket description',
+                      type='Task')
 
 The following keyword arguments were tested and accepted by our
 particular JIRA instance during ticket creation:
