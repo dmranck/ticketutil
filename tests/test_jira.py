@@ -178,6 +178,7 @@ class TestJiraTicket(TestCase):
         expected_params = {'fields': {'project': {'key': PROJECT},
                                       'summary': SUMMARY,
                                       'description': DESCRIPTION,
+                                      'issuetype': {'name': TYPE},
                                       'assignee': 'me'}}
         self.assertEqual(params, expected_params)
 
