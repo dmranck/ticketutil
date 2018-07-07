@@ -11,18 +11,7 @@ __author__ = 'dranck, rnester, kshirsal'
 # Disable warnings for requests because we aren't doing certificate verification
 requests.packages.urllib3.disable_warnings()
 
-LOG_LEVEL = os.environ.get('TICKETUTIL_LOG_LEVEL', 'INFO')
-
-if LOG_LEVEL == 'DEBUG':
-    logging.basicConfig(level=logging.DEBUG)
-elif LOG_LEVEL == 'INFO':
-    logging.basicConfig(level=logging.INFO)
-elif LOG_LEVEL == 'WARNING':
-    logging.basicConfig(level=logging.WARNING)
-elif LOG_LEVEL == 'ERROR':
-    logging.basicConfig(level=logging.ERROR)
-elif LOG_LEVEL == 'CRITICAL':
-    logging.basicConfig(level=logging.CRITICAL)
+logger = logging.getLogger(__name__)
 
 
 class TicketException(Exception):
@@ -67,10 +56,10 @@ class Ticket(object):
         if self._verify_ticket_id(ticket_id):
             self.ticket_id = ticket_id
             self.ticket_url = self._generate_ticket_url()
-            logging.info("Current ticket: {0} - {1}".format(self.ticket_id, self.ticket_url))
+            logger.info("Current ticket: {0} - {1}".format(self.ticket_id, self.ticket_url))
             return self.request_result
         else:
-            logging.error("Unable to set ticket id to {0}".format(ticket_id))
+            logger.error("Unable to set ticket id to {0}".format(ticket_id))
             error_message = "Ticket ID not valid"
             return self.request_result._replace(status='Failure', error_message=error_message)
 
@@ -79,7 +68,7 @@ class Ticket(object):
         Returns the ticket_id for the current Ticket object.
         :return: self.ticket_id: The ID of the ticket.
         """
-        logging.info("Returned ticket id: {0}".format(self.ticket_id))
+        logger.info("Returned ticket id: {0}".format(self.ticket_id))
         return self.ticket_id
 
     def get_ticket_url(self):
@@ -87,7 +76,7 @@ class Ticket(object):
         Returns the ticket_url for the current Ticket object.
         :return: self.ticket_url: The URL of the ticket.
         """
-        logging.info("Returned ticket url: {0}".format(self.ticket_url))
+        logger.info("Returned ticket url: {0}".format(self.ticket_url))
         return self.ticket_url
 
     def _create_requests_session(self):
@@ -109,13 +98,13 @@ class Ticket(object):
         # Try to authenticate to auth_url.
         try:
             r = s.get(self.auth_url)
-            logging.debug("Create requests session: status code: {0}".format(r.status_code))
+            logger.debug("Create requests session: status code: {0}".format(r.status_code))
             r.raise_for_status()
-            logging.info("Successfully authenticated to {0}".format(self.ticketing_tool))
+            logger.info("Successfully authenticated to {0}".format(self.ticketing_tool))
             return s
         except requests.RequestException as e:
-            logging.error("Error authenticating to {0}".format(self.auth_url))
-            logging.error(e)
+            logger.error("Error authenticating to {0}".format(self.auth_url))
+            logger.error(e)
             s.close()
 
     def close_requests_session(self):

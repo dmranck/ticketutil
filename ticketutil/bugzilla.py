@@ -8,7 +8,7 @@ from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
 
-logger = logger.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class BugzillaTicket(ticket.Ticket):
