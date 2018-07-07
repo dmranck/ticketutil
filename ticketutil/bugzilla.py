@@ -8,6 +8,8 @@ from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
 
+logger = logger.getLogger(__name__)
+
 
 class BugzillaTicket(ticket.Ticket):
     """
@@ -72,21 +74,21 @@ class BugzillaTicket(ticket.Ticket):
         # Try to authenticate to auth_url.
         try:
             r = s.get(self.auth_url)
-            logging.debug("Create requests session: status code: {0}".format(r.status_code))
+            logger.debug("Create requests session: status code: {0}".format(r.status_code))
             r.raise_for_status()
         # We log an error if authentication was not successful, because rest of the HTTP requests will not succeed.
         except requests.RequestException as e:
-            logging.error("Error authenticating to {0}".format(self.auth_url))
-            logging.error(e)
+            logger.error("Error authenticating to {0}".format(self.auth_url))
+            logger.error(e)
             s.close()
             return
 
         # Bugzilla's API returns 200 even if the request was not valid. We need to parse the response.
         if "error" in r.json():
-            logging.error("Error authenticating to {0}".format(self.auth_url))
-            logging.error(r.json()["message"])
+            logger.error("Error authenticating to {0}".format(self.auth_url))
+            logger.error(r.json()["message"])
             return
-        logging.info("Successfully authenticated to {0}".format(self.ticketing_tool))
+        logger.info("Successfully authenticated to {0}".format(self.ticketing_tool))
         return s
 
     def _verify_project(self, project):
@@ -97,19 +99,19 @@ class BugzillaTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/rest/product/{1}".format(self.url, project.replace(" ", "%20")))
-            logging.debug("Verify project: status code: {0}".format(r.status_code))
+            logger.debug("Verify project: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Unexpected error occurred when verifying project")
-            logging.error(e)
+            logger.error("Unexpected error occurred when verifying project")
+            logger.error(e)
             return False
 
         # Bugzilla's API returns 200 even if the request response is not valid. We need to parse r.text.
         if r.json() == {"products": []}:
-            logging.error("Project {0} is not valid".format(project))
+            logger.error("Project {0} is not valid".format(project))
             return False
         else:
-            logging.debug("Project {0} is valid".format(project))
+            logger.debug("Project {0} is valid".format(project))
             return True
 
     def _verify_ticket_id(self, ticket_id):
@@ -120,11 +122,11 @@ class BugzillaTicket(ticket.Ticket):
         """
         try:
             r = self.s.get("{0}/{1}".format(self.rest_url, ticket_id))
-            logging.debug("Verify ticket_id: status code: {0}".format(r.status_code))
+            logger.debug("Verify ticket_id: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Unexpected error occurred when verifying ticket_id")
-            logging.error(e)
+            logger.error("Unexpected error occurred when verifying ticket_id")
+            logger.error(e)
             return False
 
         error_responses = ["Bug #{0} does not exist.".format(ticket_id),
@@ -133,10 +135,10 @@ class BugzillaTicket(ticket.Ticket):
 
         # Bugzilla's API returns 200 even if the request response is not valid. We need to parse r.text.
         if any(error in r.text for error in error_responses):
-            logging.error("Ticket {0} is not valid".format(ticket_id))
+            logger.error("Ticket {0} is not valid".format(ticket_id))
             return False
         else:
-            logging.debug("Ticket {0} is valid".format(ticket_id))
+            logger.debug("Ticket {0} is valid".format(ticket_id))
             return True
 
     def create(self, summary, description, **kwargs):
@@ -154,7 +156,7 @@ class BugzillaTicket(ticket.Ticket):
         if description is None:
             error_message = "description is a necessary parameter for ticket creation"
         if error_message:
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Create our parameters used in ticket creation.
@@ -208,11 +210,11 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to create ticket.
         try:
             r = self.s.post(self.rest_url, json=params)
-            logging.debug("Create ticket: status code: {0}".format(r.status_code))
+            logger.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error creating ticket")
-            logging.error(e)
+            logger.error("Error creating ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         # Bugzilla's API returns 200 even if the request response is not valid. We need to parse r.text.
@@ -220,14 +222,14 @@ class BugzillaTicket(ticket.Ticket):
             self.ticket_id = r.json()['id']
         elif "error" in r.json():
             error_message = r.json()['message']
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         else:
             error_message = "Error creating ticket"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         self.ticket_url = self._generate_ticket_url()
-        logging.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
     def edit(self, **kwargs):
@@ -249,7 +251,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Some of the ticket fields need to be in a specific form for the tool.
@@ -259,24 +261,24 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
-            logging.debug("Edit ticket: status code: {0}".format(r.status_code))
+            logger.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error editing ticket")
-            logging.error(e)
+            logger.error("Error editing ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         # Bugzilla's API returns 200 even if the request response is not valid. We need to parse r.text.
         if 'bugs' in r.json():
             if r.json()['bugs'][0]['changes'] == {}:
                 error_message = "No changes made to ticket. Possible invalid field or lack of change in field"
-                logging.info(error_message)
+                logger.info(error_message)
                 return self.request_result
         if 'error' in r.json():
             error_message = r.json()['message']
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
     def add_comment(self, comment, **kwargs):
@@ -287,7 +289,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         params = {"comment": comment}
@@ -296,19 +298,19 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to add comment to ticket.
         try:
             r = self.s.post("{0}/{1}/comment".format(self.rest_url, self.ticket_id), json=params)
-            logging.debug("Add comment: status code: {0}".format(r.status_code))
+            logger.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error adding comment to ticket")
-            logging.error(e)
+            logger.error("Error adding comment to ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         # Bugzilla's API returns 200 even if the request response is not valid. We need to parse r.text.
         if 'error' in r.json():
             error_message = r.json()['message']
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
     def add_attachment(self, file_name, data, summary, **kwargs):
@@ -320,7 +322,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Read the contents from the file path, guess the mimetypes and update the params.
@@ -328,7 +330,7 @@ class BugzillaTicket(ticket.Ticket):
             f = open(data, "rb")
         except IOError:
             error_message = "File {0} not found".format(file_name)
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         file_content = f.read()
         f.close()
@@ -347,19 +349,19 @@ class BugzillaTicket(ticket.Ticket):
         try:
             headers = {"Content-Type": "application/json"}
             r = self.s.post("{0}/{1}/attachment".format(self.rest_url, self.ticket_id), json=params, headers=headers)
-            logging.debug("Add attachment: status code: {0}".format(r.status_code))
+            logger.debug("Add attachment: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error adding attachment to ticket")
-            logging.error(e)
+            logger.error("Error adding attachment to ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         # Bugzilla's API returns 200 even if the request response is not valid. We need to parse r.text.
         if 'error' in r.json():
             error_message = r.json()['message']
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+        logger.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
         return self.request_result
 
     def change_status(self, status, **kwargs):
@@ -372,7 +374,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         params = {"status": status}
@@ -381,18 +383,18 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to change status of ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
-            logging.debug("Change status: status code: {0}".format(r.status_code))
+            logger.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error changing status of ticket")
-            logging.error(e)
+            logger.error("Error changing status of ticket")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         if 'error' in r.json():
             error_message = r.json()['message']
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
     def add_cc(self, user):
@@ -403,7 +405,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         if isinstance(user, list):
@@ -414,23 +416,23 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
-            logging.debug("Add cc: status code: {0}".format(r.status_code))
+            logger.debug("Add cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error adding user(s) to cc list")
-            logging.error(e)
+            logger.error("Error adding user(s) to cc list")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         if 'bugs' in r.json():
             if r.json()['bugs'][0]['changes'] == {}:
                 error_message = "No changes made to ticket. Possible invalid field or lack of change in field"
-                logging.info(error_message)
+                logger.info(error_message)
                 return self.request_result
         if 'error' in r.json():
             error_message = r.json()['message']
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Added user(s) to cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Added user(s) to cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
     def remove_cc(self, user):
@@ -441,7 +443,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         if isinstance(user, list):
@@ -452,23 +454,23 @@ class BugzillaTicket(ticket.Ticket):
         # Attempt to edit ticket.
         try:
             r = self.s.put("{0}/{1}".format(self.rest_url, self.ticket_id), json=params)
-            logging.debug("Remove cc: status code: {0}".format(r.status_code))
+            logger.debug("Remove cc: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logging.error("Error removing user(s) from cc list")
-            logging.error(e)
+            logger.error("Error removing user(s) from cc list")
+            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=str(e))
 
         if 'bugs' in r.json():
             if r.json()['bugs'][0]['changes'] == {}:
                 error_message = "No changes made to ticket. Possible invalid field or lack of change in field"
-                logging.info(error_message)
+                logger.info(error_message)
                 return self.request_result
         if 'error' in r.json():
             error_message = r.json()['message']
-            logging.error(error_message)
+            logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
-        logging.info("Removed user(s) from cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        logger.info("Removed user(s) from cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
 
