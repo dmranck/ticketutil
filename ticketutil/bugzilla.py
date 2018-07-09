@@ -255,8 +255,7 @@ class BugzillaTicket(ticket.Ticket):
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Some of the ticket fields need to be in a specific form for the tool.
-        kwargs = _prepare_ticket_fields("edit", kwargs)
-        params = kwargs
+        params = _prepare_ticket_fields("edit", kwargs)
 
         # Attempt to edit ticket.
         try:
@@ -344,6 +343,7 @@ class BugzillaTicket(ticket.Ticket):
                   "is_patch": False,
                   "content_type": content_type}
         params.update(kwargs)
+        print(params)
 
         # Attempt to change status of ticket.
         try:

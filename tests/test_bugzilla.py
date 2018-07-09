@@ -1,6 +1,4 @@
 import logging
-import os
-import sys
 from collections import namedtuple
 from unittest import main, TestCase
 from unittest.mock import patch
@@ -18,6 +16,8 @@ TICKET_ID2 = 'PROJECT-008'
 TEXT = "There is no bug."
 SUMMARY = 'The ticket summary'
 DESCRIPTION = 'The ticket description'
+TICKET_URL = "{0}/show_bug.cgi?id={1}".format(URL, TICKET_ID)
+
 
 RETURN_RESULT = namedtuple('Result', ['status', 'error_message', 'url', 'ticket_content'])
 SUCCESS_RESULT = RETURN_RESULT('Success', None, None, None)
@@ -40,15 +40,14 @@ class FakeSession(object):
         else:
             return FakeResponse(status_code=self.status_code, text=self.text)
 
-    def post(self, url, json):
-        if '/comment' in url:
-            pass
-        elif '/attachment' in url:
-            pass
-        elif self.status_code == 204:
+    def post(self, url, json, headers='headers'):
+        if self.status_code == 204:
             return FakeResponseID(status_code=self.status_code, text=self.text)
         else:
             return FakeResponse(status_code=self.status_code, text=self.text)
+
+    def put(self, url, json):
+        return FakeResponse(status_code=self.status_code, text=self.text)
 
     def close(self):
         return
@@ -64,7 +63,7 @@ class FakeResponse(object):
         self.text = text
 
     def raise_for_status(self):
-        if self.status_code not in [200, 204, 401]:
+        if self.status_code not in [200, 204, 401, 402]:
             raise requests.RequestException
 
     def json(self):
@@ -72,6 +71,8 @@ class FakeResponse(object):
             return {}
         elif self.status_code == 401:
             return {'error': True, 'message': 'There is some error.'}
+        elif self.status_code == 402:
+            return {'bugs': {0: {'changes': {}}}}
 
 
 class FakeResponseProject(FakeResponse):
@@ -81,6 +82,7 @@ class FakeResponseProject(FakeResponse):
             return {"products": []}
         elif self.status_code == 200:
             return {}
+
 
 class FakeResponseID(FakeResponse):
 
@@ -95,7 +97,6 @@ class TestBugzillaTicket(TestCase):
     def test_generate_ticket_url(self, mock_session):
         mock_session.return_value = FakeSession()
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
-        TICKET_URL = "{0}/show_bug.cgi?id={1}".format(URL, TICKET_ID)
         self.assertEqual(TICKET_URL, ticket._generate_ticket_url())
         self.assertEqual(ticket.request_result, SUCCESS_RESULT._replace(url=TICKET_URL))
 
@@ -260,3 +261,127 @@ class TestBugzillaTicket(TestCase):
         ticket = bugzilla.BugzillaTicket(URL, PROJECT)
         t = ticket._create_ticket_request({})
         self.assertEqual(t, FAILURE_RESULT._replace(error_message=''))
+
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_edit_no_id(self, mock_session):
+        mock_session.return_value = FakeSession()
+        error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT)
+        t = ticket.edit()
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+
+    @patch.object(bugzilla, '_prepare_ticket_fields')
+    @patch.object(bugzilla.BugzillaTicket, '_verify_project')
+    @patch.object(bugzilla.BugzillaTicket, '_verify_ticket_id')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_edit_unexpected_response(self, mock_session, mock_id, mock_project, mock_fields):
+        mock_session.return_value = FakeSession(status_code=400)
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.edit()
+        self.assertEqual(t, RETURN_RESULT('Failure', '', TICKET_URL, None))
+
+    @patch.object(bugzilla, '_prepare_ticket_fields')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_edit_bugs(self, mock_session, mock_fields):
+        mock_session.return_value = FakeSession(status_code=402)
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.edit()
+        self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL))
+
+    @patch.object(bugzilla, '_prepare_ticket_fields')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_edit_error(self, mock_session, mock_fields):
+        mock_session.return_value = FakeSession(status_code=401)
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.edit()
+        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, None))
+
+    @patch.object(bugzilla, '_prepare_ticket_fields')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_edit(self, mock_session, mock_fields):
+        mock_session.return_value = FakeSession()
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.edit()
+        self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL))
+
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_add_comment_no_id(self, mock_session):
+        mock_session.return_value = FakeSession()
+        error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT)
+        t = ticket.add_comment('')
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+
+    @patch.object(bugzilla.BugzillaTicket, '_verify_project')
+    @patch.object(bugzilla.BugzillaTicket, '_verify_ticket_id')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_add_comment_unexpected_response(self, mock_session, mock_id, mock_project):
+        mock_session.return_value = FakeSession(status_code=400)
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.add_comment('')
+        self.assertEqual(t, RETURN_RESULT('Failure', '', TICKET_URL, None))
+
+    @patch.object(bugzilla, '_prepare_ticket_fields')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_add_comment_error(self, mock_session, mock_fields):
+        mock_session.return_value = FakeSession(status_code=401)
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.add_comment('')
+        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, None))
+
+    @patch.object(bugzilla, '_prepare_ticket_fields')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_add_comment(self, mock_session, mock_fields):
+        mock_session.return_value = FakeSession()
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.add_comment('')
+        self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL))
+
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_add_attachment_no_id(self, mock_session):
+        mock_session.return_value = FakeSession()
+        error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT)
+        t = ticket.add_attachment('file_name', 'data', 'summary')
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_add_attachment_ioerror(self, mock_session):
+        mock_session.return_value = FakeSession()
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.add_attachment('file_name', 'data', 'summary')
+        self.assertEqual(t, RETURN_RESULT('Failure', 'File file_name not found', TICKET_URL, None))
+
+    @patch('ticketutil.bugzilla.base64.standard_b64encode')
+    @patch('ticketutil.bugzilla.mimetypes.guess_type')
+    @patch('builtins.open')
+    @patch.object(bugzilla.BugzillaTicket, '_verify_project')
+    @patch.object(bugzilla.BugzillaTicket, '_verify_ticket_id')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_add_attachment_unexpected_response(self, mock_session, mock_id, mock_project, mock_open, mock_guess_type,
+                                                mock_encode):
+        mock_session.return_value = FakeSession(status_code=400)
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.add_attachment('file_name', 'data', 'summary')
+        self.assertEqual(t, RETURN_RESULT('Failure', '', TICKET_URL, None))
+
+    @patch('ticketutil.bugzilla.base64.standard_b64encode')
+    @patch('ticketutil.bugzilla.mimetypes.guess_type')
+    @patch('builtins.open')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_add_attachment_error(self, mock_session, mock_open, mock_guess_type, mock_encode):
+        mock_session.return_value = FakeSession(status_code=401)
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.add_attachment('file_name', 'data', 'summary')
+        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, None))
+
+    @patch('ticketutil.bugzilla.base64.standard_b64encode')
+    @patch('ticketutil.bugzilla.mimetypes.guess_type')
+    @patch('builtins.open')
+    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
+    def test_add_attachment(self, mock_session, mock_open, mock_guess_type, mock_encode):
+        mock_session.return_value = FakeSession()
+        ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        t = ticket.add_attachment('file_name', 'data', 'summary')
+        mock_session.post.assert_called_with('something')
+        self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL))
