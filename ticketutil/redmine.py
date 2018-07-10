@@ -348,6 +348,7 @@ class RedmineTicket(ticket.Ticket):
                 logger.error("Error attaching file {0}".format(file_name))
                 logger.error(e)
                 return self.request_result._replace(status='Failure', error_message=str(e))
+            # Does it ever happen that IOError is raised?
             except IOError:
                 error_message = "File {0} not found".format(file_name)
                 logger.error(error_message)
