@@ -343,7 +343,6 @@ class BugzillaTicket(ticket.Ticket):
                   "is_patch": False,
                   "content_type": content_type}
         params.update(kwargs)
-        print(params)
 
         # Attempt to change status of ticket.
         try:
