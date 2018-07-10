@@ -17,7 +17,7 @@ TEXT = "There is no bug."
 SUMMARY = 'The ticket summary'
 DESCRIPTION = 'The ticket description'
 TICKET_URL = "{0}/show_bug.cgi?id={1}".format(URL, TICKET_ID)
-
+ERROR_MESSAGE = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
 
 RETURN_RESULT = namedtuple('Result', ['status', 'error_message', 'url', 'ticket_content'])
 SUCCESS_RESULT = RETURN_RESULT('Success', None, None, None)
@@ -201,7 +201,7 @@ class TestBugzillaTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = bugzilla.BugzillaTicket(URL, PROJECT)
         t = ticket.create(SUMMARY, DESCRIPTION, assignee='me')
-        mock_parameters.assert_called_with(SUMMARY, DESCRIPTION, {'assignee':'me'})
+        mock_parameters.assert_called_with(SUMMARY, DESCRIPTION, {'assignee': 'me'})
         self.assertEqual(t, mock_request.return_value)
 
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
@@ -265,10 +265,9 @@ class TestBugzillaTicket(TestCase):
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
     def test_edit_no_id(self, mock_session):
         mock_session.return_value = FakeSession()
-        error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
         ticket = bugzilla.BugzillaTicket(URL, PROJECT)
         t = ticket.edit()
-        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=ERROR_MESSAGE))
 
     @patch.object(bugzilla, '_prepare_ticket_fields')
     @patch.object(bugzilla.BugzillaTicket, '_verify_project')
@@ -307,10 +306,9 @@ class TestBugzillaTicket(TestCase):
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
     def test_add_comment_no_id(self, mock_session):
         mock_session.return_value = FakeSession()
-        error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
         ticket = bugzilla.BugzillaTicket(URL, PROJECT)
         t = ticket.add_comment('')
-        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=ERROR_MESSAGE))
 
     @patch.object(bugzilla.BugzillaTicket, '_verify_project')
     @patch.object(bugzilla.BugzillaTicket, '_verify_ticket_id')
@@ -340,10 +338,9 @@ class TestBugzillaTicket(TestCase):
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
     def test_add_attachment_no_id(self, mock_session):
         mock_session.return_value = FakeSession()
-        error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
         ticket = bugzilla.BugzillaTicket(URL, PROJECT)
         t = ticket.add_attachment('file_name', 'data', 'summary')
-        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=ERROR_MESSAGE))
 
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
     def test_add_attachment_ioerror(self, mock_session):
@@ -388,10 +385,9 @@ class TestBugzillaTicket(TestCase):
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
     def test_change_status_no_id(self, mock_session):
         mock_session.return_value = FakeSession()
-        error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
         ticket = bugzilla.BugzillaTicket(URL, PROJECT)
         t = ticket.change_status('')
-        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=ERROR_MESSAGE))
 
     @patch.object(bugzilla.BugzillaTicket, '_verify_project')
     @patch.object(bugzilla.BugzillaTicket, '_verify_ticket_id')
@@ -421,10 +417,9 @@ class TestBugzillaTicket(TestCase):
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
     def test_add_cc_no_id(self, mock_session):
         mock_session.return_value = FakeSession()
-        error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
         ticket = bugzilla.BugzillaTicket(URL, PROJECT)
         t = ticket.add_cc('')
-        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=ERROR_MESSAGE))
 
     @patch.object(bugzilla.BugzillaTicket, '_verify_project')
     @patch.object(bugzilla.BugzillaTicket, '_verify_ticket_id')
@@ -459,10 +454,9 @@ class TestBugzillaTicket(TestCase):
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
     def test_remove_cc_no_id(self, mock_session):
         mock_session.return_value = FakeSession()
-        error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
         ticket = bugzilla.BugzillaTicket(URL, PROJECT)
         t = ticket.remove_cc('')
-        self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
+        self.assertEqual(t, FAILURE_RESULT._replace(error_message=ERROR_MESSAGE))
 
     @patch.object(bugzilla.BugzillaTicket, '_verify_project')
     @patch.object(bugzilla.BugzillaTicket, '_verify_ticket_id')
@@ -493,3 +487,12 @@ class TestBugzillaTicket(TestCase):
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.remove_cc('')
         self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL))
+
+    def test_prepare_ticket_fields(self):
+        fields = {'groups': ['group1', 'group2'], 'assignee': 'me'}
+        expected_fields = {'groups': {'add': ['group1', 'group2']}, 'assigned_to': 'me'}
+        self.assertEqual(bugzilla._prepare_ticket_fields('edit', fields), expected_fields)
+
+
+if __name__ == '__main__':
+    main()
