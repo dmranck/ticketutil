@@ -437,6 +437,7 @@ class ServiceNowTicket(Ticket):
         """
         Attaches a file to a ServiceNow ticket.
         :param file_name: A string representing the file to attach.
+        :param name: A string representing the name under which the file is attached.
         :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
         if not self.ticket_id:
