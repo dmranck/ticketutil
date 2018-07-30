@@ -316,5 +316,46 @@ class TestServiceNowTicket(TestCase):
         t = ticket.remove_cc(['dranck@redhat.com', 'mail@redhat.com'])
         self.assertEqual(t.status, MOCK_RETURN_FAILURE.status)
 
+    @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
+    @patch('servicenow.ServiceNowTicket.get_ticket_content', mock_get_ticket_content)
+    def test_add_attachment_no_ticket_id(self, mock_session):
+        mock_session.return_value = FakeSession()
+        ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE)
+        t = ticket.add_attachment('file_name')
+        error_message = 'No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)'
+        self.assertEqual(t.error_message, error_message)
+
+    @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
+    @patch('servicenow.ServiceNowTicket.get_ticket_content', mock_get_ticket_content)
+    def test_add_attachment_ioerror(self, mock_session):
+        mock_session.return_value = FakeSession()
+        ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE, ticket_id=TICKET_ID)
+        t = ticket.add_attachment('file_name')
+        error_message = 'File file_name not found'
+        self.assertEqual(t.error_message, error_message)
+
+    @patch('builtins.open')
+    @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
+    @patch('servicenow.ServiceNowTicket.get_ticket_content', mock_get_ticket_content)
+    def test_add_attachment_unexpected_response(self, mock_session, mock_open):
+        mock_session.return_value = FakeSession(status_code=404)
+        ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE, ticket_id=TICKET_ID)
+        t = ticket.add_attachment('file_name')
+        self.assertEqual(t.error_message, '')
+
+    @patch('builtins.open')
+    @patch.object(servicenow.ServiceNowTicket, '_create_requests_session')
+    @patch('servicenow.ServiceNowTicket._verify_project', mock_verify_project)
+    @patch('servicenow.ServiceNowTicket.get_ticket_content', mock_get_ticket_content)
+    def test_add_attachment(self, mock_session, mock_open):
+        mock_session.return_value = FakeSession()
+        ticket = servicenow.ServiceNowTicket(TEST_URL, TABLE, ticket_id=TICKET_ID)
+        t = ticket.add_attachment('file_name')
+        self.assertEqual(t.status, 'Success')
+
+
 if __name__ == '__main__':
     main()
