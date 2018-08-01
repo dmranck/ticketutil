@@ -20,6 +20,7 @@ class JiraTicket(ticket.Ticket):
         # JIRA URLs
         self.url = url
         self.rest_url = '{0}/rest/api/2/issue'.format(self.url)
+        self.ticket_content = None
         if isinstance(auth, tuple):
             self.auth = auth
             self.auth_url = self.url
@@ -32,7 +33,7 @@ class JiraTicket(ticket.Ticket):
 
         # Overwrite our request_result namedtuple from Ticket, adding watchers field for JiraTicket.
         Result = namedtuple('Result', ['status', 'error_message', 'url', 'ticket_content', 'watchers'])
-        self.request_result = Result('Success', None, self.ticket_url, None, None)
+        self.request_result = Result('Success', None, self.ticket_url, self.ticket_content, None)
 
     def _generate_ticket_url(self):
         """
@@ -82,6 +83,7 @@ class JiraTicket(ticket.Ticket):
             logger.debug("Verify ticket_id: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logger.debug("Ticket {0} is valid".format(ticket_id))
+            self.ticket_content = r.json()
             return True
         except requests.RequestException as e:
             if r.json()['errorMessages'][0] == "Issue Does Not Exist":

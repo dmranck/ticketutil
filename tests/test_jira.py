@@ -116,12 +116,12 @@ class TestJiraTicket(TestCase):
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         TICKET_URL = "{0}/browse/{1}".format(URL, TICKET_ID)
         self.assertEqual(TICKET_URL, ticket._generate_ticket_url())
-        self.assertEqual(ticket.request_result, SUCCESS_RESULT._replace(url=TICKET_URL))
+        self.assertEqual(ticket.request_result, SUCCESS_RESULT._replace(url=TICKET_URL, ticket_content=MOCK_RESULT))
 
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_generate_ticket_url_no_ticket_id(self, mock_session):
         mock_session.return_value = FakeSession()
-        ticket = jira.JiraTicket(URL, PROJECT, TYPE)
+        ticket = jira.JiraTicket(URL, PROJECT)
         self.assertEqual(None, ticket._generate_ticket_url())
         self.assertEqual(ticket.request_result, SUCCESS_RESULT)
 
@@ -141,15 +141,15 @@ class TestJiraTicket(TestCase):
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_verify_ticket_id(self, mock_session):
         mock_session.return_value = FakeSession()
-        ticket = jira.JiraTicket(URL, PROJECT)
-        self.assertTrue(ticket._verify_ticket_id(PROJECT))
+        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        self.assertTrue(ticket._verify_ticket_id(ticket_id=TICKET_ID))
 
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_verify_ticket_id_unexpected_response(self, mock_session):
         mock_session.return_value = FakeSession(status_code=401)
         with self.assertRaises(TicketException):
-            ticket = jira.JiraTicket(URL, PROJECT)
-            self.assertFalse(ticket._verify_ticket_id(PROJECT))
+            ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+            self.assertFalse(ticket._verify_ticket_id(ticket_id=TICKET_ID))
 
     @patch.object(jira.JiraTicket, '_create_ticket_parameters')
     @patch.object(jira.JiraTicket, '_create_ticket_request')
@@ -209,7 +209,7 @@ class TestJiraTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.edit(summary='Edited summary')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value, ticket_content=MOCK_RESULT))
 
     @patch.object(jira, '_prepare_ticket_fields')
     @patch.object(jira.JiraTicket, '_create_requests_session')
@@ -238,7 +238,7 @@ class TestJiraTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_comment('Status update: ...')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value, ticket_content=MOCK_RESULT))
 
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_add_comment_no_ticket_id(self, mock_session):
@@ -266,7 +266,7 @@ class TestJiraTicket(TestCase):
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         mock_get_id.return_value = 'STATUS_ID'
         request_result = ticket.change_status('Done')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value, ticket_content=MOCK_RESULT))
 
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_change_status_no_ticket_id(self, mock_session):
@@ -297,7 +297,7 @@ class TestJiraTicket(TestCase):
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         mock_get_list.return_value = watchers
         request_result = ticket.remove_all_watchers()
-        self.assertEqual(request_result, RETURN_RESULT('Success', None, mock_url.return_value, None, watchers))
+        self.assertEqual(request_result, RETURN_RESULT('Success', None, mock_url.return_value, MOCK_RESULT, watchers))
 
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_remove_all_watchers_no_ticket_id(self, mock_session):
@@ -326,7 +326,7 @@ class TestJiraTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.remove_watcher('me')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value, ticket_content=MOCK_RESULT))
 
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_remove_watcher_no_ticket_id(self, mock_session):
@@ -353,7 +353,7 @@ class TestJiraTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_watcher('me')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value, ticket_content=MOCK_RESULT))
 
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_add_watcher_no_ticket_id(self, mock_session):
@@ -381,7 +381,8 @@ class TestJiraTicket(TestCase):
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_watcher('')
         error_message = 'Error adding  as a watcher to ticket'
-        self.assertEqual(request_result, RETURN_RESULT('Failure', error_message, mock_url.return_value, None, None))
+        self.assertEqual(request_result, RETURN_RESULT('Failure', error_message, mock_url.return_value, MOCK_RESULT,
+                                                       None))
 
     @patch('builtins.open')
     @patch.object(jira.JiraTicket, '_generate_ticket_url')
@@ -390,7 +391,7 @@ class TestJiraTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_attachment('file_name')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=mock_url.return_value, ticket_content=MOCK_RESULT))
 
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_add_attachment_no_ticket_id(self, mock_session):
