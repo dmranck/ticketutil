@@ -38,6 +38,7 @@ Methods
 -  `add_cc() <#add_cc>`__
 -  `rewrite_cc() <#rewrite_cc>`__
 -  `remove_cc() <#remove_cc>`__
+-  `add_attachment() <#add_attachment>`__
 
 set_ticket_id()
 ---------------
@@ -198,6 +199,18 @@ representing one email address.
 
     t = ticket.remove_cc(['username@domain.com', 'user3@domain.com'])
 
+add_attachment()
+----------------
+
+``add_attachment(self, file_name, name=None)``
+
+Attaches the file to existing ServiceNow ticket. Required parameter is
+file_name. If name is specified, it is used to rename the saved file.
+
+.. code:: python
+
+    t = ticket.add_attachment('scan01234.jpg', 'scan.jpg')
+
 
 Examples
 ^^^^^^^^
@@ -261,6 +274,7 @@ Create new ServiceNow ticket
     t = ticket.add_cc(['username1@mail.com', 'username2@mail.com'])
     t = ticket.remove_cc('username1@mail.com')
     t = ticket.change_status('Work in Progress')
+    t = ticket.add_attachment('scan01234.jpg', 'scan.jpg')
 
     # Retrieve ticket content
     t = ticket.get_ticket_content()
@@ -290,4 +304,3 @@ Update existing ServiceNow tickets
 
     # Close Requests session
     ticket.close_requests_session()
-
