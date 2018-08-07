@@ -433,40 +433,6 @@ class ServiceNowTicket(Ticket):
         self.request_result = self.request_result._replace(ticket_content=self.ticket_content)
         return self.request_result
 
-    def add_attachment(self, file_name, name=None):
-        """
-        Attaches a file to a ServiceNow ticket.
-        :param file_name: A string representing the file to attach.
-        :param name: A string representing the name under which the file is attached.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
-        """
-        if not self.ticket_id:
-            error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
-            logger.error(error_message)
-            return self.request_result._replace(status='Failure', error_message=error_message)
-
-        if not name:
-            name = file_name
-
-        url = '{}/api/now/attachment/file?table_name={}&table_sys_id={}&file_name={}'.format(self.url, self.project,
-                                                                                             self.sys_id, name)
-        try:
-            with open(file_name, 'rb') as f:
-                data = f.read()
-            r = self.s.post(url, data=data)
-            logger.debug("Add attachment: status code: {0}".format(r.status_code))
-            r.raise_for_status()
-            logger.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
-            return self.request_result
-        except requests.RequestException as e:
-            logger.error("Error attaching file {0}".format(file_name))
-            logger.error(e)
-            return self.request_result._replace(status='Failure', error_message=str(e))
-        except IOError:
-            error_message = "File {0} not found".format(file_name)
-            logger.error(error_message)
-            return self.request_result._replace(status='Failure', error_message=error_message)
-
 
 def _prepare_ticket_fields(fields):
     """
