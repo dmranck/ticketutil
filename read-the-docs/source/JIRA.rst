@@ -16,6 +16,7 @@ https://docs.atlassian.com/jira/REST/cloud/
 Methods
 ^^^^^^^
 
+-  `get_ticket_content() <#get_ticket_content>`__
 -  `create() <#create>`__
 -  `edit() <#edit>`__
 -  `add_comment() <#comment>`__
@@ -24,6 +25,18 @@ Methods
 -  `remove_watcher() <#remove_watcher>`__
 -  `add_watcher() <#add_watcher>`__
 -  `add_attachment() <#add_attachment>`__
+
+get_ticket_content()
+--------------------
+
+``get_ticket_content(self, ticket_id=None)``
+
+Queries the JIRA API to get ticket_content using ticket_id.
+
+.. code:: python
+
+    t = ticket.get_ticket_content('Ticket_ID')
+
 
 create()
 --------
@@ -223,6 +236,7 @@ Create and update JIRA ticket
                       type='Task',
                       priority='Major',
                       assignee='username')
+    t = ticket.get_ticket_content('Ticket_ID')
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='Critical',
                     type='Bug')
@@ -251,6 +265,9 @@ Update existing JIRA tickets
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='Critical',
                     type='Bug')
+
+    # Check the actual ticket content after applied updates
+    t = ticket.get_ticket_content()
 
     # Work with a different ticket.
     t = ticket.set_ticket_id(<new_ticket_id>)
