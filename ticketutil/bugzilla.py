@@ -114,62 +114,76 @@ class BugzillaTicket(ticket.Ticket):
             logger.debug("Project {0} is valid".format(project))
             return True
 
+    def get_ticket_content(self, ticket_id=None):
+        """
+        Queries the Bugzilla API to get ticket_content using ticket_id.
+        :param ticket_id: ticket number, if not set self.ticket_id is used.
+        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        """
+        if ticket_id is None:
+            ticket_id = self.ticket_id
+            if not self.ticket_id:
+                error_message = "No ticket ID associated with ticket object. " \
+                                "Set ticket ID with set_ticket_id(<ticket_id>)"
+                logger.error(error_message)
+                return self.request_result._replace(status='Failure', error_message=error_message)
+        try:
+            r = self.s.get("{0}/{1}".format(self.rest_url, ticket_id))
+            logger.debug("Get ticket content: status code: {0}".format(r.status_code))
+            r.raise_for_status()
+            self.ticket_content = r.json()
+            return self.request_result._replace(ticket_content=self.ticket_content)
+        except requests.RequestException as e:
+            error_message = "Error getting ticket content"
+            logger.error(error_message)
+            logger.error(e)
+            return self.request_result._replace(status='Failure', error_message=error_message)
+
     def _verify_ticket_id(self, ticket_id):
         """
-        Queries the Bugzilla API to see if ticket_id is a valid ticket for the given Bugzilla instance.
+        Check if ticket_id is connected with valid ticket for the given Bugzilla instance.
         :param ticket_id: The ticket you're verifying.
         :return: True or False depending on if ticket is valid.
         """
-        try:
-            r = self.s.get("{0}/{1}".format(self.rest_url, ticket_id))
-            logger.debug("Verify ticket_id: status code: {0}".format(r.status_code))
-            r.raise_for_status()
-        except requests.RequestException as e:
-            logger.error("Unexpected error occurred when verifying ticket_id")
-            logger.error(e)
-            return False
-
-        error_responses = ["Bug #{0} does not exist.".format(ticket_id),
-                           "\\\"{0}\\\" is out of range for type integer".format(ticket_id),
-                           "\'{0}\' is not a valid bug number nor an alias to a bug.".format(ticket_id)]
-
-        # Bugzilla's API returns 200 even if the request response is not valid. We need to parse r.text.
-        if any(error in r.text for error in error_responses):
+        self.request_result = self.get_ticket_content(ticket_id)
+        if 'Failure' in self.request_result.status:
             logger.error("Ticket {0} is not valid".format(ticket_id))
             return False
         else:
             logger.debug("Ticket {0} is valid".format(ticket_id))
             return True
 
-    def create(self, summary, description, **kwargs):
+    def create(self, summary, description, component, version, **kwargs):
         """
         Creates a ticket.
-        The required parameters for ticket creation are summary and description.
+        The required parameters for ticket creation are summary, description, component and version.
         Keyword arguments are used for other ticket fields.
         :param summary: The ticket summary.
         :param description: The ticket description.
+        :param component: The ticket component.
+        :param version: The ticket version.
         :return: self.request_result: Named tuple containing request status, error_message, and url info.
         """
         error_message = ""
-        if summary is None:
-            error_message = "summary is a necessary parameter for ticket creation"
-        if description is None:
-            error_message = "description is a necessary parameter for ticket creation"
+        required_args = {summary: 'summary', description: 'description', component: 'component', version: 'version'}
+        for arg in required_args:
+            if arg is None:
+                error_message = '{} is a necessary parameter for ticket creation'.format(required_args[arg])
         if error_message:
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Create our parameters used in ticket creation.
-        params = self._create_ticket_parameters(summary, description, kwargs)
+        params = self._create_ticket_parameters(summary, description, component, version, kwargs)
 
         # Create our ticket.
         return self._create_ticket_request(params)
 
-    def _create_ticket_parameters(self, summary, description, fields):
+    def _create_ticket_parameters(self, summary, description, component, version, fields):
         """
         Creates the payload for the POST request when creating a Bugzilla ticket.
 
-        The required parameters for ticket creation are summary and description.
+        The required parameters for ticket creation are summary, description and component.
         Keyword arguments are used for other ticket fields.
 
         Fields examples:
@@ -185,13 +199,17 @@ class BugzillaTicket(ticket.Ticket):
 
         :param summary: The ticket summary.
         :param description: The ticket description.
+        :param component: The ticket component.
+        :param version: The ticket version.
         :param fields: Other ticket fields.
         :return: params: A dictionary to pass in to the POST request containing ticket details.
         """
         # Create our parameters for creating the ticket.
         params = {"product": str(self.project),
                   "summary": summary,
-                  "description": description}
+                  "description": description,
+                  "component": component,
+                  "version": version}
 
         # Some of the ticket fields need to be in a specific form for the tool.
         fields = _prepare_ticket_fields("create", fields)
@@ -230,6 +248,7 @@ class BugzillaTicket(ticket.Ticket):
             return self.request_result._replace(status='Failure', error_message=error_message)
         self.ticket_url = self._generate_ticket_url()
         logger.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def edit(self, **kwargs):
@@ -278,6 +297,7 @@ class BugzillaTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def add_comment(self, comment, **kwargs):
@@ -310,6 +330,7 @@ class BugzillaTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def add_attachment(self, file_name, data, summary, **kwargs):
@@ -361,6 +382,7 @@ class BugzillaTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def change_status(self, status, **kwargs):
@@ -394,6 +416,7 @@ class BugzillaTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def add_cc(self, user):
@@ -432,6 +455,7 @@ class BugzillaTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Added user(s) to cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def remove_cc(self, user):
@@ -470,6 +494,7 @@ class BugzillaTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Removed user(s) from cc list of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
 
