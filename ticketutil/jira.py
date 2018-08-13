@@ -94,7 +94,7 @@ class JiraTicket(ticket.Ticket):
             self.ticket_content = r.json()
             return self.request_result._replace(ticket_content=self.ticket_content)
         except requests.RequestException as e:
-            if r.json()['errorMessages'][0] == "Issue Does Not Exist":
+            if "issue does not exist" in r.json()['errorMessages'][0].lower():
                 error_message = "Ticket {0} is not valid".format(ticket_id)
                 logger.error(error_message)
             else:
