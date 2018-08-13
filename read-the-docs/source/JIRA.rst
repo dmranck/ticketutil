@@ -38,7 +38,7 @@ https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/issue-getIss
 .. code:: python
 
     t = ticket.get_ticket_content(<ticket_id>)
-
+    returned_ticket_content = t.ticket_content
 
 create()
 --------
