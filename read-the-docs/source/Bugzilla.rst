@@ -30,11 +30,14 @@ get_ticket_content()
 
 ``get_ticket_content(self, ticket_id=None)``
 
-Queries the Bugzilla API to get ticket_content using ticket_id.
+Queries the Bugzilla API to get ticket_content using ticket_id. The
+ticket_content is expressed in a form of dictionary as a result of JIRA API
+get product: http://bugzilla.readthedocs.io/en/latest/api/core/v1/bug.html#get-bug
 
 .. code:: python
 
-    t = ticket.create(ticket_id='Ticket_ID')
+    t = ticket.create(ticket_id=<ticket_id>)
+    returned_ticket_content = t.ticket_content
 
 create()
 --------
@@ -273,6 +276,7 @@ Update existing Bugzilla tickets
 
     # Check the ticket content.
     t = ticket.get_ticket_id()
+    returned_ticket_content = t.ticket_content
 
     # Work with a different ticket.
     t = ticket.set_ticket_id(<new_ticket_id>)
