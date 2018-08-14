@@ -126,7 +126,8 @@ class JiraTicket(ticket.Ticket):
         :param summary: The ticket summary.
         :param description: The ticket description.
         :param type: The ticket issue type.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         error_message = ""
         if summary is None:
@@ -189,7 +190,8 @@ class JiraTicket(ticket.Ticket):
         Tries to create the ticket through the ticketing tool's API.
         Retrieves the ticket_id and creates the ticket_url.
         :param params: The payload to send in the POST request.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         # Attempt to create ticket.
         try:
@@ -226,7 +228,8 @@ class JiraTicket(ticket.Ticket):
         parent='KEY-XX'
         customfield_XXXXX='Custom field text'
 
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -256,7 +259,8 @@ class JiraTicket(ticket.Ticket):
         """
         Adds a comment to a JIRA ticket.
         :param comment: A string representing the comment to be added.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -287,7 +291,8 @@ class JiraTicket(ticket.Ticket):
         <self.rest_url>/<self.ticket_id>/transitions
 
         :param status: Status to change to.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -353,7 +358,8 @@ class JiraTicket(ticket.Ticket):
         Removes watcher from a JIRA ticket.
         Accepts an email or username.
         :param watcher: Username of watcher to remove.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -382,7 +388,8 @@ class JiraTicket(ticket.Ticket):
         Adds watcher to a JIRA ticket.
         Accepts an email or username.
         :param watcher: Username of watcher to remove.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -419,7 +426,8 @@ class JiraTicket(ticket.Ticket):
         """
         Attaches a file to a JIRA ticket.
         :param file_name: A string representing the file to attach.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
