@@ -31,7 +31,7 @@ get_ticket_content()
 ``get_ticket_content(self, ticket_id=None)``
 
 Queries the Bugzilla API to get ticket_content using ticket_id. The
-ticket_content is expressed in a form of dictionary as a result of JIRA API
+ticket_content is expressed in a form of dictionary as a result of Bugzilla API
 get product: http://bugzilla.readthedocs.io/en/latest/api/core/v1/bug.html#get-bug
 
 .. code:: python

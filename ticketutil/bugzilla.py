@@ -118,7 +118,8 @@ class BugzillaTicket(ticket.Ticket):
         """
         Queries the Bugzilla API to get ticket_content using ticket_id.
         :param ticket_id: ticket number, if not set self.ticket_id is used.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if ticket_id is None:
             ticket_id = self.ticket_id
@@ -162,7 +163,8 @@ class BugzillaTicket(ticket.Ticket):
         :param description: The ticket description.
         :param component: The ticket component.
         :param version: The ticket version.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         error_message = ""
         required_args = {summary: 'summary', description: 'description', component: 'component', version: 'version'}
@@ -183,7 +185,7 @@ class BugzillaTicket(ticket.Ticket):
         """
         Creates the payload for the POST request when creating a Bugzilla ticket.
 
-        The required parameters for ticket creation are summary, description and component.
+        The required parameters for ticket creation are summary, description, component and version.
         Keyword arguments are used for other ticket fields.
 
         Fields examples:
@@ -223,7 +225,8 @@ class BugzillaTicket(ticket.Ticket):
         Tries to create the ticket through the ticketing tool's API.
         Retrieves the ticket_id and creates the ticket_url.
         :param params: The payload to send in the POST request.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         # Attempt to create ticket.
         try:
@@ -266,7 +269,8 @@ class BugzillaTicket(ticket.Ticket):
         severity='medium'
         alias='SomeAlias'
 
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -304,7 +308,8 @@ class BugzillaTicket(ticket.Ticket):
         """
         Adds a comment to a Bugzilla ticket.
         :param comment: A string representing the comment to be added.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -338,7 +343,8 @@ class BugzillaTicket(ticket.Ticket):
         :param file_name: The "file name" that will be displayed in the UI for this attachment.
         :param data: A string representing the file to attach.
         :param summary: A short string describing the attachment.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -391,7 +397,8 @@ class BugzillaTicket(ticket.Ticket):
         Some status changes require a secondary field (i.e. resolution). Specify this as a kwarg.
         A resolution of Duplicate requires dupe_of kwarg with a valid bug ID.
         :param status: Status to change to.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -423,7 +430,8 @@ class BugzillaTicket(ticket.Ticket):
         """
         Adds user(s) to cc list.
         :param user: A string representing one user's email address, or a list of strings for multiple users.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -462,7 +470,8 @@ class BugzillaTicket(ticket.Ticket):
         """
         Removes user(s) from cc list.
         :param user: A string representing one user's email address, or a list of strings for multiple users.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
