@@ -16,6 +16,7 @@ https://docs.atlassian.com/jira/REST/cloud/
 Methods
 ^^^^^^^
 
+-  `get_ticket_content() <#get_ticket_content>`__
 -  `create() <#create>`__
 -  `edit() <#edit>`__
 -  `add_comment() <#comment>`__
@@ -24,6 +25,20 @@ Methods
 -  `remove_watcher() <#remove_watcher>`__
 -  `add_watcher() <#add_watcher>`__
 -  `add_attachment() <#add_attachment>`__
+
+get_ticket_content()
+--------------------
+
+``get_ticket_content(self, ticket_id=None)``
+
+Queries the JIRA API to get ticket_content using ticket_id. The ticket_content
+is expressed in a form of dictionary as a result of JIRA API's get issue:
+https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/issue-getIssue
+
+.. code:: python
+
+    t = ticket.get_ticket_content(<ticket_id>)
+    returned_ticket_content = t.ticket_content
 
 create()
 --------
@@ -223,6 +238,7 @@ Create and update JIRA ticket
                       type='Task',
                       priority='Major',
                       assignee='username')
+    t = ticket.get_ticket_content('Ticket_ID')
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='Critical',
                     type='Bug')
@@ -251,6 +267,10 @@ Update existing JIRA tickets
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='Critical',
                     type='Bug')
+
+    # Check the actual ticket content after applied updates
+    t = ticket.get_ticket_content()
+    returned_ticket_content = t.ticket_content
 
     # Work with a different ticket.
     t = ticket.set_ticket_id(<new_ticket_id>)
