@@ -32,7 +32,7 @@ get_ticket_content()
 ``get_ticket_content(self, ticket_id=None)``
 
 Queries the JIRA API to get ticket_content using ticket_id. The ticket_content
-is expressed in a form of dictionary as a result of JIRA API get product:
+is expressed in a form of dictionary as a result of JIRA API's get issue:
 https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/issue-getIssue
 
 .. code:: python

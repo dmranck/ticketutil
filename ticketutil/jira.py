@@ -77,7 +77,8 @@ class JiraTicket(ticket.Ticket):
         Queries the JIRA API to get ticket_content using ticket_id.
 
         :param ticket_id: ticket number, if not set self.ticket_id is used.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if ticket_id is None:
             ticket_id = self.ticket_id
