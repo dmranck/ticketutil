@@ -16,6 +16,7 @@ http://bugzilla.readthedocs.io/en/latest/api/index.html
 Methods
 ^^^^^^^
 
+-  `get_ticket_content() <#get_ticket_content>`__
 -  `create() <#create>`__
 -  `edit() <#edit>`__
 -  `add_comment() <#comment>`__
@@ -23,6 +24,20 @@ Methods
 -  `remove_cc() <#remove_cc>`__
 -  `add_cc() <#add_cc>`__
 -  `add_attachment() <#add_attachment>`__
+
+get_ticket_content()
+--------------------
+
+``get_ticket_content(self, ticket_id=None)``
+
+Queries the Bugzilla API to get ticket_content using ticket_id. The
+ticket_content is expressed in a form of dictionary as a result of Bugzilla API's
+get issue: http://bugzilla.readthedocs.io/en/latest/api/core/v1/bug.html#get-bug
+
+.. code:: python
+
+    t = ticket.create(ticket_id=<ticket_id>)
+    returned_ticket_content = t.ticket_content
 
 create()
 --------
@@ -225,6 +240,7 @@ Create and update Bugzilla ticket
                       assignee='username@mail.com',
                       qa_contact='username@mail.com',
                       groups='beta')
+    t = ticket.get_ticket_id()
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='medium',
                     qa_contact='username@mail.com')
@@ -258,11 +274,13 @@ Update existing Bugzilla tickets
                              data=<contents/file-location>,
                              summary=<summary describing attachment>)
 
+    # Check the ticket content.
+    t = ticket.get_ticket_id()
+    returned_ticket_content = t.ticket_content
+
     # Work with a different ticket.
     t = ticket.set_ticket_id(<new_ticket_id>)
     t = ticket.change_status(status='CLOSED', resolution='NOTABUG')
 
     # Close Requests session.
     ticket.close_requests_session()
-
-
