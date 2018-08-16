@@ -6,7 +6,6 @@ from . import ticket
 
 __author__ = 'dranck, rnester, kshirsal'
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
