@@ -22,6 +22,13 @@ SUCCESS_RESULT = RETURN_RESULT('Success', None, TICKET_URL, None)
 FAILURE_RESULT1 = RETURN_RESULT('Failure', ERROR_MESSAGE, None, None)
 FAILURE_RESULT2 = RETURN_RESULT('Failure', '', TICKET_URL, None)
 
+MOCK_CONTENT = {'issue': {'id': TICKET_ID},
+                'upload': {'token': 'Token'},
+                'project': {'id': 'ID'},
+                'issue_statuses': [{'name': 'started', 'id': 1}, {'name': 'finished', 'id': 2}],
+                'issue_priorities': [{'name': 'low', 'id': 1}, {'name': 'high', 'id': 2}],
+                'users': [{'login': 'me', 'id': 1}, {'login': 'you', 'id': 2}]}
+
 
 class FakeSession(object):
     """
@@ -63,12 +70,7 @@ class FakeResponse(object):
             raise IOError
 
     def json(self):
-        return {'issue': {'id': TICKET_ID},
-                'upload': {'token': 'Token'},
-                'project': {'id': 'ID'},
-                'issue_statuses': [{'name': 'started', 'id': 1}, {'name': 'finished', 'id': 2}],
-                'issue_priorities': [{'name': 'low', 'id': 1}, {'name': 'high', 'id': 2}],
-                'users': [{'login': 'me', 'id': 1}, {'login': 'you', 'id': 2}]}
+        return MOCK_CONTENT
 
 
 class TestRedmineTicket(TestCase):
@@ -99,6 +101,29 @@ class TestRedmineTicket(TestCase):
         with patch.object(redmine.RedmineTicket, '_verify_project'):
             ticket = redmine.RedmineTicket(URL, PROJECT)
         self.assertFalse(ticket._verify_project(PROJECT))
+
+    @patch.object(redmine.RedmineTicket, '_create_requests_session')
+    def test_get_ticket_content_no_id(self, mock_session):
+        mock_session.return_value = FakeSession()
+        ticket = redmine.RedmineTicket(URL, PROJECT)
+        t = ticket.get_ticket_content()
+        self.assertEqual(t, FAILURE_RESULT1)
+
+    @patch.object(redmine.RedmineTicket, '_create_requests_session')
+    def test_get_ticket_content_unexpected_response(self, mock_session):
+        mock_session.return_value = FakeSession(status_code=400)
+        error_message = "Error getting ticket content"
+        with patch.object(redmine.RedmineTicket, '_verify_project'):
+            ticket = redmine.RedmineTicket(URL, PROJECT, TICKET_ID)
+        t = ticket.get_ticket_content(ticket_id=TICKET_ID)
+        self.assertEqual(t, FAILURE_RESULT1._replace(error_message=error_message))
+
+    @patch.object(redmine.RedmineTicket, '_create_requests_session')
+    def test_get_ticket_content(self, mock_session):
+        mock_session.return_value = FakeSession()
+        ticket = redmine.RedmineTicket(URL, PROJECT, TICKET_ID)
+        t = ticket.get_ticket_content(ticket_id=TICKET_ID)
+        self.assertEqual(t.ticket_content, MOCK_CONTENT)
 
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
     def test_verify_ticket_id(self, mock_session):
@@ -155,14 +180,15 @@ class TestRedmineTicket(TestCase):
         request_result = ticket._create_ticket_request({})
         self.assertEqual(request_result, FAILURE_RESULT1._replace(error_message=''))
 
+    @patch.object(redmine.RedmineTicket, 'get_ticket_content')
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
-    def test_create_ticket_request(self, mock_session):
+    def test_create_ticket_request(self, mock_session, mock_content):
         mock_session.return_value = FakeSession()
         ticket = redmine.RedmineTicket(URL, PROJECT)
         request_result = ticket._create_ticket_request({})
         self.assertEqual(ticket.ticket_id, TICKET_ID)
         self.assertEqual(ticket.ticket_url, TICKET_URL)
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, mock_content.return_value)
 
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
     def test_edit_no_id(self, mock_session):
@@ -181,13 +207,14 @@ class TestRedmineTicket(TestCase):
         request_result = ticket.edit()
         self.assertEqual(request_result, RETURN_RESULT('Failure', '', TICKET_URL, None))
 
+    @patch.object(redmine.RedmineTicket, 'get_ticket_content')
     @patch.object(redmine.RedmineTicket, '_prepare_ticket_fields')
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
-    def test_edit(self, mock_session, mock_fields):
+    def test_edit(self, mock_session, mock_fields, mock_content):
         mock_session.return_value = FakeSession()
         ticket = redmine.RedmineTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.edit()
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, mock_content.return_value)
 
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
     def test_add_comment_no_id(self, mock_session):
@@ -205,13 +232,14 @@ class TestRedmineTicket(TestCase):
         request_result = ticket.add_comment('')
         self.assertEqual(request_result, RETURN_RESULT('Failure', '', TICKET_URL, None))
 
+    @patch.object(redmine.RedmineTicket, 'get_ticket_content')
     @patch.object(redmine.RedmineTicket, '_prepare_ticket_fields')
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
-    def test_add_comment(self, mock_session, mock_fields):
+    def test_add_comment(self, mock_session, mock_fields, mock_content):
         mock_session.return_value = FakeSession()
         ticket = redmine.RedmineTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_comment('')
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, mock_content.return_value)
 
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
     def test_change_status_no_ticket_id(self, mock_session):
@@ -241,14 +269,15 @@ class TestRedmineTicket(TestCase):
         request_result = ticket.change_status('')
         self.assertEqual(request_result, RETURN_RESULT('Failure', '', TICKET_URL, None))
 
+    @patch.object(redmine.RedmineTicket, 'get_ticket_content')
     @patch.object(redmine.RedmineTicket, '_get_status_id')
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
-    def test_change_status(self, mock_session, mock_get_id):
+    def test_change_status(self, mock_session, mock_get_id, mock_content):
         mock_session.return_value = FakeSession()
         mock_get_id.return_value = 1
         ticket = redmine.RedmineTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.change_status('')
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, mock_content.return_value)
 
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
     def test_remove_watcher_no_ticket_id(self, mock_session):
@@ -267,13 +296,14 @@ class TestRedmineTicket(TestCase):
         request_result = ticket.remove_watcher('me')
         self.assertEqual(request_result, RETURN_RESULT('Failure', '', TICKET_URL, None))
 
+    @patch.object(redmine.RedmineTicket, 'get_ticket_content')
     @patch.object(redmine.RedmineTicket, '_get_user_id')
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
-    def test_remove_watcher(self, mock_session, mock_get_id):
+    def test_remove_watcher(self, mock_session, mock_get_id, mock_content):
         mock_session.return_value = FakeSession()
         ticket = redmine.RedmineTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.remove_watcher('me')
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, mock_content.return_value)
 
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
     def test_add_watcher_no_ticket_id(self, mock_session):
@@ -282,14 +312,15 @@ class TestRedmineTicket(TestCase):
         request_result = ticket.add_watcher('me')
         self.assertEqual(request_result, FAILURE_RESULT1)
 
+    @patch.object(redmine.RedmineTicket, 'get_ticket_content')
     @patch.object(redmine.RedmineTicket, '_get_user_id')
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
-    def test_add_watcher(self, mock_session, mock_get_id):
+    def test_add_watcher(self, mock_session, mock_get_id,  mock_content):
         mock_session.return_value = FakeSession()
         mock_get_id.return_value = 1
         ticket = redmine.RedmineTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_watcher('me')
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, mock_content.return_value)
 
     @patch.object(redmine.RedmineTicket, '_get_user_id')
     @patch.object(redmine.RedmineTicket, '_verify_ticket_id')
@@ -319,14 +350,15 @@ class TestRedmineTicket(TestCase):
         request_result = ticket.add_attachment('file_name')
         self.assertEqual(request_result, FAILURE_RESULT1)
 
+    @patch.object(redmine.RedmineTicket, 'get_ticket_content')
     @patch.object(redmine.RedmineTicket, '_upload_file')
     @patch.object(redmine.RedmineTicket, '_create_requests_session')
-    def test_add_attachment(self, mock_session, mock_upload):
+    def test_add_attachment(self, mock_session, mock_upload, mock_content):
         mock_session.return_value = FakeSession()
         mock_upload.return_value = 1
         ticket = redmine.RedmineTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_attachment('file_name')
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, mock_content.return_value)
 
     @patch.object(redmine.RedmineTicket, '_upload_file')
     @patch.object(redmine.RedmineTicket, '_verify_ticket_id')

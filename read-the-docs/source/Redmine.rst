@@ -30,6 +30,20 @@ Methods
 -  `add_attachment() <#add_attachment>`__
 
 
+get_ticket_content()
+--------------------
+
+``get_ticket_content(self, ticket_id=None)``
+
+Queries the Redmine API to get ticket_content using ticket_id. The
+ticket_content is expressed in a form of dictionary as a result of Redmine API's
+get issue: http://www.redmine.org/projects/redmine/wiki/Rest_Issues
+
+.. code:: python
+
+    t = ticket.create(ticket_id=<ticket_id>)
+    returned_ticket_content = t.ticket_content
+
 create()
 --------
 
@@ -241,6 +255,10 @@ Update existing Redmine tickets
     t = ticket.add_comment('Test Comment')
     t = ticket.edit(priority='High',
                     done_ratio='90')
+
+    # Check the ticket content.
+    t = ticket.get_ticket_id()
+    returned_ticket_content = t.ticket_content
 
     # Work with a different ticket.
     t = ticket.set_ticket_id(<new_ticket_id>)
