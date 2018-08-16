@@ -41,7 +41,7 @@ get issue: http://www.redmine.org/projects/redmine/wiki/Rest_Issues
 
 .. code:: python
 
-    t = ticket.create(ticket_id=<ticket_id>)
+    t = ticket.get_ticket_content(<ticket_id>)
     returned_ticket_content = t.ticket_content
 
 create()
