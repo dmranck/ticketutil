@@ -20,6 +20,7 @@ class JiraTicket(ticket.Ticket):
         # JIRA URLs
         self.url = url
         self.rest_url = '{0}/rest/api/2/issue'.format(self.url)
+        self.ticket_content = None
         if isinstance(auth, tuple):
             self.auth = auth
             self.auth_url = self.url
@@ -32,7 +33,7 @@ class JiraTicket(ticket.Ticket):
 
         # Overwrite our request_result namedtuple from Ticket, adding watchers field for JiraTicket.
         Result = namedtuple('Result', ['status', 'error_message', 'url', 'ticket_content', 'watchers'])
-        self.request_result = Result('Success', None, self.ticket_url, None, None)
+        self.request_result = Result('Success', None, self.ticket_url, self.ticket_content, None)
 
     def _generate_ticket_url(self):
         """
@@ -71,25 +72,51 @@ class JiraTicket(ticket.Ticket):
                 logger.error(e)
             return False
 
+    def get_ticket_content(self, ticket_id=None):
+        """
+        Queries the JIRA API to get ticket_content using ticket_id.
+
+        :param ticket_id: ticket number, if not set self.ticket_id is used.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
+        """
+        if ticket_id is None:
+            ticket_id = self.ticket_id
+            if not self.ticket_id:
+                error_message = "No ticket ID associated with ticket object. " \
+                                "Set ticket ID with set_ticket_id(<ticket_id>)"
+                logger.error(error_message)
+                return self.request_result._replace(status='Failure', error_message=error_message)
+
+        try:
+            r = self.s.get("{0}/{1}".format(self.rest_url, ticket_id))
+            logger.debug("Get ticket content: status code: {0}".format(r.status_code))
+            r.raise_for_status()
+            self.ticket_content = r.json()
+            return self.request_result._replace(ticket_content=self.ticket_content)
+        except requests.RequestException as e:
+            if "issue does not exist" in r.json()['errorMessages'][0].lower():
+                error_message = "Ticket {0} is not valid".format(ticket_id)
+                logger.error(error_message)
+            else:
+                error_message = "Error getting ticket content"
+                logger.error(error_message)
+                logger.error(e)
+            return self.request_result._replace(status='Failure', error_message=error_message)
+
     def _verify_ticket_id(self, ticket_id):
         """
-        Queries the JIRA API to see if ticket_id is a valid ticket for the given JIRA instance.
+        Check if ticket_id is connected with valid ticket for the given JIRA instance.
         :param ticket_id: The ticket you're verifying.
         :return: True or False depending on if ticket is valid.
         """
-        try:
-            r = self.s.get("{0}/{1}".format(self.rest_url, ticket_id))
-            logger.debug("Verify ticket_id: status code: {0}".format(r.status_code))
-            r.raise_for_status()
-            logger.debug("Ticket {0} is valid".format(ticket_id))
-            return True
-        except requests.RequestException as e:
-            if r.json()['errorMessages'][0] == "Issue Does Not Exist":
-                logger.error("Ticket {0} is not valid".format(ticket_id))
-            else:
-                logger.error("Unexpected error occurred when verifying ticket_id")
-                logger.error(e)
+        result = self.get_ticket_content(ticket_id)
+        if 'Failure' in result.status:
+            logger.error("Ticket {0} is not valid".format(ticket_id))
             return False
+        logger.debug("Ticket {0} is valid".format(ticket_id))
+        self.ticket_id = ticket_id
+        return True
 
     def create(self, summary, description, type, **kwargs):
         """
@@ -99,7 +126,8 @@ class JiraTicket(ticket.Ticket):
         :param summary: The ticket summary.
         :param description: The ticket description.
         :param type: The ticket issue type.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         error_message = ""
         if summary is None:
@@ -162,7 +190,8 @@ class JiraTicket(ticket.Ticket):
         Tries to create the ticket through the ticketing tool's API.
         Retrieves the ticket_id and creates the ticket_url.
         :param params: The payload to send in the POST request.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         # Attempt to create ticket.
         try:
@@ -176,9 +205,9 @@ class JiraTicket(ticket.Ticket):
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Retrieve key from new ticket.
-        ticket_content = r.json()
-        self.ticket_id = ticket_content['key']
+        self.ticket_id = r.json()['key']
         self.ticket_url = self._generate_ticket_url()
+        self.request_result = self.get_ticket_content()
         logger.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
@@ -199,7 +228,8 @@ class JiraTicket(ticket.Ticket):
         parent='KEY-XX'
         customfield_XXXXX='Custom field text'
 
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -217,6 +247,7 @@ class JiraTicket(ticket.Ticket):
             logger.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logger.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
             error_message = "Error editing ticket - {0}".format(list(r.json()['errors'].values())[0])
@@ -228,7 +259,8 @@ class JiraTicket(ticket.Ticket):
         """
         Adds a comment to a JIRA ticket.
         :param comment: A string representing the comment to be added.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -243,6 +275,7 @@ class JiraTicket(ticket.Ticket):
             logger.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logger.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
             error_message = "Error adding comment to ticket - {0}".format(list(r.json()['errors'].values())[0])
@@ -258,7 +291,8 @@ class JiraTicket(ticket.Ticket):
         <self.rest_url>/<self.ticket_id>/transitions
 
         :param status: Status to change to.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -280,6 +314,7 @@ class JiraTicket(ticket.Ticket):
             logger.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logger.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
             error_message = "Error changing status of ticket"
@@ -315,6 +350,7 @@ class JiraTicket(ticket.Ticket):
             return self.request_result._replace(status='Failure', error_message=error_message)
         else:
             logger.info("Removed watchers from ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            self.request_result = self.get_ticket_content()
             return self.request_result._replace(watchers=watchers_list)
 
     def remove_watcher(self, watcher):
@@ -322,7 +358,8 @@ class JiraTicket(ticket.Ticket):
         Removes watcher from a JIRA ticket.
         Accepts an email or username.
         :param watcher: Username of watcher to remove.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -338,6 +375,7 @@ class JiraTicket(ticket.Ticket):
             logger.debug("Remove watcher {0}: status code: {1}".format(watcher, r.status_code))
             r.raise_for_status()
             logger.info("Removed watcher {0} from ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
+            self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
             error_message = "Error removing watcher {0} from ticket".format(watcher)
@@ -350,7 +388,8 @@ class JiraTicket(ticket.Ticket):
         Adds watcher to a JIRA ticket.
         Accepts an email or username.
         :param watcher: Username of watcher to remove.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -371,6 +410,7 @@ class JiraTicket(ticket.Ticket):
                 logger.debug("Add watcher {0}: status code: {1}".format(watcher, r.status_code))
                 r.raise_for_status()
                 logger.info("Added watcher {0} to ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
+                self.request_result = self.get_ticket_content()
                 return self.request_result
             except requests.RequestException as e:
                 error_message = "Error adding {0} as a watcher to ticket".format(watcher)
@@ -386,7 +426,8 @@ class JiraTicket(ticket.Ticket):
         """
         Attaches a file to a JIRA ticket.
         :param file_name: A string representing the file to attach.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -404,6 +445,7 @@ class JiraTicket(ticket.Ticket):
             logger.debug("Add attachment: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logger.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+            self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
             error_message = "Error attaching file {0}".format(file_name)
