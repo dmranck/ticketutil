@@ -78,7 +78,8 @@ class RedmineTicket(ticket.Ticket):
                 logger.error(error_message)
                 return self.request_result._replace(status='Failure', error_message=error_message)
         try:
-            r = self.s.get("{0}/{1}.json?include=attachments,journals,watchers".format(self.rest_url, ticket_id))
+            r = self.s.get("{0}/{1}.json?include=attachments,journals,watchers,children,relations,changesets" \
+                           "".format(self.rest_url, ticket_id))
             logger.debug("Get ticket content: status code: {0}".format(r.status_code))
             r.raise_for_status()
             self.ticket_content = r.json()

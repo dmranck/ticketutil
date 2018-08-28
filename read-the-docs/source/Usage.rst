@@ -102,5 +102,4 @@ URL of the ticket. An example is below.
 
     For ServiceNow, Jira, Bugzilla and Redmine the user-accessible methods return a ``ticket_content``
     field, which contains a json representation of the current ticket's content.
-    This will be expanded to the other ticketutil tools in the future. Access this
-    data with ``t.ticket_content``.
+    Access this data with ``t.ticket_content``.

@@ -21,6 +21,7 @@ methods, so you can use the name instead of having to look up the id.
 Methods
 ^^^^^^^
 
+-  `get_ticket_content() <#get_ticket_content>`__
 -  `create() <#create>`__
 -  `edit() <#edit>`__
 -  `add_comment() <#comment>`__
@@ -37,7 +38,8 @@ get_ticket_content()
 
 Queries the Redmine API to get ticket_content using ticket_id. The
 ticket_content is expressed in a form of dictionary as a result of Redmine API's
-get issue: http://www.redmine.org/projects/redmine/wiki/Rest_Issues
+get issue:
+http://www.redmine.org/projects/redmine/wiki/Rest_Issues#Showing-an-issue
 
 .. code:: python
 
