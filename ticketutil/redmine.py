@@ -63,21 +63,46 @@ class RedmineTicket(ticket.Ticket):
             logger.error("Project {0} is not valid".format(project))
             return False
 
+    def get_ticket_content(self, ticket_id=None):
+        """
+        Queries the Redmine API to get the ticket_content using ticket_id.
+        :param ticket_id: ticket number, if not set self.ticket_id is used.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
+        """
+        if ticket_id is None:
+            ticket_id = self.ticket_id
+            if not self.ticket_id:
+                error_message = "No ticket ID associated with ticket object. " \
+                                "Set ticket ID with set_ticket_id(<ticket_id>)"
+                logger.error(error_message)
+                return self.request_result._replace(status='Failure', error_message=error_message)
+        try:
+            r = self.s.get("{0}/{1}.json?include=attachments,journals,watchers,children,relations,changesets" \
+                           "".format(self.rest_url, ticket_id))
+            logger.debug("Get ticket content: status code: {0}".format(r.status_code))
+            r.raise_for_status()
+            self.ticket_content = r.json()
+            return self.request_result._replace(ticket_content=self.ticket_content)
+        except requests.RequestException as e:
+            error_message = "Error getting ticket content"
+            logger.error(error_message)
+            logger.error(e)
+            return self.request_result._replace(status='Failure', error_message=error_message)
+
     def _verify_ticket_id(self, ticket_id):
         """
-        Queries the Redmine API to see if ticket_id is a valid ticket for the given Redmine instance.
+        Check if ticket_id is connected with valid ticket for the given Redmine instance.
         :param ticket_id: The ticket you're verifying.
         :return: True or False depending on if ticket is valid.
         """
-        try:
-            r = self.s.get("{0}/{1}.json".format(self.rest_url, ticket_id))
-            logger.debug("Verify ticket_id: status code: {0}".format(r.status_code))
-            r.raise_for_status()
-            logger.debug("Ticket {0} is valid".format(ticket_id))
-            return True
-        except requests.RequestException as e:
+        result = self.get_ticket_content(ticket_id)
+        if 'Failure' in result.status:
             logger.error("Ticket {0} is not valid".format(ticket_id))
             return False
+        logger.debug("Ticket {0} is valid".format(ticket_id))
+        self.ticket_id = ticket_id
+        return True
 
     def create(self, subject, description, **kwargs):
         """
@@ -86,7 +111,8 @@ class RedmineTicket(ticket.Ticket):
         Keyword arguments are used for other ticket fields.
         :param subject: The ticket subject.
         :param description: The ticket description.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         error_message = ""
         if subject is None:
@@ -141,7 +167,8 @@ class RedmineTicket(ticket.Ticket):
         Tries to create the ticket through the ticketing tool's API.
         Retrieves the ticket_id and creates the ticket_url.
         :param params: The payload to send in the POST request.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         # Attempt to create ticket.
         try:
@@ -157,6 +184,7 @@ class RedmineTicket(ticket.Ticket):
         ticket_content = r.json()
         self.ticket_id = ticket_content['issue']['id']
         self.ticket_url = self._generate_ticket_url()
+        self.request_result = self.get_ticket_content()
         logger.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
         return self.request_result
 
@@ -174,7 +202,8 @@ class RedmineTicket(ticket.Ticket):
         done_ratio='70'
         assignee='username@mail.com'
 
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -192,6 +221,7 @@ class RedmineTicket(ticket.Ticket):
             logger.debug("Edit ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logger.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
             logger.error("Error editing ticket")
@@ -202,7 +232,8 @@ class RedmineTicket(ticket.Ticket):
         """
         Adds a comment to a Redmine ticket.
         :param comment: A string representing the comment to be added.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -218,6 +249,7 @@ class RedmineTicket(ticket.Ticket):
             logger.debug("Add comment: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logger.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
             logger.error("Error adding comment to ticket")
@@ -228,7 +260,8 @@ class RedmineTicket(ticket.Ticket):
         """
         Changes status of a Redmine ticket.
         :param status: Status to change to.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -250,6 +283,7 @@ class RedmineTicket(ticket.Ticket):
             logger.debug("Change status: status code: {0}".format(r.status_code))
             r.raise_for_status()
             logger.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+            self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
             logger.error("Error changing status of ticket")
@@ -261,7 +295,8 @@ class RedmineTicket(ticket.Ticket):
         Removes watcher from a Redmine ticket.
         Accepts an email or username.
         :param watcher: Username or email of watcher to remove.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -279,6 +314,7 @@ class RedmineTicket(ticket.Ticket):
             logger.debug("Remove watcher {0}: status code: {1}".format(watcher, r.status_code))
             r.raise_for_status()
             logger.info("Removed watcher {0} from ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
+            self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
             logger.error("Error removing watcher {0} from ticket".format(watcher))
@@ -290,7 +326,8 @@ class RedmineTicket(ticket.Ticket):
         Adds watcher to a Redmine ticket.
         Accepts an email or username.
         :param watcher: Username or email of watcher to remove.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -310,6 +347,7 @@ class RedmineTicket(ticket.Ticket):
                 logger.debug("Add watcher {0}: status code: {1}".format(watcher, r.status_code))
                 r.raise_for_status()
                 logger.info("Added watcher {0} to ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
+                self.request_result = self.get_ticket_content()
                 return self.request_result
             except requests.RequestException as e:
                 logger.error("Error adding {0} as a watcher to ticket".format(watcher))
@@ -324,7 +362,8 @@ class RedmineTicket(ticket.Ticket):
         """
         Attaches a file to a Redmine ticket.
         :param file_name: A string representing the file to attach.
-        :return: self.request_result: Named tuple containing request status, error_message, and url info.
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
         if not self.ticket_id:
             error_message = "No ticket ID associated with ticket object. Set ticket ID with set_ticket_id(<ticket_id>)"
@@ -343,6 +382,7 @@ class RedmineTicket(ticket.Ticket):
                 logger.debug("Add attachment: status code: {0}".format(r.status_code))
                 r.raise_for_status()
                 logger.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+                self.request_result = self.get_ticket_content()
                 return self.request_result
             except requests.RequestException as e:
                 logger.error("Error attaching file {0}".format(file_name))
