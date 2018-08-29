@@ -197,7 +197,7 @@ http://bugzilla.readthedocs.io/en/latest/api/core/v1/general.html#authentication
     >>> from ticketutil.bugzilla import BugzillaTicket
     >>> ticket = BugzillaTicket(<bugzilla_url>,
                                 <product_name>,
-                                auth=({'api_key': '<your-api-key>'})
+                                auth={'api_key': '<your-api-key>'})
 
 You now have a ``BugzillaTicket`` object that is associated with the
 ``<product_name>`` product.
