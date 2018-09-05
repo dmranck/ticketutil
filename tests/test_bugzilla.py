@@ -204,23 +204,6 @@ class TestBugzillaTicket(TestCase):
             ticket = bugzilla.BugzillaTicket(URL, PROJECT, TICKET_ID)
             self.assertEquals(ticket.get_ticket_content(), FAILURE_RESULT._replace(error_message=error_message))
 
-    @patch.object(bugzilla.BugzillaTicket, 'get_ticket_content')
-    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
-    def test_verify_ticket_success(self, mock_session, mock_content):
-        mock_session.return_value = FakeSession()
-        mock_content.return_value = SUCCESS_RESULT
-        ticket = bugzilla.BugzillaTicket(URL, PROJECT, TICKET_ID)
-        self.assertTrue(ticket._verify_ticket_id(TICKET_ID))
-
-    @patch.object(bugzilla.BugzillaTicket, 'get_ticket_content')
-    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
-    def test_verify_ticket_failure(self, mock_session, mock_content):
-        mock_session.return_value = FakeSession(status_code=400)
-        mock_content.return_value = FAILURE_RESULT
-        with self.assertRaises(ticketutil.ticket.TicketException):
-            ticket = bugzilla.BugzillaTicket(URL, PROJECT, TICKET_ID)
-            self.assertFalse(ticket._verify_ticket_id(TICKET_ID))
-
     @patch.object(bugzilla.BugzillaTicket, '_create_ticket_request')
     @patch.object(bugzilla.BugzillaTicket, '_create_ticket_parameters')
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
