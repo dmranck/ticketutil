@@ -65,6 +65,12 @@ class ChildTicket(ticket.Ticket):
     def _verify_project(self, project):
         return True
 
+    def get_ticket_content(ticket_id):
+        if 'PROJECT-00' in ticket_id:
+            return {'status': 'Success'}
+        else:
+            return {'status': 'Failure'}
+
     def _verify_ticket_id(self, ticket_id):
         if 'PROJECT-00' in ticket_id:
             return True
@@ -85,6 +91,18 @@ class FakeCredentials(object):
 
 
 class TestTicket(TestCase):
+
+    @patch.object(ticket.Ticket, '_create_requests_session')
+    def test_verify_ticket_id(self, mock_session):
+        mock_session.return_value = FakeSession()
+        t = ChildTicket(PROJECT, TICKET_ID)
+        self.assertTrue(t._verify_ticket_id(TICKET_ID))
+
+    @patch.object(ticket.Ticket, '_create_requests_session')
+    def test_verify_ticket_id_non_valid(self, mock_session):
+        mock_session.return_value = FakeSession()
+        t = ChildTicket(PROJECT, TICKET_ID)
+        self.assertFalse(t._verify_ticket_id('PROJECT-010'))
 
     @patch.object(ticket.Ticket, '_create_requests_session')
     def test_set_ticket_id(self, mock_session):

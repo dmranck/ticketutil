@@ -125,19 +125,6 @@ class TestRedmineTicket(TestCase):
         t = ticket.get_ticket_content(ticket_id=TICKET_ID)
         self.assertEqual(t.ticket_content, MOCK_CONTENT)
 
-    @patch.object(redmine.RedmineTicket, '_create_requests_session')
-    def test_verify_ticket_id(self, mock_session):
-        mock_session.return_value = FakeSession()
-        ticket = redmine.RedmineTicket(URL, PROJECT)
-        self.assertTrue(ticket._verify_ticket_id(PROJECT))
-
-    @patch.object(redmine.RedmineTicket, '_create_requests_session')
-    def test_verify_ticket_id_valid(self, mock_session):
-        mock_session.return_value = FakeSession(status_code=400)
-        with patch.object(redmine.RedmineTicket, '_verify_project'):
-            ticket = redmine.RedmineTicket(URL, PROJECT)
-        self.assertFalse(ticket._verify_ticket_id(PROJECT))
-
     @patch.object(redmine.RedmineTicket, '_create_ticket_request')
     @patch.object(redmine.RedmineTicket, '_create_ticket_parameters')
     @patch.object(redmine.RedmineTicket, '_create_requests_session')

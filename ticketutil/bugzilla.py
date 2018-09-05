@@ -140,20 +140,6 @@ class BugzillaTicket(ticket.Ticket):
             logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
-    def _verify_ticket_id(self, ticket_id):
-        """
-        Check if ticket_id is connected with valid ticket for the given Bugzilla instance.
-        :param ticket_id: The ticket you're verifying.
-        :return: True or False depending on if ticket is valid.
-        """
-        self.request_result = self.get_ticket_content(ticket_id)
-        if 'Failure' in self.request_result.status:
-            logger.error("Ticket {0} is not valid".format(ticket_id))
-            return False
-        else:
-            logger.debug("Ticket {0} is valid".format(ticket_id))
-            return True
-
     def create(self, summary, description, component, version, **kwargs):
         """
         Creates a ticket.
