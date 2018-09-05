@@ -70,10 +70,11 @@ particular JIRA instance during ticket creation:
     duedate='2017-01-13'
     parent='KEY-XX'
     customfield_XXXXX='Custom field text'
+    components=['component1', 'component2']
 
 While creating a Sub task, parent ticket id is required, otherwise create()
 method fails with KeyError - "Parent field is required while creating a Sub
-Task"
+Task". Components are referenced using their names.
 
 edit()
 ------

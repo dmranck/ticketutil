@@ -512,6 +512,17 @@ class TestJiraTicket(TestCase):
         with self.assertRaises(KeyError):
             jira._prepare_ticket_fields(fields)
 
+    def test_prepare_ticket_fields_components(self):
+        fields = {'components': ["c1", "c2"]}
+        expected_fields = {
+            'components': [
+                {"name": "c1"},
+                {"name": "c2"}
+            ]
+        }
+        prepared_fields = jira._prepare_ticket_fields(fields)
+        self.assertEqual(prepared_fields, expected_fields)
+
 
 if __name__ == '__main__':
     main()
