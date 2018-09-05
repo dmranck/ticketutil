@@ -515,6 +515,10 @@ def _prepare_ticket_fields(fields):
                 fields[key] = {'name': value}
             if key in ['parent']:
                 fields[key] = {'key': value}
+            if key in ['components']:
+                # we take in list of strings (names) and turn it into list of
+                # dicts with key "name" and value of the component name
+                fields[key] = [{"name": name} for name in fields[key]]
             if key == 'type':
                 fields['issuetype'] = {'name': value}
                 fields.pop('type')
