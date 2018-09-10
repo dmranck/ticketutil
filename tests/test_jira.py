@@ -155,23 +155,6 @@ class TestJiraTicket(TestCase):
             t = ticket._verify_ticket_id(ticket_id=TICKET_ID)
             self.assertEqual(t, FAILURE_RESULT._replace(error_message=error_message))
 
-    @patch.object(jira.JiraTicket, 'get_ticket_content')
-    @patch.object(jira.JiraTicket, '_create_requests_session')
-    def test_verify_ticket_id_success(self, mock_session, mock_content):
-        mock_session.return_value = FakeSession()
-        mock_content.return_value = SUCCESS_RESULT
-        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
-        self.assertTrue(ticket._verify_ticket_id(ticket_id=TICKET_ID))
-
-    @patch.object(jira.JiraTicket, 'get_ticket_content')
-    @patch.object(jira.JiraTicket, '_create_requests_session')
-    def test_verify_ticket_id_failure(self, mock_session, mock_content):
-        mock_session.return_value = FakeSession()
-        mock_content.return_value = FAILURE_RESULT
-        with self.assertRaises(TicketException):
-            ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
-            self.assertFalse(ticket._verify_ticket_id(ticket_id=TICKET_ID))
-
     @patch.object(jira.JiraTicket, '_create_ticket_parameters')
     @patch.object(jira.JiraTicket, '_create_ticket_request')
     @patch.object(jira.JiraTicket, '_create_requests_session')

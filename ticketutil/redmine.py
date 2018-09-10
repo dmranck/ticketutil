@@ -78,7 +78,7 @@ class RedmineTicket(ticket.Ticket):
                 logger.error(error_message)
                 return self.request_result._replace(status='Failure', error_message=error_message)
         try:
-            r = self.s.get("{0}/{1}.json?include=attachments,journals,watchers,children,relations,changesets" \
+            r = self.s.get("{0}/{1}.json?include=attachments,journals,watchers,children,relations,changesets"
                            "".format(self.rest_url, ticket_id))
             logger.debug("Get ticket content: status code: {0}".format(r.status_code))
             r.raise_for_status()
@@ -89,20 +89,6 @@ class RedmineTicket(ticket.Ticket):
             logger.error(error_message)
             logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
-
-    def _verify_ticket_id(self, ticket_id):
-        """
-        Check if ticket_id is connected with valid ticket for the given Redmine instance.
-        :param ticket_id: The ticket you're verifying.
-        :return: True or False depending on if ticket is valid.
-        """
-        result = self.get_ticket_content(ticket_id)
-        if 'Failure' in result.status:
-            logger.error("Ticket {0} is not valid".format(ticket_id))
-            return False
-        logger.debug("Ticket {0} is valid".format(ticket_id))
-        self.ticket_id = ticket_id
-        return True
 
     def create(self, subject, description, **kwargs):
         """

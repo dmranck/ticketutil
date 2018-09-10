@@ -1,5 +1,4 @@
 import logging
-import os
 from collections import namedtuple
 
 import gssapi
@@ -46,6 +45,20 @@ class Ticket(object):
                 raise TicketException("Ticket {0} is not valid".format(self.ticket_id))
             else:
                 self.ticket_url = self._generate_ticket_url()
+
+    def _verify_ticket_id(self, ticket_id):
+        """
+        Check if ticket_id is connected with valid ticket for the given ticketing tool instance.
+        :param ticket_id: The ticket you're verifying.
+        :return: True or False depending on if ticket is valid.
+        """
+        result = self.get_ticket_content(ticket_id)
+        if 'Failure' in result.status:
+            logger.error("Ticket {0} is not valid".format(ticket_id))
+            return False
+        logger.debug("Ticket {0} is valid".format(ticket_id))
+        self.ticket_id = ticket_id
+        return True
 
     def set_ticket_id(self, ticket_id):
         """

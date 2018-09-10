@@ -103,7 +103,7 @@ class TestBugzillaTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         self.assertEqual(TICKET_URL, ticket._generate_ticket_url())
-        self.assertEqual(ticket.request_result, SUCCESS_RESULT._replace(url=TICKET_URL, ticket_content=MOCK200))
+        self.assertEqual(ticket.request_result, SUCCESS_RESULT._replace(url=TICKET_URL))
 
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
     def test_generate_ticket_url_no_ticket_id(self, mock_session):
@@ -204,23 +204,6 @@ class TestBugzillaTicket(TestCase):
             ticket = bugzilla.BugzillaTicket(URL, PROJECT, TICKET_ID)
             self.assertEquals(ticket.get_ticket_content(), FAILURE_RESULT._replace(error_message=error_message))
 
-    @patch.object(bugzilla.BugzillaTicket, 'get_ticket_content')
-    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
-    def test_verify_ticket_success(self, mock_session, mock_content):
-        mock_session.return_value = FakeSession()
-        mock_content.return_value = SUCCESS_RESULT
-        ticket = bugzilla.BugzillaTicket(URL, PROJECT, TICKET_ID)
-        self.assertTrue(ticket._verify_ticket_id(TICKET_ID))
-
-    @patch.object(bugzilla.BugzillaTicket, 'get_ticket_content')
-    @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
-    def test_verify_ticket_failure(self, mock_session, mock_content):
-        mock_session.return_value = FakeSession(status_code=400)
-        mock_content.return_value = FAILURE_RESULT
-        with self.assertRaises(ticketutil.ticket.TicketException):
-            ticket = bugzilla.BugzillaTicket(URL, PROJECT, TICKET_ID)
-            self.assertFalse(ticket._verify_ticket_id(TICKET_ID))
-
     @patch.object(bugzilla.BugzillaTicket, '_create_ticket_request')
     @patch.object(bugzilla.BugzillaTicket, '_create_ticket_parameters')
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
@@ -315,7 +298,7 @@ class TestBugzillaTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=402)
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.edit()
-        self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL, ticket_content=MOCK402))
+        self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL))
 
     @patch.object(bugzilla, '_prepare_ticket_fields')
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
@@ -323,7 +306,7 @@ class TestBugzillaTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=401)
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.edit()
-        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, MOCK401))
+        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, None))
 
     @patch.object(bugzilla.BugzillaTicket, 'get_ticket_content')
     @patch.object(bugzilla, '_prepare_ticket_fields')
@@ -356,7 +339,7 @@ class TestBugzillaTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=401)
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.add_comment('')
-        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, MOCK401))
+        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, None))
 
     @patch.object(bugzilla.BugzillaTicket, 'get_ticket_content')
     @patch.object(bugzilla, '_prepare_ticket_fields')
@@ -379,7 +362,7 @@ class TestBugzillaTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.add_attachment('file_name', 'data', 'summary')
-        self.assertEqual(t, RETURN_RESULT('Failure', 'File file_name not found', TICKET_URL, MOCK200))
+        self.assertEqual(t, RETURN_RESULT('Failure', 'File file_name not found', TICKET_URL, None))
 
     @patch('ticketutil.bugzilla.base64.standard_b64encode')
     @patch('ticketutil.bugzilla.mimetypes.guess_type')
@@ -402,7 +385,7 @@ class TestBugzillaTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=401)
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.add_attachment('file_name', 'data', 'summary')
-        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, MOCK401))
+        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, None))
 
     @patch.object(bugzilla.BugzillaTicket, 'get_ticket_content')
     @patch('ticketutil.bugzilla.base64.standard_b64encode')
@@ -437,7 +420,7 @@ class TestBugzillaTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=401)
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.change_status('')
-        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, MOCK401))
+        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, None))
 
     @patch.object(bugzilla.BugzillaTicket, 'get_ticket_content')
     @patch.object(bugzilla, '_prepare_ticket_fields')
@@ -469,14 +452,14 @@ class TestBugzillaTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=402)
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.add_cc('')
-        self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL, ticket_content=MOCK402))
+        self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL))
 
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
     def test_add_cc_error(self, mock_session):
         mock_session.return_value = FakeSession(status_code=401)
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.add_cc('')
-        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, MOCK401))
+        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, None))
 
     @patch.object(bugzilla.BugzillaTicket, 'get_ticket_content')
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
@@ -507,14 +490,14 @@ class TestBugzillaTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=402)
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.remove_cc('')
-        self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL, ticket_content=MOCK402))
+        self.assertEqual(t, SUCCESS_RESULT._replace(url=TICKET_URL))
 
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
     def test_remove_cc_error(self, mock_session):
         mock_session.return_value = FakeSession(status_code=401)
         ticket = bugzilla.BugzillaTicket(URL, PROJECT, ticket_id=TICKET_ID)
         t = ticket.remove_cc('')
-        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, MOCK401))
+        self.assertEqual(t, RETURN_RESULT('Failure', 'There is some error.', TICKET_URL, None))
 
     @patch.object(bugzilla.BugzillaTicket, 'get_ticket_content')
     @patch.object(bugzilla.BugzillaTicket, '_create_requests_session')
