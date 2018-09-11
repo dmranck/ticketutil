@@ -153,23 +153,32 @@ class TestRTTicket(TestCase):
         self.assertTrue(ticket._verify_project(PROJECT))
 
     @patch.object(rt.RTTicket, '_create_requests_session')
-    def test_verify_ticket_id_unexpected_response(self, mock_session):
-        mock_session.return_value = FakeSession(status_code=404)
-        with patch.object(rt.RTTicket, '_verify_project'):
-            ticket = rt.RTTicket(URL, PROJECT)
-        self.assertFalse(ticket._verify_ticket_id(TICKET_ID))
-
-    @patch.object(rt.RTTicket, '_create_requests_session')
-    def test_verify_ticket_id_not_valid(self, mock_session):
-        mock_session.return_value = FakeSession(status_code=400)
-        ticket = rt.RTTicket(URL, PROJECT)
-        self.assertFalse(ticket._verify_ticket_id(TICKET_ID))
-
-    @patch.object(rt.RTTicket, '_create_requests_session')
-    def test_verify_ticket_id(self, mock_session):
+    def test_get_ticket_content_no_id(self, mock_session):
         mock_session.return_value = FakeSession()
         ticket = rt.RTTicket(URL, PROJECT)
-        self.assertTrue(ticket._verify_ticket_id(TICKET_ID))
+        self.assertEqual(ticket.get_ticket_content(), FAILURE_RESULT)
+
+    @patch.object(rt.RTTicket, '_create_requests_session')
+    def test_get_ticket_content_unexpected_response(self, mock_session):
+        mock_session.return_value = FakeSession(status_code=404)
+        error_message = "Error getting ticket content"
+        with patch.object(rt.RTTicket, '_verify_project'):
+            ticket = rt.RTTicket(URL, PROJECT)
+        self.assertEqual(ticket.get_ticket_content(TICKET_ID), FAILURE_RESULT._replace(error_message=error_message))
+
+    @patch.object(rt.RTTicket, '_create_requests_session')
+    def test_get_ticket_content_id_not_valid(self, mock_session):
+        mock_session.return_value = FakeSession(status_code=400)
+        error_message = "Ticket {0} is not valid".format(TICKET_ID)
+        ticket = rt.RTTicket(URL, PROJECT)
+        self.assertEqual(ticket.get_ticket_content(TICKET_ID), FAILURE_RESULT._replace(error_message=error_message))
+
+    @patch.object(rt.RTTicket, '_create_requests_session')
+    def test_get_ticket_content(self, mock_session):
+        mock_session.return_value = FakeSession()
+        ticket = rt.RTTicket(URL, PROJECT)
+        t = ticket.get_ticket_content(TICKET_ID)
+        self.assertEqual(t, SUCCESS_RESULT._replace(url=None, ticket_content=['200 OK']))
 
     @patch.object(rt.RTTicket, '_create_requests_session')
     def test_create_no_subject(self, mock_session):
@@ -223,7 +232,7 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=201)
         ticket = rt.RTTicket(URL, PROJECT)
         request_result = ticket._create_ticket_request('')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=None))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=None, ticket_content=['201 Ticket 007 created']))
         self.assertEqual(ticket.ticket_id, '007')
         self.assertEqual(ticket.ticket_url, mock_url.return_value)
 
@@ -254,7 +263,7 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = rt.RTTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.edit()
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content=['200 OK']))
 
     @patch.object(rt.RTTicket, '_create_requests_session')
     def test_add_comment_no_ticket_id(self, mock_session):
@@ -284,7 +293,7 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = rt.RTTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_comment('')
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content=['200 OK']))
 
     @patch.object(rt.RTTicket, '_create_requests_session')
     def test_change_status_no_ticket_id(self, mock_session):
@@ -313,7 +322,7 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = rt.RTTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.change_status('')
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content=['200 OK']))
 
     @patch.object(rt.RTTicket, '_create_requests_session')
     def test_add_attachment_no_ticket_id(self, mock_session):
@@ -353,7 +362,7 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = rt.RTTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_attachment('file_name')
-        self.assertEqual(request_result, SUCCESS_RESULT)
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content=['200 OK']))
 
     def test_prepare_ticket_fields(self):
         fields = {'cc': 'something', 'admincc': ['me', 'you']}
