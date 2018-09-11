@@ -185,7 +185,7 @@ class JiraTicket(ticket.Ticket):
             logger.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            error_message = "Error creating ticket - {0}".format(list(r.json()['errors'].values())[0])
+            error_message = "Error creating ticket - {0}".format(_extract_error_messages(r.json()))
             logger.error(error_message)
             logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
@@ -236,7 +236,7 @@ class JiraTicket(ticket.Ticket):
             self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
-            error_message = "Error editing ticket - {0}".format(list(r.json()['errors'].values())[0])
+            error_message = "Error editing ticket - {0}".format(_extract_error_messages(r.json()))
             logger.error(error_message)
             logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
@@ -264,7 +264,7 @@ class JiraTicket(ticket.Ticket):
             self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
-            error_message = "Error adding comment to ticket - {0}".format(list(r.json()['errors'].values())[0])
+            error_message = "Error adding comment to ticket - {0}".format(_extract_error_messages(r.json()))
             logger.error(error_message)
             logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
@@ -510,6 +510,14 @@ def _prepare_ticket_fields(fields):
                 fields.pop('type')
 
         return fields
+
+
+def _extract_error_messages(data):
+    if data.get('errorMessages'):
+        return ' '.join(data['errorMessages'])
+    elif data.get('errors'):
+        return ' '.join(data['errors'].values())
+    return ''
 
 
 def main():
