@@ -1,7 +1,7 @@
 import logging
 from collections import namedtuple
 from unittest import main, TestCase
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import requests
 from ticketutil.ticket import TicketException
@@ -505,6 +505,58 @@ class TestJiraTicket(TestCase):
         }
         prepared_fields = jira._prepare_ticket_fields(fields)
         self.assertEqual(prepared_fields, expected_fields)
+
+    @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_comment_errors(self, mock_session_factoy):
+        """
+        Test if error responses are handled correctly when adding comments.
+        """
+        mock_response = Mock()
+        mock_response.raise_for_status.side_effect = requests.RequestException()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {
+            "errorMessages": [],
+            "errors": {
+                "comment": "Comment body can not be empty!"
+            }
+        }
+
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_response)
+
+        mock_session_factoy.return_value = mock_session
+
+        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+
+        # This should not raise `IndexError: list index out of range` when
+        # handling error
+        ticket.add_comment('foobar')
+
+    @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_comment_error_messages(self, mock_session_factoy):
+        """
+        Test if error responses are handled correctly when adding comments.
+        """
+        mock_response = Mock()
+        mock_response.raise_for_status.side_effect = requests.RequestException()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {
+            "errorMessages": [
+                "You do not have the permission to comment on this issue."
+            ],
+            "errors": {}
+        }
+
+        mock_session = Mock()
+        mock_session.post.return_value = mock_response
+
+        mock_session_factoy.return_value = mock_session
+
+        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+
+        # This should not raise `IndexError: list index out of range` when
+        # handling error
+        ticket.add_comment('foobar')
 
 
 if __name__ == '__main__':
