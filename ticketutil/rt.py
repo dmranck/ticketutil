@@ -103,7 +103,7 @@ class RTTicket(ticket.Ticket):
 
     def get_ticket_content(self, ticket_id=None, option='show'):
         """
-        Queries the Redmine API to get the ticket_content using ticket_id.
+        Queries the RT API to get the ticket_content using ticket_id.
         :param ticket_id: ticket number, if not set self.ticket_id is used.
         :param option: specifies the type of content with possible values 'show', 'attachments', 'comment' and
                        'history'
@@ -135,7 +135,7 @@ class RTTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
-        self.ticket_content = r.text.split('\n')
+        self.ticket_content = _convert_string(r.text)
         return self.request_result._replace(ticket_content=self.ticket_content)
 
     def create(self, subject, text, **kwargs):
@@ -314,7 +314,7 @@ class RTTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
-        self.request_result = self.get_ticket_content(option='comment')
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def change_status(self, status):
@@ -389,7 +389,7 @@ class RTTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
-        self.request_result = self.get_ticket_content(option='attachments')
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
 
@@ -404,6 +404,29 @@ def _prepare_ticket_fields(fields):
                 if isinstance(value, list):
                     fields[key] = ', '.join(value)
         return fields
+
+
+def _convert_string(text):
+    """
+    Converts string into more appropriate form for reading and accessing.
+    :param text: Text to be converted in a form of string.
+    :return: List of stings or a dictionary in dependance of which form is preferable.
+    """
+    lines = text.split('\n')
+    if 'Stack' in text:
+        return text.split('\n')
+    response = {'header': []}
+    for line in lines:
+        if line:
+            if ':' not in line:
+                response['header'].append(line)
+            elif ':' in line:
+                elements = line.split(':')
+                if 'Attachments' in elements[0]:
+                    response[elements[1].lstrip()] = elements[2].lstrip()
+                else:
+                    response[elements[0].lstrip()] = elements[1].lstrip()
+    return response
 
 
 def main():

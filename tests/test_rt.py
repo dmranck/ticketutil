@@ -178,7 +178,7 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = rt.RTTicket(URL, PROJECT)
         t = ticket.get_ticket_content(TICKET_ID)
-        self.assertEqual(t, SUCCESS_RESULT._replace(url=None, ticket_content=['200 OK']))
+        self.assertEqual(t, SUCCESS_RESULT._replace(url=None, ticket_content={'header': ['200 OK']}))
 
     @patch.object(rt.RTTicket, '_create_requests_session')
     def test_create_no_subject(self, mock_session):
@@ -232,7 +232,8 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=201)
         ticket = rt.RTTicket(URL, PROJECT)
         request_result = ticket._create_ticket_request('')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(url=None, ticket_content=['201 Ticket 007 created']))
+        self.assertEqual(request_result,
+                         SUCCESS_RESULT._replace(url=None, ticket_content={'header': ['201 Ticket 007 created']}))
         self.assertEqual(ticket.ticket_id, '007')
         self.assertEqual(ticket.ticket_url, mock_url.return_value)
 
@@ -263,7 +264,7 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = rt.RTTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.edit()
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content=['200 OK']))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content={'header': ['200 OK']}))
 
     @patch.object(rt.RTTicket, '_create_requests_session')
     def test_add_comment_no_ticket_id(self, mock_session):
@@ -293,7 +294,7 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = rt.RTTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_comment('')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content=['200 OK']))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content={'header': ['200 OK']}))
 
     @patch.object(rt.RTTicket, '_create_requests_session')
     def test_change_status_no_ticket_id(self, mock_session):
@@ -322,7 +323,7 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = rt.RTTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.change_status('')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content=['200 OK']))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content={'header': ['200 OK']}))
 
     @patch.object(rt.RTTicket, '_create_requests_session')
     def test_add_attachment_no_ticket_id(self, mock_session):
@@ -362,13 +363,21 @@ class TestRTTicket(TestCase):
         mock_session.return_value = FakeSession()
         ticket = rt.RTTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_attachment('file_name')
-        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content=['200 OK']))
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(ticket_content={'header': ['200 OK']}))
 
     def test_prepare_ticket_fields(self):
         fields = {'cc': 'something', 'admincc': ['me', 'you']}
         expected_result = {'cc': 'something', 'admincc': 'me, you'}
         result = rt._prepare_ticket_fields(fields)
         self.assertEqual(result, expected_result)
+
+    def test_convert_string(self):
+        string1 = 'Header1\n\nHeader2\n id: 1\n Attachments:   1000: file'
+        string2 = 'Header1\n\n Stack:\n id: 1\n Attachments:   1000: file'
+        expected_result1 = {'header': ['Header1', 'Header2'], 'id': '1', '1000': 'file'}
+        expected_result2 = ['Header1', '', ' Stack:', ' id: 1', ' Attachments:   1000: file']
+        self.assertDictEqual(rt._convert_string(string1), expected_result1)
+        self.assertEqual(rt._convert_string(string2), expected_result2)
 
 
 if __name__ == '__main__':
