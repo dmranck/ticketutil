@@ -16,11 +16,31 @@ https://rt-wiki.bestpractical.com/wiki/REST
 Methods
 ^^^^^^^
 
+-  `get_ticket_content() <#get_ticket_content>`__
 -  `create() <#create>`__
 -  `edit() <#edit>`__
 -  `add_comment() <#comment>`__
 -  `change_status() <#status>`__
 -  `add_attachment() <#add_attachment>`__
+
+
+get_ticket_content()
+--------------------
+
+``get_ticket_content(self, ticket_id=None, option='show')``
+
+Queries the RT API to get the ticket_content using ticket_id. Calls
+have different options ('show', 'comment', 'attachments', 'history')
+in dependence of what kind of content is required. The ticket_content
+is expressed as a dictionary for options 'show', 'attachments' and
+'history' and as a list of strings representing lines in returned text
+for option 'comment'. The API calling is described in
+https://rt-wiki.bestpractical.com/wiki/REST#Ticket
+
+.. code:: python
+
+    t = ticket.get_ticket_content(<ticket_id>, option='attachments')
+    returned_ticket_content = t.ticket_content
 
 
 create()
@@ -211,10 +231,13 @@ Update existing RT tickets
     t = ticket.edit(priority='4',
                     cc='username@mail.com')
 
+    # Check the ticket content.
+    t = ticket.get_ticket_id()
+    returned_ticket_content = t.ticket_content
+
     # Work with a different ticket.
     t = ticket.set_ticket_id(<new_ticket_id>)
     t = ticket.change_status('Resolved')
 
     # Close Requests session.
     ticket.close_requests_session()
-

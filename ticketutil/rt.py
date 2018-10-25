@@ -101,30 +101,42 @@ class RTTicket(ticket.Ticket):
             logger.debug("Project {0} is valid".format(project))
             return True
 
-    def _verify_ticket_id(self, ticket_id):
+    def get_ticket_content(self, ticket_id=None, option='show'):
         """
-        Queries the RT API to see if ticket_id is a valid ticket for the given RT instance.
-        :param ticket_id: The ticket you're verifying.
-        :return: True or False depending on if ticket is valid.
+        Queries the RT API to get the ticket_content using ticket_id.
+        :param ticket_id: ticket number, if not set self.ticket_id is used.
+        :param option: specifies the type of content with possible values 'show', 'attachments', 'comment' and
+                       'history'
+        :return: self.request_result: Named tuple containing request status, error_message, url info and
+                 ticket_content.
         """
+        if ticket_id is None:
+            ticket_id = self.ticket_id
+            if not self.ticket_id:
+                error_message = "No ticket ID associated with ticket object. " \
+                                "Set ticket ID with set_ticket_id(<ticket_id>)"
+                logger.error(error_message)
+                return self.request_result._replace(status='Failure', error_message=error_message)
         try:
-            r = self.s.get("{0}/ticket/{1}/show".format(self.rest_url, ticket_id))
-            logger.debug("Verify ticket_id: status code: {0}".format(r.status_code))
+            r = self.s.get("{0}/ticket/{1}/{2}".format(self.rest_url, ticket_id, option))
+            logger.debug("Get ticket content: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            logger.error("Unexpected error occurred when verifying ticket_id")
+            error_message = "Error getting ticket content"
+            logger.error(error_message)
             logger.error(e)
-            return False
+            return self.request_result._replace(status='Failure', error_message=error_message)
 
         # RT's API returns 200 even if the ticket is not valid. We need to parse the response.
         error_responses = ["Ticket {0} does not exist.".format(ticket_id),
                            "Bad Request"]
         if any(error in r.text for error in error_responses):
-            logger.error("Ticket {0} is not valid".format(ticket_id))
-            return False
-        else:
-            logger.debug("Ticket {0} is valid".format(ticket_id))
-            return True
+            error_message = "Ticket {0} is not valid".format(ticket_id)
+            logger.error(error_message)
+            return self.request_result._replace(status='Failure', error_message=error_message)
+
+        self.ticket_content = _convert_string(r.text)
+        return self.request_result._replace(ticket_content=self.ticket_content)
 
     def create(self, subject, text, **kwargs):
         """
@@ -216,6 +228,7 @@ class RTTicket(ticket.Ticket):
         self.ticket_id = re.search('Ticket (\d+) created', ticket_content).groups()[0]
         self.ticket_url = self._generate_ticket_url()
         logger.info("Created ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def edit(self, **kwargs):
@@ -263,6 +276,7 @@ class RTTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Edited ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def add_comment(self, comment):
@@ -300,6 +314,7 @@ class RTTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Added comment to ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def change_status(self, status):
@@ -333,6 +348,7 @@ class RTTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Changed status of ticket {0} - {1}".format(self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
     def add_attachment(self, file_name):
@@ -373,6 +389,7 @@ class RTTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
         logger.info("Attached file {0} to ticket {1} - {2}".format(file_name, self.ticket_id, self.ticket_url))
+        self.request_result = self.get_ticket_content()
         return self.request_result
 
 
@@ -387,6 +404,29 @@ def _prepare_ticket_fields(fields):
                 if isinstance(value, list):
                     fields[key] = ', '.join(value)
         return fields
+
+
+def _convert_string(text):
+    """
+    Converts string into more appropriate form for reading and accessing.
+    :param text: Text to be converted in a form of string.
+    :return: List of strings or a dictionary in dependance of which form is preferable.
+    """
+    lines = text.split('\n')
+    if 'Stack' in text:
+        return text.split('\n')
+    response = {'header': []}
+    for line in lines:
+        if line:
+            if ':' not in line:
+                response['header'].append(line)
+            elif ':' in line:
+                elements = line.split(':')
+                if 'Attachments' in elements[0]:
+                    response[elements[1].lstrip()] = elements[2].lstrip()
+                else:
+                    response[elements[0].lstrip()] = elements[1].lstrip()
+    return response
 
 
 def main():
