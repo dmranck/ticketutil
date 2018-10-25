@@ -29,11 +29,12 @@ get_ticket_content()
 
 ``get_ticket_content(self, ticket_id=None, option='show')``
 
-Queries the RT API to get the ticket_content using ticket_id. The
-ticket_content is expressed as a list of strings representing lines
-in text returned by specific call. Calls have different options ('show',
-'comment', 'attachments', 'history') in dependence of what kind of
-content is required. The API calling is described in
+Queries the RT API to get the ticket_content using ticket_id. Calls
+have different options ('show', 'comment', 'attachments', 'history')
+in dependence of what kind of content is required. The ticket_content
+is expressed as a dictionary for options 'show', 'attachments' and
+'history' and as a list of strings representing lines in returned text
+for option 'comment'. The API calling is described in
 https://rt-wiki.bestpractical.com/wiki/REST#Ticket
 
 .. code:: python

@@ -410,7 +410,7 @@ def _convert_string(text):
     """
     Converts string into more appropriate form for reading and accessing.
     :param text: Text to be converted in a form of string.
-    :return: List of stings or a dictionary in dependance of which form is preferable.
+    :return: List of strings or a dictionary in dependance of which form is preferable.
     """
     lines = text.split('\n')
     if 'Stack' in text:
