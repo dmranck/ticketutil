@@ -1,6 +1,17 @@
 Release History
 ---------------
 
+1.4.0 (01-07-2019)
+++++++++++++++++++
+
+* Added get_ticket_content() method to jira.py, rt.py, redmine.py, and
+  bugzilla.py.
+* Added add_attachment() method to servicenow.py.
+* Added unit tests for ticket.py, jira.py, rt.py, redmine.py, and bugzilla.py.
+* Added module-level loggers throughout all files.
+* Added components support to Jira.
+* Added support for creating subtasks in Jira.
+
 1.3.0 (06-29-2017)
 ++++++++++++++++++
 
