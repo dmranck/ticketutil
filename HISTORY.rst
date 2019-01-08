@@ -1,17 +1,7 @@
 Release History
 ---------------
 
-1.4.2 (01-07-2019)
-++++++++++++++++++
-
-* Still fixing README on PyPI.
-
-1.4.1 (01-07-2019)
-++++++++++++++++++
-
-* Fixing README on PyPI.
-
-1.4.0 (01-07-2019)
+1.4.3 (01-08-2019)
 ++++++++++++++++++
 
 * Added get_ticket_content() method to jira.py, rt.py, redmine.py, and
