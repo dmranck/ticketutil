@@ -107,7 +107,7 @@ class Ticket(object):
             s.verify = False
         if isinstance(self.auth, tuple):
             s.auth = self.auth
-            s.verify = True
+            s.verify = False
 
         # Try to authenticate to auth_url.
         try:
