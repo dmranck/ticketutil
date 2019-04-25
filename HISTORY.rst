@@ -1,6 +1,11 @@
 Release History
 ---------------
 
+1.4.4 (04-25-2019)
+++++++++++++++++++
+
+* Updated HTTP Basic Auth in ticket.py to disable SSL cert verification.
+
 1.4.3 (01-08-2019)
 ++++++++++++++++++
 
