@@ -13,6 +13,11 @@ should be able to process them. See JIRA's REST API documentation for
 more information on custom fields:
 https://docs.atlassian.com/jira/REST/cloud/
 
+Note: A mapping of custom field names to ids for a given Jira instance
+can be determined through the following API endpoint: /rest/api/2/field.
+For example: https://<jira_url>/rest/api/2/field. The customfield_XXXXX
+ids can then be used in the create() or edit() methods below.
+
 Methods
 ^^^^^^^
 
