@@ -21,10 +21,11 @@ class Ticket(object):
     """
     A class representing a ticket.
     """
-    def __init__(self, project, ticket_id):
+    def __init__(self, project, ticket_id, verify=False):
         self.project = project
         self.ticket_id = ticket_id
         self.ticket_url = None
+        self.verify = verify
 
         # Create our default namedtuple for our request results.
         Result = namedtuple('Result', ['status', 'error_message', 'url', 'ticket_content'])
@@ -104,10 +105,10 @@ class Ticket(object):
         if self.auth == 'kerberos':
             self.principal = _get_kerberos_principal()
             s.auth = HTTPKerberosAuth(mutual_authentication=DISABLED)
-            s.verify = False
+            s.verify = self.verify
         if isinstance(self.auth, tuple):
             s.auth = self.auth
-            s.verify = False
+            s.verify = self.verify
 
         # Try to authenticate to auth_url.
         try:
