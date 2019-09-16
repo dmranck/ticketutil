@@ -14,7 +14,7 @@ class JiraTicket(ticket.Ticket):
     """
     A JIRA Ticket object. Contains JIRA-specific methods for working with tickets.
     """
-    def __init__(self, url, project, auth=None, ticket_id=None):
+    def __init__(self, url, project, auth=None, ticket_id=None, verify=False):
         self.ticketing_tool = 'JIRA'
 
         # JIRA URLs
@@ -29,7 +29,7 @@ class JiraTicket(ticket.Ticket):
             self.auth_url = '{0}/step-auth-gss'.format(self.url)
 
         # Call our parent class's init method which creates our requests session.
-        super(JiraTicket, self).__init__(project, ticket_id)
+        super(JiraTicket, self).__init__(project, ticket_id, verify=verify)
 
         # Overwrite our request_result namedtuple from Ticket, adding watchers field for JiraTicket.
         Result = namedtuple('Result', ['status', 'error_message', 'url', 'ticket_content', 'watchers'])
