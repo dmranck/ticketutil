@@ -21,7 +21,7 @@ class RTTicket(ticket.Ticket):
         self.auth = auth
 
         # RT URLs
-        self.url = url
+        self.url = url[:-1] if url.endswith('/') else url
         self.rest_url = '{0}/REST/1.0'.format(self.url)
         self.auth_url = '{0}/index.html'.format(self.rest_url)
 
