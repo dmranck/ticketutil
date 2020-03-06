@@ -22,7 +22,7 @@ class BugzillaTicket(ticket.Ticket):
         self.credentials = None
 
         # BZ URLs
-        self.url = url
+        self.url = url[:-1] if url.endswith('/') else url
         self.rest_url = '{0}/rest/bug'.format(self.url)
         self.auth_url = '{0}/rest/login'.format(self.url)
 

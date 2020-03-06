@@ -27,7 +27,7 @@ class ServiceNowTicket(Ticket):
 
         # The auth param should be of the form (<username>, <password>) for
         # HTTP Basic authentication.
-        self.url = url
+        self.url = url[:-1] if url.endswith('/') else url
         self.auth = auth
         self.project = project
         self.rest_url = '{0}/api/now/v1/table/{1}'.format(

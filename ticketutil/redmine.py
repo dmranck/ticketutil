@@ -20,7 +20,7 @@ class RedmineTicket(ticket.Ticket):
         self.auth = auth
 
         # Redmine URLs
-        self.url = url
+        self.url = url[:-1] if url.endswith('/') else url
         self.rest_url = '{0}/issues'.format(self.url)
         self.auth_url = '{0}/login'.format(self.url)
 

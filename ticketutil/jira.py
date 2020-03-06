@@ -18,7 +18,7 @@ class JiraTicket(ticket.Ticket):
         self.ticketing_tool = 'JIRA'
 
         # JIRA URLs
-        self.url = url
+        self.url = url[:-1] if url.endswith('/') else url
         self.rest_url = '{0}/rest/api/2/issue'.format(self.url)
         self.ticket_content = None
         if isinstance(auth, tuple):
