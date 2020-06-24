@@ -475,7 +475,7 @@ def _prepare_ticket_fields(fields):
     :param fields: Ticket fields.
     :return: fields: Ticket fields for the ticketing tool.
     """
-    for key, value in fields.items():
+    for key, value in list(fields.items()):
         if key in ['opened_for', 'operating_system', 'category', 'item',
                    'severity', 'hostname_affected', 'opened_by_dept']:
             fields['u_{}'.format(key)] = value

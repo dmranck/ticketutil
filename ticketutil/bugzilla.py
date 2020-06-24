@@ -506,7 +506,7 @@ def _prepare_ticket_fields(operation, fields):
                 fields["groups"] = [fields["groups"]]
             fields["groups"] = {"add": fields["groups"]}
 
-    for key, value in fields.items():
+    for key, value in list(fields.items()):
         if key == 'assignee':
             fields['assigned_to'] = value
             fields.pop('assignee')

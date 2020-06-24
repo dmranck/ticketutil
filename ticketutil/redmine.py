@@ -501,7 +501,7 @@ class RedmineTicket(ticket.Ticket):
         :param fields: Ticket fields.
         :return: fields: Ticket fields in the correct form for the ticketing tool.
         """
-        for key, value in fields.items():
+        for key, value in list(fields.items()):
             if key == 'priority':
                 fields['priority_id'] = self._get_priority_id(value)
                 fields.pop('priority')

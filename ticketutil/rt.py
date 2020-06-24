@@ -399,7 +399,7 @@ def _prepare_ticket_fields(fields):
         :param fields: Ticket fields.
         :return: fields: Ticket fields in the correct form for the ticketing tool.
         """
-        for key, value in fields.items():
+        for key, value in list(fields.items()):
             if key in ['cc', 'admincc']:
                 if isinstance(value, list):
                     fields[key] = ', '.join(value)
