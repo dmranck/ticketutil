@@ -496,7 +496,7 @@ def _prepare_ticket_fields(fields):
         if 'type' in fields and fields['type'] == 'Sub-task' and 'parent' not in fields:
             raise KeyError("Parent field is required while creating a Sub Task")
 
-        for key, value in fields.items():
+        for key, value in list(fields.items()):
             if key in ['priority', 'assignee', 'reporter']:
                 fields[key] = {'name': value}
             if key in ['parent']:
