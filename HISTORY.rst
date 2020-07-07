@@ -1,6 +1,13 @@
 Release History
 ---------------
 
+1.4.5 (07-07-2020)
+++++++++++++++++++
+
+* Fixed RuntimeError in Python 3.8.
+* Added support for trailing slash in URLs.
+* Made verify requests to Jira tickets configurable.
+
 1.4.4 (04-25-2019)
 ++++++++++++++++++
 
