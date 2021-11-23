@@ -1,16 +1,24 @@
 Usage
 =====
 
-Create a Ticket object
-----------------------
+Create a Ticket object & authenticate
+-------------------------------------
 
-Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket
+Create a JiraTicket, RTTicket, RedmineTicket, BugzillaTicket,
 or ServiceNowTicket object with ``<url>``, ``<project>`` and ``<auth>``. This
 verifies that you are able to properly authenticate to the ticketing tool.
-To use HTTP Basic Authentication, the ``<auth>`` parameter should contain the
-username and password specified as a tuple. For tools that support kerberos
-authentication (JIRA and RT), the ``<auth>`` parameter should contain
-'kerberos'.
+
+To use HTTP Basic Authentication, the ``<auth>`` parameter should contain a
+tuple of the form ``auth=(<username>, <password>)``.
+
+For tools that support kerberos authentication (JIRA and RT), the ``<auth>``
+parameter should contain 'kerberos', i.e. ``auth='kerberos'``.
+
+To use API key authentication in Bugzilla, the ``<auth>`` parameter should
+contain a dictionary of the form ``auth={'api_key': <your_api_key>}``.
+
+To use Personal Access Token authentication in Jira, the ``<auth>`` parameter
+should contain a dictionary of the form ``auth={'token': <your_token>}``.
 
 
 Work with a new ticket

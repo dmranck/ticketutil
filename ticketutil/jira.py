@@ -21,9 +21,16 @@ class JiraTicket(ticket.Ticket):
         self.url = url[:-1] if url.endswith('/') else url
         self.rest_url = '{0}/rest/api/2/issue'.format(self.url)
         self.ticket_content = None
+        # HTTP Basic Auth
         if isinstance(auth, tuple):
             self.auth = auth
             self.auth_url = self.url
+        # API Key Auth
+        if isinstance(auth, dict):
+            self.auth = auth
+            self.auth_url = "{0}/rest/api/2/myself".format(self.url)
+            self.headers = {"Authorization": "Bearer {0}".format(auth['token'])}
+        # Kerberos Auth
         else:
             self.auth = 'kerberos'
             self.auth_url = '{0}/step-auth-gss'.format(self.url)
