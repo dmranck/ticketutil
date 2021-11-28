@@ -25,14 +25,14 @@ class JiraTicket(ticket.Ticket):
         if isinstance(auth, tuple):
             self.auth = auth
             self.auth_url = self.url
-        # API Key Auth
+        # Personal Access Token Auth
         if isinstance(auth, dict):
             if 'token' in auth:
                 self.auth = auth
                 self.auth_url = "{0}/rest/api/2/myself".format(self.url)
                 self.headers = {"Authorization": "Bearer {0}".format(auth['token'])}
             else:
-                raise KeyError("token is a required auth key for API Key Authentication")
+                raise KeyError("token is a required auth key for personal access token authentication")
         # Kerberos Auth
         else:
             self.auth = 'kerberos'
