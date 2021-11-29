@@ -1,6 +1,11 @@
 Release History
 ---------------
 
+1.5.0 (11-29-2021)
+++++++++++++++++++
+
+* Added support for personal access tokens in Jira.
+
 1.4.5 (07-07-2020)
 ++++++++++++++++++
 
