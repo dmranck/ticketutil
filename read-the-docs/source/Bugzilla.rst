@@ -188,8 +188,8 @@ OR, you can use API key authentication. Before you use API key
 authentication, you need to generate the API key for your account by
 clicking on the API Keys section under your user preferences in
 Bugzilla. When creating a BugzillaTicket object, you can pass in a
-dictionary of the form {'api\_key': '} into the auth argument. The code
-then authenticates for subsequent API calls. For more details, see:
+dictionary of the form {'api\_key': <your_api_key>} into the auth argument.
+The code then authenticates for subsequent API calls. For more details, see:
 http://bugzilla.readthedocs.io/en/latest/api/core/v1/general.html#authentication.
 
 .. code:: python
@@ -197,7 +197,7 @@ http://bugzilla.readthedocs.io/en/latest/api/core/v1/general.html#authentication
     >>> from ticketutil.bugzilla import BugzillaTicket
     >>> ticket = BugzillaTicket(<bugzilla_url>,
                                 <product_name>,
-                                auth={'api_key': '<your-api-key>'})
+                                auth={'api_key': <your_api_key>})
 
 You now have a ``BugzillaTicket`` object that is associated with the
 ``<product_name>`` product.

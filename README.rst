@@ -11,7 +11,8 @@ ticketutil is a Python module that allows you to easily interact with
 various ticketing tools using their REST APIs. Currently, the supported
 tools are JIRA, RT, Redmine, Bugzilla, and ServiceNow. All tools support
 HTTP Basic authentication, while JIRA and RT also support Kerberos
-authentication.
+authentication. Additionally, Bugzilla supports API key authentication and
+Jira supports Personal Access Token authentication.
 
 This module allows you to create tickets, add comments, edit ticket
 fields, and change the status of tickets in each tool. Additional

@@ -189,7 +189,7 @@ Authenticate through HTTP Basic Authentication:
     >>> from ticketutil.jira import JiraTicket
     >>> ticket = JiraTicket(<jira_url>,
                             <project_key>,
-                            auth=('username', 'password'))
+                            auth=(<username>, <password>))
 
 Authenticate through Kerberos after running ``kinit``:
 
@@ -199,6 +199,17 @@ Authenticate through Kerberos after running ``kinit``:
     >>> ticket = JiraTicket(<jira_url>,
                             <project_key>,
                             auth='kerberos')
+
+Authenticate through a Personal Access Token. See the following URL for
+details on creating a Personal Access Token in Jira:
+https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html.
+
+.. code:: python
+
+    >>> from ticketutil.jira import JiraTicket
+    >>> ticket = JiraTicket(<jira_url>,
+                            <project_key>,
+                            auth={'token': <your_token>})
 
 You should see the following response:
 

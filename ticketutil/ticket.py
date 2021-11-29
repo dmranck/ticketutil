@@ -109,6 +109,8 @@ class Ticket(object):
         if isinstance(self.auth, tuple):
             s.auth = self.auth
             s.verify = self.verify
+        if hasattr(self, 'headers'):
+            s.headers = self.headers
 
         # Try to authenticate to auth_url.
         try:
