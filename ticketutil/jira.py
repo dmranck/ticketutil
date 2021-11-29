@@ -26,7 +26,7 @@ class JiraTicket(ticket.Ticket):
             self.auth = auth
             self.auth_url = self.url
         # Personal Access Token Auth
-        if isinstance(auth, dict):
+        elif isinstance(auth, dict):
             if 'token' in auth:
                 self.auth = auth
                 self.auth_url = "{0}/rest/api/2/myself".format(self.url)
