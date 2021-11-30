@@ -14,7 +14,7 @@ class JiraTicket(ticket.Ticket):
     """
     A JIRA Ticket object. Contains JIRA-specific methods for working with tickets.
     """
-    def __init__(self, url, project, auth=None, ticket_id=None, verify=False):
+    def __init__(self, url, project, auth=None, proxies=None, ticket_id=None, verify=False):
         self.ticketing_tool = 'JIRA'
 
         # JIRA URLs
@@ -37,6 +37,14 @@ class JiraTicket(ticket.Ticket):
         else:
             self.auth = 'kerberos'
             self.auth_url = '{0}/step-auth-gss'.format(self.url)
+
+        # Proxy support:
+        # https://docs.python-requests.org/en/latest/user/advanced/#proxies
+        if isinstance(proxies, dict):
+            if any(proxy in proxies for proxy in ('http', 'https')):
+                self.proxies = proxies
+            else:
+                raise KeyError("'http' &/or 'https' are required keys for proxy setup")
 
         # Call our parent class's init method which creates our requests session.
         super(JiraTicket, self).__init__(project, ticket_id, verify=verify)
