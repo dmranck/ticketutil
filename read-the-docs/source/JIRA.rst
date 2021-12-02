@@ -249,10 +249,6 @@ the value for non-tested fields or custom fields may be in a
 non-intuitive format. See JIRA's REST API documentation for more
 information: https://docs.atlassian.com/jira/REST/cloud/
 
-
-
-
-
 Create and update JIRA ticket
 -----------------------------
 
@@ -336,5 +332,3 @@ Create a Sub-Task inside existing JIRA ticket
 
     # Close Requests session.
     t.close_requests_session()
-
-
