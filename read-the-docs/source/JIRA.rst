@@ -211,6 +211,18 @@ https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032
                             <project_key>,
                             auth={'token': <your_token>})
 
+Use proxy to access Jira. See the following URL for details on configuring
+proxy with requests library:
+https://docs.python-requests.org/en/latest/user/advanced/#proxies
+
+.. code:: python
+
+    >>> from ticketutil.jira import JiraTicket
+    >>> ticket = JiraTicket(<jira_url>,
+                            <project_key>,
+                            auth={'token': <your_token>},
+                            proxies={'https': <proxy_url>, 'http': <proxy_url>})
+
 You should see the following response:
 
 ::
@@ -236,6 +248,10 @@ ticket field can be passed in as a keyword argument, but be aware that
 the value for non-tested fields or custom fields may be in a
 non-intuitive format. See JIRA's REST API documentation for more
 information: https://docs.atlassian.com/jira/REST/cloud/
+
+
+
+
 
 Create and update JIRA ticket
 -----------------------------
@@ -320,3 +336,5 @@ Create a Sub-Task inside existing JIRA ticket
 
     # Close Requests session.
     t.close_requests_session()
+
+
