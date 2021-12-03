@@ -111,7 +111,9 @@ class Ticket(object):
             s.verify = self.verify
         if hasattr(self, 'headers'):
             s.headers = self.headers
-
+        # Proxy setup
+        if hasattr(self, 'proxies'):
+            s.proxies.update(self.proxies)
         # Try to authenticate to auth_url.
         try:
             r = s.get(self.auth_url)

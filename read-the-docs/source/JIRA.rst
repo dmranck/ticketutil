@@ -211,6 +211,18 @@ https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032
                             <project_key>,
                             auth={'token': <your_token>})
 
+Use proxy to access Jira. See the following URL for details on configuring
+proxy with requests library:
+https://docs.python-requests.org/en/latest/user/advanced/#proxies
+
+.. code:: python
+
+    >>> from ticketutil.jira import JiraTicket
+    >>> ticket = JiraTicket(<jira_url>,
+                            <project_key>,
+                            auth={'token': <your_token>},
+                            proxies={'https': <proxy_url>, 'http': <proxy_url>})
+
 You should see the following response:
 
 ::
