@@ -287,7 +287,7 @@ class JiraTicket(ticket.Ticket):
             logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
-    def change_status(self, status):
+    def change_status(self, status, **kwargs):
         """
         Changes status of a JIRA ticket.
 
@@ -311,6 +311,18 @@ class JiraTicket(ticket.Ticket):
 
         params = {'transition': {}}
         params['transition']['id'] = status_id
+
+        # Some of the ticket fields need to be in a specific form for the tool to be Resolved from In Progress/To Do/Groomed
+        fields = _prepare_ticket_fields(kwargs)
+        if 'comment' in kwargs:
+            comment = fields.pop('comment')
+
+            # Parameters for the ticket to be Resolved from To Do/Groomed
+            params['update'] = {'comment': [comment]}
+
+        # Parameters for the ticket to be Resolved from In Progress
+        resolution = fields
+        params['fields'] = resolution
 
         # Attempt to change status of ticket
         try:
@@ -526,6 +538,10 @@ def _prepare_ticket_fields(fields):
             if key == 'type':
                 fields['issuetype'] = {'name': value}
                 fields.pop('type')
+            if key == 'resolution':
+                fields[key] = {'name': value}
+            if key == 'comment':
+                fields[key] = {'add': {'body': value}}
 
         return fields
 
