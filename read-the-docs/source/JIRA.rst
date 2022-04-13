@@ -123,11 +123,19 @@ Adds a comment to a JIRA ticket.
 change_status()
 ---------------
 
+``change_status(self, status)``
 ``change_status(self, status, **kwargs)``
 
 Changes status of a JIRA ticket.
-With the future state of JIRA, no project will automatically set resolution when changing the status of the ticket to RESOLVED.
-We need to pass additional fields like 'resolution' or 'comment' to resolve the tickets via automation using TicketUtil itself.
+
+Some JIRA instances might not need extra parameters to change the status of the ticket. These instances will use the below code example.
+
+.. code:: python
+
+    t = ticket.change_status('In Progress')
+
+With the future state of JIRA, some JIRA instances may not automatically set resolution when changing the status of the ticket to RESOLVED.
+We need to pass additional fields like 'resolution' or 'comment' to resolve the tickets via automation using TicketUtil itself. See examples below.
 
 Parameters needed for the JIRA ticket to be Resolved from To Do/Groomed
 

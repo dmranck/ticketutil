@@ -314,15 +314,14 @@ class JiraTicket(ticket.Ticket):
 
         # Some of the ticket fields need to be in a specific form for the tool to be Resolved from In Progress/To Do/Groomed
         fields = _prepare_ticket_fields(kwargs)
-        if 'comment' in kwargs:
-            comment = fields.pop('comment')
 
-            # Parameters for the ticket to be Resolved from To Do/Groomed
-            params['update'] = {'comment': [comment]}
+        # Parameters for the ticket to be Resolved from To Do/Groomed
+        if 'comment' in kwargs:
+            params['update'] = {'comment': [fields.pop('comment')]}
 
         # Parameters for the ticket to be Resolved from In Progress
-        resolution = fields
-        params['fields'] = resolution
+        if 'resolution' in kwargs:
+            params['fields'] = fields
 
         # Attempt to change status of ticket
         try:
@@ -333,7 +332,7 @@ class JiraTicket(ticket.Ticket):
             self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
-            error_message = "Error changing status of ticket"
+            error_message = "Error changing status of ticket.If moving to a resolved state, try adding a resolution or comment."
             logger.error(error_message)
             logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
