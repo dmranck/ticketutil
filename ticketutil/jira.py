@@ -287,7 +287,7 @@ class JiraTicket(ticket.Ticket):
             logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
-    def change_status(self, status):
+    def change_status(self, status, **kwargs):
         """
         Changes status of a JIRA ticket.
 
@@ -312,6 +312,17 @@ class JiraTicket(ticket.Ticket):
         params = {'transition': {}}
         params['transition']['id'] = status_id
 
+        # Some of the ticket fields need to be in a specific form for the tool to be Resolved from In Progress/To Do/Groomed
+        fields = _prepare_ticket_fields(kwargs)
+
+        # Below code is triggered if comment parameter is passed
+        if 'comment' in kwargs:
+            params['update'] = {'comment': [fields.pop('comment')]}
+
+        # Below code is triggered if resolution parameter is passed
+        if 'resolution' in kwargs:
+            params['fields'] = fields
+
         # Attempt to change status of ticket
         try:
             r = self.s.post("{0}/{1}/transitions".format(self.rest_url,  self.ticket_id), json=params)
@@ -321,7 +332,7 @@ class JiraTicket(ticket.Ticket):
             self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
-            error_message = "Error changing status of ticket"
+            error_message = "Error changing status of ticket. If moving to a resolved state, try adding a resolution or comment."
             logger.error(error_message)
             logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
@@ -526,6 +537,10 @@ def _prepare_ticket_fields(fields):
             if key == 'type':
                 fields['issuetype'] = {'name': value}
                 fields.pop('type')
+            if key == 'resolution':
+                fields[key] = {'name': value}
+            if key == 'comment':
+                fields[key] = {'add': {'body': value}}
 
         return fields
 
