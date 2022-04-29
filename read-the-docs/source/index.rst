@@ -3,10 +3,10 @@ Welcome to ticketutil's documentation!
 ======================================
 
 .. image:: https://img.shields.io/badge/python-2.7%2C%203.3%2C%203.4%2C%203.5%2C%203.6-blue.svg
-    :target: https://pypi.python.org/pypi/ticketutil/1.6.0
+    :target: https://pypi.python.org/pypi/ticketutil/1.7.0
 
-.. image:: https://img.shields.io/badge/pypi-v1.6.0-blue.svg
-    :target: https://pypi.python.org/pypi/ticketutil/1.6.0
+.. image:: https://img.shields.io/badge/pypi-v1.7.0-blue.svg
+    :target: https://pypi.python.org/pypi/ticketutil/1.7.0
 
 ticketutil is a Python module that allows you to easily interact with
 various ticketing tools using their REST APIs. Currently, the supported

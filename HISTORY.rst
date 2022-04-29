@@ -1,6 +1,11 @@
 Release History
 ---------------
 
+1.7.0 (04-29-2022)
+++++++++++++++++++
+
+* Added support for kwargs to change_status() method in jira.py.
+
 1.6.0 (12-02-2021)
 ++++++++++++++++++
 
