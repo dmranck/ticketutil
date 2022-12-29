@@ -514,6 +514,38 @@ class JiraTicket(ticket.Ticket):
 
         return watchers_list
 
+    def _get_username_from_email(self, email):
+        """
+            Gets the username from JIRA account
+            :param email: take email id of user as an argument
+            :return: username
+        """
+        rest_url_user = '{0}/rest/api/2/user'.format(self.url)
+        try:
+            r = self.s.get("{0}/search?username={1}".format(rest_url_user, email))
+            logger.debug("Get ticket content: status code: {0}".format(r.status_code))
+            r.raise_for_status()  # currently if the requested user is not found then
+            # instead of 404 API returns 200 status code and [] empty response. Reference -
+            # https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/user-findUsers
+            user_details = r.json()
+            if user_details:
+                username = user_details[0]['self'].split("=")[1].strip()
+            else:
+                username = None
+                # workaround to handle "User not found issue" when JIRA API does not return expected error code
+                logger.error("user with email {0} could not be found".format(email))
+
+            return username
+        except requests.RequestException as e:
+            if "user does not exist" in r.json()['errorMessages'][0].lower():
+                error_message = "User {0} is not valid".format(email)
+                logger.error(error_message)
+            else:
+                error_message = "Error getting user details"
+                logger.error(error_message)
+                logger.error(e)
+            return self.request_result._replace(status='Failure', error_message=error_message)
+
 
 def _prepare_ticket_fields(fields):
         """
