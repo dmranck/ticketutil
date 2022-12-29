@@ -411,20 +411,23 @@ class JiraTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
-        # If an email address was passed in for watcher param, extract the 'name' piece.
-        # Add double quotes around the name, which is needed for JIRA API.
+        # If an email address was passed in for watcher param, call the _get_username_from_email method to get
+        # username for watcher .
         if '@' in watcher:
-            watcher = "{0}".format(watcher.split('@')[0].strip())
+            watcher_username = self._get_username_from_email(watcher)
+        else:
+            watcher_username = watcher
 
         # For some reason, if you try to add an empty string as a watcher, it adds the requestor.
         # So, only execute this code if the watcher is not an empty string.
-        if watcher:
-            watcher = "\"{0}\"".format(watcher)
+        if watcher_username:
+            watcher_username = "\"{0}\"".format(watcher_username)
             try:
-                r = self.s.post("{0}/{1}/watchers".format(self.rest_url, self.ticket_id), data=watcher)
-                logger.debug("Add watcher {0}: status code: {1}".format(watcher, r.status_code))
+                r = self.s.post("{0}/{1}/watchers".format(self.rest_url, self.ticket_id), data=watcher_username)
+                logger.debug("Add watcher {0}: status code: {1}".format(watcher_username, r.status_code))
                 r.raise_for_status()
-                logger.info("Added watcher {0} to ticket {1} - {2}".format(watcher, self.ticket_id, self.ticket_url))
+                logger.info(
+                    "Added watcher {0} to ticket {1} - {2}".format(watcher_username, self.ticket_id, self.ticket_url))
                 self.request_result = self.get_ticket_content()
                 return self.request_result
             except requests.RequestException as e:
