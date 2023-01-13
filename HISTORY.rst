@@ -1,6 +1,11 @@
 Release History
 ---------------
 
+1.8.0 (01-13-2023)
+++++++++++++++++++
+
+* Added support in Jira for adding / removing watchers by email address.
+
 1.7.0 (04-29-2022)
 ++++++++++++++++++
 
