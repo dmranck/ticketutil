@@ -3,7 +3,8 @@ from collections import namedtuple
 
 import gssapi
 import requests
-from requests_kerberos import HTTPKerberosAuth, DISABLED
+from requests.adapters import HTTPAdapter, Retry
+from requests_kerberos import DISABLED, HTTPKerberosAuth
 
 __author__ = 'dranck, rnester, kshirsal'
 
@@ -102,6 +103,13 @@ class Ticket(object):
         # TODO: Support other authentication methods.
         # Set up authentication for requests session.
         s = requests.Session()
+        retries = Retry(
+            total=8, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ]
+        )
+        adapter = HTTPAdapter(max_retries=retries)
+        s.mount('http://', adapter)
+        s.mount('https://', adapter)
+
         if self.auth == 'kerberos':
             self.principal = _get_kerberos_principal()
             s.auth = HTTPKerberosAuth(mutual_authentication=DISABLED)
