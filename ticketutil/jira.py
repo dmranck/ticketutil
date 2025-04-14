@@ -83,7 +83,10 @@ class JiraTicket(ticket.Ticket):
             logger.debug("Project {0} is valid".format(project))
             return True
         except requests.RequestException as e:
-            if r.json()['errorMessages'][0] == "No project could be found with key \'{0}\'.".format(project):
+            if (
+                r.headers['content-type'] == 'application/json'
+                and r.json()['errorMessages'][0] == "No project could be found with key \'{0}\'.".format(project)
+            ):
                 logger.error("Project {0} is not valid".format(project))
             else:
                 logger.error("Unexpected error occurred when verifying project")
@@ -113,9 +116,13 @@ class JiraTicket(ticket.Ticket):
             self.ticket_content = r.json()
             return self.request_result._replace(ticket_content=self.ticket_content)
         except requests.RequestException as e:
-            if "issue does not exist" in r.json()['errorMessages'][0].lower():
+            if (
+                r.headers['content-type'] == 'application/json'
+                and "issue does not exist" in r.json()['errorMessages'][0].lower()
+            ):
                 error_message = "Ticket {0} is not valid".format(ticket_id)
                 logger.error(error_message)
+                logger.error(e)
             else:
                 error_message = "Error getting ticket content"
                 logger.error(error_message)
@@ -544,7 +551,10 @@ class JiraTicket(ticket.Ticket):
 
             return username
         except requests.RequestException as e:
-            if "User does not exist" in r.json()['errorMessages'][0].lower():
+            if (
+                r.headers['content-type'] == 'application/json'
+                and "User does not exist" in r.json()['errorMessages'][0].lower()
+            ):
                 error_message = "User {0} is not valid".format(email)
                 logger.error(error_message)
             else:
