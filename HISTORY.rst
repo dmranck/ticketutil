@@ -1,6 +1,12 @@
 Release History
 ---------------
 
+1.8.1 (04-14-2025)
+++++++++++++++++++
+
+* Updated request retries with support for 429 status code.
+* Updated jira.py to check for JSON content-type in requests exceptions.
+
 1.8.0 (01-13-2023)
 ++++++++++++++++++
 
