@@ -210,9 +210,16 @@ class JiraTicket(ticket.Ticket):
             logger.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            error_message = "Error creating ticket - {0}".format(_extract_error_messages(r.json()))
+            # Check if the content type is JSON and if the request received a response (no 204/No Content return code)
+            if (
+                r.headers['content-type'] == 'application/json'
+                and r.status_code != 204
+            ):
+                error_message = "Error creating ticket - {0}".format(_extract_error_messages(r.json()))
+                logger.error(e)
+            else:
+                error_message = e
             logger.error(error_message)
-            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Retrieve key from new ticket.
@@ -261,9 +268,16 @@ class JiraTicket(ticket.Ticket):
             self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
-            error_message = "Error editing ticket - {0}".format(_extract_error_messages(r.json()))
+            # Check if the content type is JSON and if the request received a response (no 204/No Content return code)
+            if (
+                r.headers['content-type'] == 'application/json'
+                and r.status_code != 204
+            ):
+                error_message = "Error editing ticket - {0}".format(_extract_error_messages(r.json()))
+                logger.error(e)
+            else:
+                error_message = e
             logger.error(error_message)
-            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
     def add_comment(self, comment):
@@ -289,9 +303,16 @@ class JiraTicket(ticket.Ticket):
             self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
-            error_message = "Error adding comment to ticket - {0}".format(_extract_error_messages(r.json()))
+            # Check if the content type is JSON and if the request received a response (no 204/No Content return code)
+            if (
+                r.headers['content-type'] == 'application/json'
+                and r.status_code != 204
+            ):
+                error_message = "Error adding comment to ticket - {0}".format(_extract_error_messages(r.json()))
+                logger.error(e)
+            else:
+                error_message = e
             logger.error(error_message)
-            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
     def change_status(self, status, **kwargs):
