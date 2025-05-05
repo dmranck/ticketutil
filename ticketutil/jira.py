@@ -212,7 +212,7 @@ class JiraTicket(ticket.Ticket):
         except requests.RequestException as e:
             # Check if the content type is JSON and if the request received a response (no 204/No Content return code)
             if (
-                r.headers['content-type'] == 'application/json'
+                'application/json' in r.headers['content-type']
                 and r.status_code != 204
             ):
                 error_message = "Error creating ticket - {0}".format(_extract_error_messages(r.json()))
@@ -270,7 +270,7 @@ class JiraTicket(ticket.Ticket):
         except requests.RequestException as e:
             # Check if the content type is JSON and if the request received a response (no 204/No Content return code)
             if (
-                r.headers['content-type'] == 'application/json'
+                'application/json' in r.headers['content-type']
                 and r.status_code != 204
             ):
                 error_message = "Error editing ticket - {0}".format(_extract_error_messages(r.json()))
@@ -305,7 +305,7 @@ class JiraTicket(ticket.Ticket):
         except requests.RequestException as e:
             # Check if the content type is JSON and if the request received a response (no 204/No Content return code)
             if (
-                r.headers['content-type'] == 'application/json'
+                'application/json' in r.headers['content-type']
                 and r.status_code != 204
             ):
                 error_message = "Error adding comment to ticket - {0}".format(_extract_error_messages(r.json()))
