@@ -84,7 +84,7 @@ class JiraTicket(ticket.Ticket):
             return True
         except requests.RequestException as e:
             if (
-                r.headers['content-type'] == 'application/json'
+                'application/json' in r.headers['content-type']
                 and r.json()['errorMessages'][0] == "No project could be found with key \'{0}\'.".format(project)
             ):
                 logger.error("Project {0} is not valid".format(project))
@@ -117,7 +117,7 @@ class JiraTicket(ticket.Ticket):
             return self.request_result._replace(ticket_content=self.ticket_content)
         except requests.RequestException as e:
             if (
-                r.headers['content-type'] == 'application/json'
+                'application/json' in r.headers['content-type']
                 and "issue does not exist" in r.json()['errorMessages'][0].lower()
             ):
                 error_message = "Ticket {0} is not valid".format(ticket_id)
@@ -210,9 +210,16 @@ class JiraTicket(ticket.Ticket):
             logger.debug("Create ticket: status code: {0}".format(r.status_code))
             r.raise_for_status()
         except requests.RequestException as e:
-            error_message = "Error creating ticket - {0}".format(_extract_error_messages(r.json()))
+            # Check if the content type is JSON and if the request received a response (no 204/No Content return code)
+            if (
+                'application/json' in r.headers['content-type']
+                and r.status_code != 204
+            ):
+                error_message = "Error creating ticket - {0}".format(_extract_error_messages(r.json()))
+                logger.error(e)
+            else:
+                error_message = e
             logger.error(error_message)
-            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
         # Retrieve key from new ticket.
@@ -261,9 +268,16 @@ class JiraTicket(ticket.Ticket):
             self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
-            error_message = "Error editing ticket - {0}".format(_extract_error_messages(r.json()))
+            # Check if the content type is JSON and if the request received a response (no 204/No Content return code)
+            if (
+                'application/json' in r.headers['content-type']
+                and r.status_code != 204
+            ):
+                error_message = "Error editing ticket - {0}".format(_extract_error_messages(r.json()))
+                logger.error(e)
+            else:
+                error_message = e
             logger.error(error_message)
-            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
     def add_comment(self, comment):
@@ -289,9 +303,16 @@ class JiraTicket(ticket.Ticket):
             self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
-            error_message = "Error adding comment to ticket - {0}".format(_extract_error_messages(r.json()))
+            # Check if the content type is JSON and if the request received a response (no 204/No Content return code)
+            if (
+                'application/json' in r.headers['content-type']
+                and r.status_code != 204
+            ):
+                error_message = "Error adding comment to ticket - {0}".format(_extract_error_messages(r.json()))
+                logger.error(e)
+            else:
+                error_message = e
             logger.error(error_message)
-            logger.error(e)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
     def change_status(self, status, **kwargs):
@@ -552,7 +573,7 @@ class JiraTicket(ticket.Ticket):
             return username
         except requests.RequestException as e:
             if (
-                r.headers['content-type'] == 'application/json'
+                'application/json' in r.headers['content-type']
                 and "User does not exist" in r.json()['errorMessages'][0].lower()
             ):
                 error_message = "User {0} is not valid".format(email)
