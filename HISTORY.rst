@@ -1,6 +1,11 @@
 Release History
 ---------------
 
+1.8.2 (05-06-2025)
+++++++++++++++++++
+
+* Added RequestException handling for JSON content-type.
+
 1.8.1 (04-14-2025)
 ++++++++++++++++++
 
