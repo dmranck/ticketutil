@@ -84,7 +84,7 @@ class JiraTicket(ticket.Ticket):
             return True
         except requests.RequestException as e:
             if (
-                r.headers['content-type'] == 'application/json'
+                'application/json' in r.headers['content-type']
                 and r.json()['errorMessages'][0] == "No project could be found with key \'{0}\'.".format(project)
             ):
                 logger.error("Project {0} is not valid".format(project))
@@ -117,7 +117,7 @@ class JiraTicket(ticket.Ticket):
             return self.request_result._replace(ticket_content=self.ticket_content)
         except requests.RequestException as e:
             if (
-                r.headers['content-type'] == 'application/json'
+                'application/json' in r.headers['content-type']
                 and "issue does not exist" in r.json()['errorMessages'][0].lower()
             ):
                 error_message = "Ticket {0} is not valid".format(ticket_id)
@@ -573,7 +573,7 @@ class JiraTicket(ticket.Ticket):
             return username
         except requests.RequestException as e:
             if (
-                r.headers['content-type'] == 'application/json'
+                'application/json' in r.headers['content-type']
                 and "User does not exist" in r.json()['errorMessages'][0].lower()
             ):
                 error_message = "User {0} is not valid".format(email)
