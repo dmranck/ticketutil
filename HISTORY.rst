@@ -1,6 +1,11 @@
 Release History
 ---------------
 
+1.8.3 (06-02-2025)
+++++++++++++++++++
+
+* Updated request retries with support for other HTTP request methods.
+
 1.8.2 (05-06-2025)
 ++++++++++++++++++
 
