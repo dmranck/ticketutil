@@ -104,7 +104,10 @@ class Ticket(object):
         # Set up authentication for requests session.
         s = requests.Session()
         retries = Retry(
-            total=8, backoff_factor=0.1, status_forcelist=[429, 500, 502, 503, 504]
+            total=8,
+            backoff_factor=0.1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods={"GET", "POST", "OPTIONS", "DELETE", "TRACE", "PUT", "HEAD"},
         )
         adapter = HTTPAdapter(max_retries=retries)
         s.mount('http://', adapter)
