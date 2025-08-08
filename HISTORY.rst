@@ -1,6 +1,13 @@
 Release History
 ---------------
 
+1.8.4 (08-08-2025)
+++++++++++++++++++
+
+* Fixed unit test mock objects and string matching issues.
+* Enhanced test reliability with proper mock object attributes.
+* Improved test coverage to 100% success rate (207/207 tests passing).
+
 1.8.3 (06-02-2025)
 ++++++++++++++++++
 
