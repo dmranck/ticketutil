@@ -53,6 +53,14 @@ class FakeSession(object):
 
     def delete(self, url):
         return FakeResponse(status_code=self.status_code)
+    
+    def mount(self, prefix, adapter):
+        """Mock the mount method for HTTPAdapter"""
+        pass
+    
+    def close(self):
+        """Mock the close method"""
+        pass
 
 
 class FakeResponse(object):
@@ -62,6 +70,7 @@ class FakeResponse(object):
 
     def __init__(self, status_code=666):
         self.status_code = status_code
+        self.headers = {'content-type': 'application/json'}
 
     def raise_for_status(self):
         if self.status_code != 666:
@@ -293,7 +302,7 @@ class TestJiraTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=401)
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.change_status('Done')
-        error_message = "Error changing status of ticket"
+        error_message = "Error changing status of ticket. If moving to a resolved state, try adding a resolution or comment."
         self.assertEqual(request_result, RETURN_RESULT('Failure', error_message, mock_url.return_value, None, None))
 
     @patch.object(jira.JiraTicket, 'get_ticket_content')
@@ -383,7 +392,7 @@ class TestJiraTicket(TestCase):
         mock_session.return_value = FakeSession(status_code=401)
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.add_watcher('me')
-        error_message = 'Error adding "me" as a watcher to ticket'
+        error_message = 'Error adding me as a watcher to ticket'
         self.assertEqual(request_result, RETURN_RESULT('Failure', error_message, mock_url.return_value, None, None))
 
     @patch.object(jira.JiraTicket, '_generate_ticket_url')
@@ -514,6 +523,7 @@ class TestJiraTicket(TestCase):
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = requests.RequestException()
         mock_response.status_code = 400
+        mock_response.headers = {'content-type': 'application/json'}
         mock_response.json.return_value = {
             "errorMessages": [],
             "errors": {
@@ -540,6 +550,7 @@ class TestJiraTicket(TestCase):
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = requests.RequestException()
         mock_response.status_code = 400
+        mock_response.headers = {'content-type': 'application/json'}
         mock_response.json.return_value = {
             "errorMessages": [
                 "You do not have the permission to comment on this issue."

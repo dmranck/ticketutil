@@ -53,6 +53,8 @@ If not installing with pip, a short list of packages defined in the
 requirements.txt file need to be installed. To install the required
 packages, type ``pip install -r requirements.txt``.
 
+To run the unit tests, type ``python -m unittest discover -s tests``.
+
 Documentation
 -------------
 
