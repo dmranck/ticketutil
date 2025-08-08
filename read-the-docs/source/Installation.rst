@@ -18,3 +18,9 @@ Installation
 .. code:: python
 
     pip install -r requirements.txt
+
+* To run the unit tests, type:
+
+.. code:: python
+
+    python -m unittest discover -s tests
