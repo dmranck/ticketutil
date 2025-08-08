@@ -27,6 +27,10 @@ class FakeSession(object):
     def get(self, url):
         return FakeResponse(status_code=self.status_code)
 
+    def mount(self, prefix, adapter):
+        """Mock the mount method for HTTPAdapter"""
+        pass
+
     def close(self):
         return
 
@@ -38,6 +42,7 @@ class FakeResponse(object):
 
     def __init__(self, status_code=666):
         self.status_code = status_code
+        self.headers = {'content-type': 'application/json'}
 
     def raise_for_status(self):
         if self.status_code != 666:
