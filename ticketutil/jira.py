@@ -24,7 +24,7 @@ class JiraTicket(ticket.Ticket):
         # HTTP Basic Auth
         if isinstance(auth, tuple):
             self.auth = auth
-            self.auth_url = self.url
+            self.auth_url = "{0}/rest/api/2/myself".format(self.url)
         # Personal Access Token Auth
         elif isinstance(auth, dict):
             if 'token' in auth:
@@ -49,6 +49,9 @@ class JiraTicket(ticket.Ticket):
         # Call our parent class's init method which creates our requests session.
         super(JiraTicket, self).__init__(project, ticket_id, verify=verify)
 
+        self.is_cloud = self._detect_jira_cloud()
+        self._watcher_query_param = 'accountId' if self.is_cloud else 'username'
+
         # Overwrite our request_result namedtuple from Ticket, adding watchers field for JiraTicket.
         Result = namedtuple('Result', ['status', 'error_message', 'url', 'ticket_content', 'watchers'])
         self.request_result = Result('Success', None, self.ticket_url, self.ticket_content, None)
@@ -69,6 +72,21 @@ class JiraTicket(ticket.Ticket):
         self.request_result = self.request_result._replace(url=ticket_url)
 
         return ticket_url
+
+    def _detect_jira_cloud(self):
+        """
+        Queries the JIRA API to determine whether the Atlassian instance is Cloud.
+        :return: True if the Atlassian instance is Cloud, False otherwise.
+        """
+        try:
+            r = self.s.get("{0}/rest/api/2/serverInfo".format(self.url))
+            logger.debug("Detect Jira Cloud: status code: {0}".format(r.status_code))
+            r.raise_for_status()
+            return r.json().get('deploymentType') == 'Cloud'
+        except requests.RequestException as e:
+            logger.error("Unable to determine Jira deployment type from serverInfo; assuming non-cloud.")
+            logger.error(e)
+            return False
 
     def _verify_project(self, project):
         """
@@ -379,7 +397,7 @@ class JiraTicket(ticket.Ticket):
         watchers_list = self._get_watchers_list()
         for watcher in watchers_list:
             try:
-                r = self.s.delete("{0}/{1}/watchers?username={2}".format(self.rest_url, self.ticket_id, watcher))
+                r = self.s.delete("{0}/{1}/watchers?{2}={3}".format(self.rest_url, self.ticket_id, self._watcher_query_param, watcher))
                 logger.debug("Remove watcher {0}: status code: {1}".format(watcher, r.status_code))
                 r.raise_for_status()
             except requests.RequestException as e:
@@ -409,19 +427,19 @@ class JiraTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
-        # If an email address was passed in for watcher param, call the _get_username_from_email method to get
-        # username for watcher .
-        if '@' in watcher:
-            watcher_username = self._get_username_from_email(watcher)
-        else:
-            watcher_username = watcher
+        watcher_id = self._get_user_id(watcher)
+
+        if watcher_id is None:
+            error_message = "Error removing watcher {0} from ticket".format(watcher)
+            logger.error(error_message)
+            return self.request_result._replace(status='Failure', error_message=error_message)
 
         try:
-            r = self.s.delete("{0}/{1}/watchers?username={2}".format(self.rest_url, self.ticket_id, watcher_username))
-            logger.debug("Remove watcher {0}: status code: {1}".format(watcher_username, r.status_code))
+            r = self.s.delete("{0}/{1}/watchers?{2}={3}".format(self.rest_url, self.ticket_id, self._watcher_query_param, watcher_id))
+            logger.debug("Remove watcher {0}: status code: {1}".format(watcher_id, r.status_code))
             r.raise_for_status()
             logger.info(
-                "Removed watcher {0} from ticket {1} - {2}".format(watcher_username, self.ticket_id, self.ticket_url))
+                "Removed watcher {0} from ticket {1} - {2}".format(watcher_id, self.ticket_id, self.ticket_url))
             self.request_result = self.get_ticket_content()
             return self.request_result
         except requests.RequestException as e:
@@ -434,7 +452,7 @@ class JiraTicket(ticket.Ticket):
         """
         Adds watcher to a JIRA ticket.
         Accepts an email or username.
-        :param watcher: Username of watcher to remove.
+        :param watcher: Username of watcher to add.
         :return: self.request_result: Named tuple containing request status, error_message, url info and
                  ticket_content.
         """
@@ -443,23 +461,21 @@ class JiraTicket(ticket.Ticket):
             logger.error(error_message)
             return self.request_result._replace(status='Failure', error_message=error_message)
 
-        # If an email address was passed in for watcher param, call the _get_username_from_email method to get
-        # username for watcher .
-        if '@' in watcher:
-            watcher_username = self._get_username_from_email(watcher)
-        else:
-            watcher_username = watcher
+        watcher_id = self._get_user_id(watcher)
 
         # For some reason, if you try to add an empty string as a watcher, it adds the requestor.
         # So, only execute this code if the watcher is not an empty string.
-        if watcher_username:
-            watcher_username = "\"{0}\"".format(watcher_username)
+        if watcher_id:
             try:
-                r = self.s.post("{0}/{1}/watchers".format(self.rest_url, self.ticket_id), data=watcher_username)
-                logger.debug("Add watcher {0}: status code: {1}".format(watcher_username, r.status_code))
+                if self.is_cloud:
+                    r = self.s.post("{0}/{1}/watchers".format(self.rest_url, self.ticket_id), json=watcher_id)
+                else:
+                    watcher_id = "\"{0}\"".format(watcher_id)
+                    r = self.s.post("{0}/{1}/watchers".format(self.rest_url, self.ticket_id), data=watcher_id)
+                logger.debug("Add watcher {0}: status code: {1}".format(watcher_id, r.status_code))
                 r.raise_for_status()
                 logger.info(
-                    "Added watcher {0} to ticket {1} - {2}".format(watcher_username, self.ticket_id, self.ticket_url))
+                    "Added watcher {0} to ticket {1} - {2}".format(watcher_id, self.ticket_id, self.ticket_url))
                 self.request_result = self.get_ticket_content()
                 return self.request_result
             except requests.RequestException as e:
@@ -544,20 +560,30 @@ class JiraTicket(ticket.Ticket):
 
         watchers_json = r.json()
         watchers_list = []
+        key = 'accountId' if self.is_cloud else 'name'
         for watcher in watchers_json['watchers']:
-            watchers_list.append(watcher['name'])
+            watchers_list.append(watcher[key])
 
         return watchers_list
 
-    def _get_username_from_email(self, email):
+    def _get_user_id(self, user):
         """
-        Gets the username from JIRA account
-        :param email: takes email id of user as an argument
-        :return: username
+        Gets the username or accountId from JIRA account.
+        :param user: takes username or email id of user as an argument.
+        :return: username or accountId, depending on the JIRA deployment type.
         """
+        # Return None if the user parameter is empty.
+        if not user:
+            return None
+        
+        # If the deployment type is not cloud and the user parameter is not an email, return the username.
+        if not self.is_cloud and '@' not in user:
+            return user
+
         rest_url_user = '{0}/rest/api/2/user'.format(self.url)
         try:
-            r = self.s.get("{0}/search?username={1}".format(rest_url_user, email))
+            user_query_param = 'query' if self.is_cloud else 'username'
+            r = self.s.get("{0}/search?{1}={2}".format(rest_url_user, user_query_param, user))
             logger.debug("Search username: status code: {0}".format(r.status_code))
             r.raise_for_status()  # currently if the requested user is not found then
             # instead of 404 API returns 200 status code and [] empty response. Reference -
@@ -568,7 +594,7 @@ class JiraTicket(ticket.Ticket):
             else:
                 username = None
                 # workaround to handle "User not found issue" when JIRA API does not return expected error code
-                logger.error("User with email {0} could not be found".format(email))
+                logger.error("User {0} could not be found".format(user))
 
             return username
         except requests.RequestException as e:
@@ -576,7 +602,7 @@ class JiraTicket(ticket.Ticket):
                 'application/json' in r.headers['content-type']
                 and "User does not exist" in r.json()['errorMessages'][0].lower()
             ):
-                error_message = "User {0} is not valid".format(email)
+                error_message = "User {0} is not valid".format(user)
                 logger.error(error_message)
             else:
                 error_message = "Error getting user details"

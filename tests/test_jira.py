@@ -27,6 +27,12 @@ MOCK_RESULT = {'errorMessages': ["No project could be found with key \'{0}\'.".f
 TICKET_CONTENT = {'key': 'TICKET_ID', 'errors': {'ResponseError': 'No internet connection'}}
 STATUS = {'transitions': [{'to': {'name': 'To Do'}, 'id': 11}, {'to': {'name': 'Abandoned'}, 'id': 51}]}
 WATCHERS = {'watchers': [{'name': 'me'}, {'name': 'you'}]}
+WATCHERS_CLOUD = {'watchers': [{'accountId': 'me123'}, {'accountId': 'you123'}]}
+SERVER_INFO = {'cloud':{'deploymentType': 'Cloud'},
+               'server':{'deploymentType': 'Server'},
+               'unknown':{}}
+USER_SEARCH_CLOUD = [{'self': '{0}/rest/api/2/user?accountId=me123'.format(URL)}]
+USER_SEARCH_SERVER = [{'self': '{0}/rest/api/2/user?username=me'.format(URL)}]
 
 
 class FakeSession(object):
@@ -34,14 +40,19 @@ class FakeSession(object):
     Mocks Requests session behavior.
     """
 
-    def __init__(self, status_code=666):
+    def __init__(self, status_code=666, cloud=None):
         self.status_code = status_code
+        self.cloud = cloud
 
     def get(self, url):
+        if 'serverInfo' in url:
+            return FakeResponseServerInfo(status_code=self.status_code, cloud=self.cloud)
         if 'transitions' in url:
             return FakeResponseGetStatus(status_code=self.status_code)
         elif 'watchers' in url:
-            return FakeResponseGetWatchers(status_code=self.status_code)
+            return FakeResponseGetWatchers(status_code=self.status_code, cloud=self.cloud)
+        elif 'user' in url and 'search' in url:
+            return FakeResponseUserSearch(status_code=self.status_code, url=url)
         else:
             return FakeResponse(status_code=self.status_code)
 
@@ -106,8 +117,44 @@ class FakeResponseGetWatchers(FakeResponse):
     Response when trying to get a list of watchers.
     """
 
+    def __init__(self, status_code=666, cloud=False):
+        super(FakeResponseGetWatchers, self).__init__(status_code)
+        self.cloud = cloud
+
     def json(self):
-        return WATCHERS
+        return WATCHERS_CLOUD if self.cloud else WATCHERS
+
+
+class FakeResponseServerInfo(FakeResponse):
+    """
+    Response when trying to get serverInfo for deployment type.
+    """
+
+    def __init__(self, status_code=666, cloud=None):
+        super(FakeResponseServerInfo, self).__init__(status_code)
+        self.cloud = cloud
+
+    def json(self):
+        if self.cloud is True:
+            return SERVER_INFO['cloud']
+        elif self.cloud is False:
+            return SERVER_INFO['server']
+        return SERVER_INFO['unknown']
+
+
+class FakeResponseUserSearch(FakeResponse):
+    """
+    Response when trying to search users using query or username.
+    """
+
+    def __init__(self, status_code=666, url=''):
+        super(FakeResponseUserSearch, self).__init__(status_code)
+        self._url = url
+
+    def json(self):
+        if 'query=' in self._url:
+            return USER_SEARCH_CLOUD
+        return USER_SEARCH_SERVER
 
 
 class TestJiraTicket(TestCase):
@@ -146,6 +193,22 @@ class TestJiraTicket(TestCase):
         with self.assertRaises(TicketException):
             ticket = jira.JiraTicket(URL, PROJECT)
             self.assertFalse(ticket._verify_project(PROJECT))
+
+    @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_is_cloud_deployment(self, mock_session):
+        mock_session.return_value = FakeSession(cloud=True)
+        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        self.assertTrue(ticket.is_cloud)
+        self.assertEqual(ticket._watcher_query_param, 'accountId')
+        self.assertEqual(ticket._get_watchers_list(), ['me123', 'you123'])
+
+    @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_is_not_cloud_deployment(self, mock_session):
+        mock_session.return_value = FakeSession(cloud=False)
+        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        self.assertFalse(ticket.is_cloud)
+        self.assertEqual(ticket._watcher_query_param, 'username')
+        self.assertEqual(ticket._get_watchers_list(), ['me', 'you'])
 
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_get_ticket_content(self, mock_session):
@@ -318,6 +381,18 @@ class TestJiraTicket(TestCase):
         request_result = ticket.remove_all_watchers()
         self.assertEqual(request_result, SUCCESS_RESULT._replace(watchers=watchers))
 
+    @patch.object(jira.JiraTicket, 'get_ticket_content')
+    @patch.object(jira.JiraTicket, '_get_watchers_list')
+    @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_remove_all_watchers_cloud(self, mock_session, mock_get_list, mock_content):
+        mock_session.return_value = FakeSession(cloud=True)
+        mock_content.return_value = SUCCESS_RESULT
+        watchers = ['me123', 'you123']
+        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        mock_get_list.return_value = watchers
+        request_result = ticket.remove_all_watchers()
+        self.assertEqual(request_result, SUCCESS_RESULT._replace(watchers=watchers))
+
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_remove_all_watchers_no_ticket_id(self, mock_session):
         mock_session.return_value = FakeSession()
@@ -344,6 +419,14 @@ class TestJiraTicket(TestCase):
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_remove_watcher(self, mock_session, mock_url, mock_content):
         mock_session.return_value = FakeSession()
+        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        request_result = ticket.remove_watcher('me')
+        self.assertEqual(request_result, mock_content.return_value)
+
+    @patch.object(jira.JiraTicket, 'get_ticket_content')
+    @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_remove_watcher_cloud(self, mock_session, mock_content):
+        mock_session.return_value = FakeSession(cloud=True)
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
         request_result = ticket.remove_watcher('me')
         self.assertEqual(request_result, mock_content.return_value)
@@ -376,6 +459,14 @@ class TestJiraTicket(TestCase):
         request_result = ticket.add_watcher('me')
         self.assertEqual(request_result, mock_content.return_value)
 
+    @patch.object(jira.JiraTicket, 'get_ticket_content')
+    @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_add_watcher_cloud(self, mock_session, mock_content):
+        mock_session.return_value = FakeSession(cloud=True)
+        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        request_result = ticket.add_watcher('me')
+        self.assertEqual(request_result, mock_content.return_value)
+
     @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_add_watcher_no_ticket_id(self, mock_session):
         mock_session.return_value = FakeSession()
@@ -404,6 +495,24 @@ class TestJiraTicket(TestCase):
         error_message = 'Error adding  as a watcher to ticket'
         self.assertEqual(request_result, RETURN_RESULT('Failure', error_message, mock_url.return_value, MOCK_RESULT,
                                                        None))
+
+    @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_get_user_id(self, mock_session):
+        mock_session.return_value = FakeSession()
+        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        self.assertEqual(ticket._get_user_id('me'), 'me')
+        self.assertEqual(ticket._get_user_id('me@example.com'), 'me')
+        self.assertIsNone(ticket._get_user_id(''))
+        self.assertIsNone(ticket._get_user_id(None))
+
+    @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_get_user_id_cloud(self, mock_session):
+        mock_session.return_value = FakeSession(cloud=True)
+        ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
+        self.assertEqual(ticket._get_user_id('me'), 'me123')
+        self.assertEqual(ticket._get_user_id('me@example.com'), 'me123')
+        self.assertIsNone(ticket._get_user_id(''))
+        self.assertIsNone(ticket._get_user_id(None))
 
     @patch.object(jira.JiraTicket, 'get_ticket_content')
     @patch('builtins.open')
