@@ -47,7 +47,7 @@ class FakeSession(object):
     def get(self, url):
         if 'serverInfo' in url:
             return FakeResponseServerInfo(status_code=self.status_code, cloud=self.cloud)
-        if 'transitions' in url:
+        elif 'transitions' in url:
             return FakeResponseGetStatus(status_code=self.status_code)
         elif 'watchers' in url:
             return FakeResponseGetWatchers(status_code=self.status_code, cloud=self.cloud)

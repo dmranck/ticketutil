@@ -590,13 +590,14 @@ class JiraTicket(ticket.Ticket):
             # https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/user-findUsers
             user_details = r.json()
             if user_details:
-                username = user_details[0]['self'].split("=")[1].strip()
+                # user_id is an accountId if deploymentType is cloud, a username if not
+                user_id = user_details[0]['self'].split("=")[1].strip()
             else:
-                username = None
+                user_id = None
                 # workaround to handle "User not found issue" when JIRA API does not return expected error code
                 logger.error("User {0} could not be found".format(user))
 
-            return username
+            return user_id
         except requests.RequestException as e:
             if (
                 'application/json' in r.headers['content-type']
