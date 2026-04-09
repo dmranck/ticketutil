@@ -168,6 +168,21 @@ class TestJiraTicket(TestCase):
     """
 
     @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_api_token_auth(self, mock_session):
+        mock_session.return_value = FakeSession()
+        auth = {'username': 'user@example.com', 'api_token': 'test_api_token'}
+        ticket = jira.JiraTicket(URL, PROJECT, auth=auth)
+        self.assertEqual(ticket.auth, ('user@example.com', 'test_api_token'))
+        self.assertEqual(ticket.auth_url, URL)
+
+    @patch.object(jira.JiraTicket, '_create_requests_session')
+    def test_api_token_auth_missing_username(self, mock_session):
+        mock_session.return_value = FakeSession()
+        auth = {'api_token': 'test_api_token'}
+        with self.assertRaises(KeyError) as context:
+            jira.JiraTicket(URL, PROJECT, auth=auth)
+
+    @patch.object(jira.JiraTicket, '_create_requests_session')
     def test_generate_ticket_url(self, mock_session):
         mock_session.return_value = FakeSession()
         ticket = jira.JiraTicket(URL, PROJECT, ticket_id=TICKET_ID)
