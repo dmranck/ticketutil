@@ -228,6 +228,19 @@ https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032
                             <project_key>,
                             auth={'token': <your_token>})
 
+Authenticate with Jira Cloud API Token.
+API tokens can be generated at: <jira-domain>/manage-profile/security/api-tokens
+
+See the following URL for details:
+https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
+
+.. code:: python
+
+    >>> from ticketutil.jira import JiraTicket
+    >>> ticket = JiraTicket(<jira_url>,
+                            <project_key>,
+                            auth={'username': <email_or_username>, 'api_token': <your_api_token>})
+
 Use proxy to access Jira. See the following URL for details on configuring
 proxy with requests library:
 https://docs.python-requests.org/en/latest/user/advanced/#proxies
