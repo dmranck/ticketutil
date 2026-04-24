@@ -1,6 +1,12 @@
 Release History
 ---------------
 
+1.8.5 (04-24-2026)
+++++++++++++++++++
+
+* Resolved client errors with Jira users and watchers.
+* Implemented API token authentication support.
+
 1.8.4 (08-08-2025)
 ++++++++++++++++++
 
